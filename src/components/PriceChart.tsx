@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { createChart, ColorType, AreaSeries } from 'lightweight-charts';
@@ -38,8 +39,7 @@ export default function PriceChart({ isStandalone = false }: PriceChartProps) {
     });
 
     // Handle v5 API compatibility
-    // @ts-expect-error – v5 addSeries API
-    const series = chart.addSeries(AreaSeries, {
+    const series = (chart as any).addSeries(AreaSeries, {
       lineColor: '#f5c451',
       topColor: 'rgba(245, 196, 81, 0.3)',
       bottomColor: 'rgba(245, 196, 81, 0)',
@@ -72,8 +72,7 @@ export default function PriceChart({ isStandalone = false }: PriceChartProps) {
         { time: lastTime, value: lastPrice },
     ];
 
-    // @ts-expect-error – v5 setData API
-    series.setData(initialData);
+    (series as any).setData(initialData);
     chart.timeScale().fitContent();
 
     // SIMULATED LIVE FEED: Push update every 5 seconds
@@ -82,8 +81,7 @@ export default function PriceChart({ isStandalone = false }: PriceChartProps) {
         lastPrice = parseFloat((lastPrice + change).toFixed(2));
         lastTime += 60; // Advance time by 1 minute for each update in this simulation
         
-        // @ts-expect-error – v5 update API
-        series.update({ time: lastTime, value: lastPrice });
+        (series as any).update({ time: lastTime, value: lastPrice });
     }, 5000);
 
     const handleResize = () => {
