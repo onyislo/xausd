@@ -35,7 +35,7 @@ export default function LiveChat() {
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const messages = allMessages[activeTab] ?? [];
+  const messages = React.useMemo(() => allMessages[activeTab] ?? [], [allMessages, activeTab]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
