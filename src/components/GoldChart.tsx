@@ -62,7 +62,6 @@ type WsStatus = 'connecting' | 'live' | 'disconnected';
 export default function GoldChart({ height = 480, fullscreen = false }: GoldChartProps) {
   const containerRef   = useRef<HTMLDivElement>(null);
   const chartRef       = useRef<IChartApi | null>(null);
-  // @ts-expect-error – generic param accepted at runtime
   const seriesRef      = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const wsRef          = useRef<WebSocket | null>(null);
   const currentCandle  = useRef<CandlestickData<Time> | null>(null);
@@ -117,8 +116,7 @@ export default function GoldChart({ height = 480, fullscreen = false }: GoldChar
     lastTickMs.current    = Date.now();
     
       try {
-      // @ts-expect-error – v5 update API
-      seriesRef.current.update(candle);
+        seriesRef.current.update(candle);
     } catch (e) {
       console.warn('[GoldChart] Update rejected:', e);
     }
@@ -165,7 +163,6 @@ export default function GoldChart({ height = 480, fullscreen = false }: GoldChar
         },
       });
 
-      // @ts-expect-error – v5 addSeries API
       const series = chart.addSeries(CandlestickSeries, {
         upColor: '#26a69a', downColor: '#ef5350',
         borderUpColor: '#26a69a', borderDownColor: '#ef5350',
@@ -187,7 +184,6 @@ export default function GoldChart({ height = 480, fullscreen = false }: GoldChar
       fetchTimeSeries()
         .then(candles => {
           if (unmounted || !seriesRef.current) return;
-          // @ts-expect-error – v5 setData API
           seriesRef.current.setData(candles);
           chartRef.current?.timeScale().fitContent();
           setCandlesLoaded(candles.length);
