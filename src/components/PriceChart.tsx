@@ -163,7 +163,7 @@ export default function PriceChart({ isStandalone = false }: PriceChartProps) {
 
       {isStandalone && (
         <div className="absolute bottom-4 right-4 text-[10px] text-slate-500/50 tracking-widest pointer-events-none uppercase">
-          Geopolitical Gold • Tactical Terminal v2.4.1
+          AuScope • Tactical Terminal v2.4.1
         </div>
       )}
     </div>

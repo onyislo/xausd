@@ -69,7 +69,7 @@ export default function AuthCard({ mode, fields, onSubmit }: AuthCardProps) {
             fontFamily: "'Chakra Petch', sans-serif",
             fontSize: '13px', fontWeight: 700, letterSpacing: '0.18em',
             textTransform: 'uppercase', color: '#f5c451', marginBottom: '4px',
-          }}>Geopolitical Gold</h1>
+          }}>AuScope</h1>
           <p style={{ fontSize: '11px', color: '#4a5568', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             XAU/USD Terminal
           </p>
@@ -220,7 +220,7 @@ export default function AuthCard({ mode, fields, onSubmit }: AuthCardProps) {
 
         {/* Footer */}
         <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '10px', color: '#2a3441', letterSpacing: '0.08em' }}>
-          © 2025 GEOPOLITICAL GOLD · SECURE CONNECTION · SSL ENCRYPTED
+          © 2025 AUSCOPE · SECURE CONNECTION · SSL ENCRYPTED
         </p>
       </div>
     </div>

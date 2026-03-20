@@ -13,7 +13,7 @@ export default function LoginPage() {
         { id: 'email',    label: 'Email Address', type: 'email',    placeholder: 'trader@example.com' },
         { id: 'password', label: 'Password',       type: 'password', placeholder: '••••••••••••' },
       ]}
-      onSubmit={() => router.push('/')}
+      onSubmit={() => router.push('/dashboard')}
     />
   );
 }
