@@ -61,6 +61,12 @@ export default function Home() {
           {/* XAU Price */}
           <HeaderPrice />
 
+          {/* Login Button */}
+          <Link href="/login" className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold tracking-widest uppercase transition-all border border-yellow-500/40 text-yellow-500 hover:bg-yellow-500/10 hover:border-yellow-500/70" style={{fontFamily:"'Chakra Petch',sans-serif"}}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            Login
+          </Link>
+
           {/* Divider */}
           <div className="h-7 w-px bg-slate-700/60"></div>
 
