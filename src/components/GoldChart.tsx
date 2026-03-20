@@ -3,334 +3,319 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  createChart,
-  ColorType,
-  CandlestickSeries,
-  IChartApi,
-  ISeriesApi,
-  CandlestickData,
-  Time,
+  createChart, ColorType,
+  CandlestickSeries, HistogramSeries, LineSeries,
+  IChartApi, ISeriesApi, CandlestickData, HistogramData, LineData, Time,
 } from 'lightweight-charts';
-import { TrendingUp, TrendingDown, RefreshCw, AlertCircle, Wifi, WifiOff, ShieldOff } from 'lucide-react';
+import { ChevronDown, Crown, Maximize2 } from 'lucide-react';
 
-// ─── Config ──────────────────────────────────────────────────────────────────
-// Using the provided API key directly as a fallback if process.env is missing
-const API_KEY    = process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY || '76c9f305de4343028c2fa26b75d63b81';
-const SYMBOL     = 'XAU/USD';
-const INTERVAL   = '1min';
-const OUTPUTSIZE = 90;
-const WS_URL     = `wss://ws.twelvedata.com/v1/quotes/price?apikey=${API_KEY}`;
+const API_KEY = process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY || '76c9f305de4343028c2fa26b75d63b81';
+const SYMBOL  = 'XAU/USD';
+const WS_URL  = `wss://ws.twelvedata.com/v1/quotes/price?apikey=${API_KEY}`;
 
-// ─── REST helpers ─────────────────────────────────────────────────────────────
-interface RawCandle { datetime: string; open: string; high: string; low: string; close: string; }
+const TIMEFRAMES = [
+  { label: '1m', interval: '1min' },
+  { label: '5m', interval: '5min' },
+  { label: '15m', interval: '15min' },
+  { label: '30m', interval: '30min' },
+  { label: '1h', interval: '1h' },
+  { label: '4h', interval: '4h' },
+  { label: '1D', interval: '1day' },
+  { label: '1W', interval: '1week' },
+];
 
-async function fetchTimeSeries(): Promise<CandlestickData<Time>[]> {
-  console.log(`[GoldChart] Fetching historical for ${SYMBOL}...`);
-  const res  = await fetch(
-    `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(SYMBOL)}&interval=${INTERVAL}&outputsize=${OUTPUTSIZE}&apikey=${API_KEY}`
-  );
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json();
-  if (json.status === 'error') throw new Error(json.message ?? 'API error');
-  const values = (json.values as RawCandle[] ?? []);
-  console.log(`[GoldChart] Received ${values.length} candles.`);
-  return values
-    .slice().reverse()
-    .map(v => ({
-      time:  (new Date(v.datetime).getTime() / 1000) as Time,
-      open:  parseFloat(v.open),
-      high:  parseFloat(v.high),
-      low:   parseFloat(v.low),
-      close: parseFloat(v.close),
-    }));
+interface RawCandle { datetime: string; open: string; high: string; low: string; close: string; volume?: string; }
+
+function calcMA(candles: CandlestickData<Time>[], period: number): LineData<Time>[] {
+  return candles.slice(period - 1).map((_, i) => ({
+    time:  candles[i + period - 1].time,
+    value: candles.slice(i, i + period).reduce((s, c) => s + c.close, 0) / period,
+  }));
 }
 
-async function fetchLatestPrice(): Promise<number> {
-  const res  = await fetch(
-    `https://api.twelvedata.com/price?symbol=${encodeURIComponent(SYMBOL)}&apikey=${API_KEY}`
-  );
+async function fetchCandles(interval: string): Promise<{ candles: CandlestickData<Time>[]; volumes: HistogramData<Time>[] }> {
+  try {
+    const res  = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(SYMBOL)}&interval=${interval}&outputsize=90&apikey=${API_KEY}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (json.status === 'error') throw new Error(json.message ?? 'API error');
+    const vals = (json.values as RawCandle[] ?? []).slice().reverse();
+    const candles: CandlestickData<Time>[] = vals.map(v => ({
+      time:  (new Date(v.datetime).getTime() / 1000) as Time,
+      open:  parseFloat(v.open), high: parseFloat(v.high),
+      low:   parseFloat(v.low),  close: parseFloat(v.close),
+    }));
+    const volumes: HistogramData<Time>[] = vals.map((v, i) => ({
+      time:  candles[i].time,
+      value: parseFloat(v.volume ?? '0') || Math.abs(parseFloat(v.close) - parseFloat(v.open)) * 500 + 30,
+      color: parseFloat(v.close) >= parseFloat(v.open) ? 'rgba(38,166,154,0.55)' : 'rgba(239,83,80,0.55)',
+    }));
+    return { candles, volumes };
+  } catch (err) {
+    console.error(err);
+    return { candles: [], volumes: [] };
+  }
+}
+
+async function fetchPrice(): Promise<number> {
+  const res  = await fetch(`https://api.twelvedata.com/price?symbol=${encodeURIComponent(SYMBOL)}&apikey=${API_KEY}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
-  if (json.status === 'error') throw new Error(json.message);
   return parseFloat(json.price);
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
 interface GoldChartProps { height?: number; fullscreen?: boolean; }
 
-type WsStatus = 'connecting' | 'live' | 'disconnected';
+export default function GoldChart({ height = 420, fullscreen = false }: GoldChartProps) {
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const chartRef      = useRef<IChartApi | null>(null);
+  const candleRef     = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const volRef        = useRef<ISeriesApi<'Histogram'> | null>(null);
+  const maFastRef     = useRef<ISeriesApi<'Line'> | null>(null);
+  const maSlowRef     = useRef<ISeriesApi<'Line'> | null>(null);
+  const wsRef         = useRef<WebSocket | null>(null);
+  const liveCandle    = useRef<CandlestickData<Time> | null>(null);
+  const lastTickMs    = useRef(0);
+  const allCandles    = useRef<CandlestickData<Time>[]>([]);
 
-export default function GoldChart({ height = 480, fullscreen = false }: GoldChartProps) {
-  const containerRef   = useRef<HTMLDivElement>(null);
-  const chartRef       = useRef<IChartApi | null>(null);
-  const seriesRef      = useRef<ISeriesApi<'Candlestick'> | null>(null);
-  const wsRef          = useRef<WebSocket | null>(null);
-  const currentCandle  = useRef<CandlestickData<Time> | null>(null);
-  const lastTickMs     = useRef<number>(0);
+  const [tfIdx,       setTfIdx]       = useState(0); // default 1m
+  const [livePrice,   setLivePrice]   = useState<number | null>(null);
 
-  const [livePrice,     setLivePrice]     = useState<number | null>(null);
-  const [prevPrice,     setPrevPrice]     = useState<number | null>(null);
-  const [lastUpdated,   setLastUpdated]   = useState<Date | null>(null);
-  const [loading,       setLoading]       = useState(true);
-  const [error,         setError]         = useState<string | null>(null);
-  const [candlesLoaded, setCandlesLoaded] = useState(0);
-  const [wsStatus,      setWsStatus]      = useState<WsStatus>('disconnected');
-
-  // ── Manual forcing of data ────────────────────────────────────────────────
-  const forceRefresh = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const price = await fetchLatestPrice();
-      console.log(`[GoldChart] Forced refresh price: ${price}`);
-      applyTick(price);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [livePrice]);
-
-  const applyTick = (price: number) => {
-    if (!seriesRef.current) return;
-    
-    // 1. Calculate the preferred minute timestamp
-    // We anchor it to the current system minute.
-    const localMinuteTs = (Math.floor(Date.now() / 60_000) * 60) as Time;
-    
-    // 2. Safety: never go backward in time compared to the last loaded candle
-    const lastExistingTs = currentCandle.current?.time ?? 0;
-    const finalTs = (localMinuteTs as number) >= (lastExistingTs as number)
-      ? localMinuteTs
-      : lastExistingTs;
-
-    const prev = currentCandle.current;
-    
-    // Create new candle or update current one
-    const candle: CandlestickData<Time> =
-      !prev || prev.time !== finalTs
-        ? { time: finalTs as Time, open: price, high: price, low: price, close: price }
+  /* ── apply a new price tick ── */
+  const applyTick = useCallback((price: number) => {
+    if (!candleRef.current) return;
+    const minTs = (Math.floor(Date.now() / 60_000) * 60) as Time;
+    const prev  = liveCandle.current;
+    const ts    = prev && (prev.time as number) > (minTs as number) ? prev.time : minTs;
+    const c: CandlestickData<Time> =
+      !prev || prev.time !== ts
+        ? { time: ts, open: price, high: price, low: price, close: price }
         : { ...prev, high: Math.max(prev.high, price), low: Math.min(prev.low, price), close: price };
-
-    currentCandle.current = candle;
-    lastTickMs.current    = Date.now();
-    
-      try {
-        seriesRef.current.update(candle);
-    } catch (e) {
-      console.warn('[GoldChart] Update rejected:', e);
-    }
-    
-    setPrevPrice(p => (p === null ? price : livePrice ?? p));
+    liveCandle.current = c;
+    lastTickMs.current = Date.now();
+    try { candleRef.current.update(c); } catch { /* ignore */ }
+    try { volRef.current?.update({ time: c.time, value: Math.abs(c.close - c.open) * 200 + 20, color: c.close >= c.open ? 'rgba(38,166,154,0.55)' : 'rgba(239,83,80,0.55)' }); } catch { /* ignore */ }
+    const cs = [...allCandles.current];
+    const i  = cs.findIndex(x => x.time === c.time);
+    if (i >= 0) cs[i] = c; else cs.push(c);
+    allCandles.current = cs;
+    try { const f = calcMA(cs, 9);  if (f.length) maFastRef.current?.update(f[f.length - 1]); } catch { /* ignore */ }
+    try { const s = calcMA(cs, 21); if (s.length) maSlowRef.current?.update(s[s.length - 1]); } catch { /* ignore */ }
     setLivePrice(price);
-    setLastUpdated(new Date());
-  };
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    let unmounted  = false;
-    let wsReconnectTimer: ReturnType<typeof setTimeout>;
-    let restFallbackTimer: ReturnType<typeof setInterval>;
-
-    function initChart(width: number, chartHeight: number) {
-      if (unmounted || !containerRef.current) return;
-
-      const chart = createChart(containerRef.current, {
-        width,
-        height: chartHeight,
-        layout: {
-          background: { type: ColorType.Solid, color: 'transparent' },
-          textColor:  '#8a9bb2',
-          fontSize:   11,
-          fontFamily: "'Chakra Petch','Inter',sans-serif",
-        },
-        grid: {
-          vertLines: { color: 'rgba(255,196,0,0.04)' },
-          horzLines: { color: 'rgba(255,196,0,0.04)' },
-        },
-        handleScroll: { mouseWheel: true, pressedMouseMove: true },
-        handleScale:  { mouseWheel: true, pinch: true },
-        rightPriceScale: { 
-          borderColor: 'rgba(245,196,81,0.15)', 
-          scaleMargins: { top: 0.1, bottom: 0.1 },
-          autoScale: true 
-        },
-        timeScale: { 
-          borderColor: 'rgba(245,196,81,0.15)', 
-          timeVisible: true, 
-          secondsVisible: true 
-        },
-      });
-
-      const series = chart.addSeries(CandlestickSeries, {
-        upColor: '#26a69a', downColor: '#ef5350',
-        borderUpColor: '#26a69a', borderDownColor: '#ef5350',
-        wickUpColor:   '#26a69a', wickDownColor:   '#ef5350',
-      });
-
-      chartRef.current  = chart;
-      seriesRef.current = series;
-
-      const ro = new ResizeObserver(entries => {
-        const entry = entries[0];
-        if (!entry || !chartRef.current) return;
-        const w = entry.contentRect.width;
-        if (w > 0) chartRef.current.applyOptions({ width: w });
-      });
-      ro.observe(containerRef.current);
-
-      // Historical Load
-      fetchTimeSeries()
-        .then(candles => {
-          if (unmounted || !seriesRef.current) return;
-          seriesRef.current.setData(candles);
-          chartRef.current?.timeScale().fitContent();
-          setCandlesLoaded(candles.length);
-          if (candles.length) {
-            const last = candles[candles.length - 1];
-            currentCandle.current = { ...last };
-            setLivePrice(last.close);
-            setLastUpdated(new Date());
-          }
-        })
-        .catch(err => { if (!unmounted) setError(err.message); })
-        .finally(()  => { if (!unmounted) setLoading(false); });
-
-      // WebSocket Connection
-      function connectWs() {
-        if (unmounted) return;
-        console.log(`[GoldChart] Connecting to ${WS_URL}...`);
-        setWsStatus('connecting');
-        const ws = new WebSocket(WS_URL);
-        wsRef.current = ws;
-
-        ws.onopen = () => {
-          console.log(`[GoldChart] WS Connected. Subscribing to ${SYMBOL}...`);
-          ws.send(JSON.stringify({ action: 'subscribe', params: { symbols: SYMBOL } }));
-          setWsStatus('live');
-        };
-
-        ws.onmessage = (ev) => {
-          const msg = JSON.parse(ev.data);
-          if (msg.event === 'price' && msg.price) {
-            applyTick(msg.price);
-          }
-        };
-
-        ws.onerror = (err) => {
-          console.error(`[GoldChart] WS Error:`, err);
-          setWsStatus('disconnected');
-        };
-
-        ws.onclose = () => {
-          console.warn(`[GoldChart] WS Closed.`);
-          setWsStatus('disconnected');
-          if (!unmounted) wsReconnectTimer = setTimeout(connectWs, 5000);
-        };
-      }
-      connectWs();
-
-      // REST Fallback (every 10s)
-      restFallbackTimer = setInterval(async () => {
-        if (unmounted || !seriesRef.current) return;
-        const silentSecs = (Date.now() - lastTickMs.current) / 1000;
-        if (silentSecs < 12) return; 
-        try {
-          const price = await fetchLatestPrice();
-          applyTick(price);
-        } catch { /* ignore */ }
-      }, 10000);
-
-      return () => {
-        ro.disconnect();
-        chart.remove();
-        wsRef.current?.close();
-      };
-    }
-
-    // Delay init until container has width
-    const sizeObserver = new ResizeObserver(entries => {
-      const w = entries[0]?.contentRect.width ?? 0;
-      if (w > 0) {
-        sizeObserver.disconnect();
-        initChart(w, fullscreen ? window.innerHeight - 80 : height);
-      }
-    });
-    sizeObserver.observe(containerRef.current);
-
-    return () => {
-      unmounted = true;
-      sizeObserver.disconnect();
-      clearTimeout(wsReconnectTimer);
-      clearInterval(restFallbackTimer);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const priceUp = prevPrice !== null && livePrice !== null && livePrice >= prevPrice;
-  const priceDelta = prevPrice !== null && livePrice !== null ? (livePrice - prevPrice).toFixed(2) : null;
-  const formattedPrice = livePrice?.toLocaleString('en-US', { minimumFractionDigits: 2 }) ?? '—';
+  /* ── load data for selected timeframe ── */
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let dead = false;
+    let wsTimer:   ReturnType<typeof setTimeout>;
+
+    const interval = TIMEFRAMES[tfIdx].interval;
+    liveCandle.current = null;
+    allCandles.current = [];
+
+    // Build / rebuild chart
+    chartRef.current?.remove();
+    chartRef.current = null;
+
+    const w = containerRef.current.clientWidth || 600;
+    const h = fullscreen ? window.innerHeight - 80 : height;
+
+    const chart = createChart(containerRef.current, {
+      width: w, height: h,
+      layout: {
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: '#8a9bb2', fontSize: 11,
+        fontFamily: "'Chakra Petch','Inter',sans-serif",
+      },
+      grid: {
+        vertLines: { color: 'rgba(255,196,0,0.03)' },
+        horzLines: { color: 'rgba(255,196,0,0.03)' },
+      },
+      crosshair: {
+        vertLine: { color: 'rgba(245,196,81,0.3)', width: 1, style: 3 },
+        horzLine: { color: 'rgba(245,196,81,0.3)', width: 1, style: 3 },
+      },
+      rightPriceScale: { borderColor: 'rgba(245,196,81,0.15)', scaleMargins: { top: 0.15, bottom: 0.22 } },
+      timeScale:        { borderColor: 'rgba(245,196,81,0.15)', timeVisible: true, secondsVisible: false },
+      handleScroll: { mouseWheel: true, pressedMouseMove: true },
+      handleScale:  { mouseWheel: true, pinch: true },
+    });
+
+    const cSeries = chart.addSeries(CandlestickSeries, {
+      upColor: '#26a69a', downColor: '#ef5350',
+      borderUpColor: '#26a69a', borderDownColor: '#ef5350',
+      wickUpColor: '#26a69a',   wickDownColor: '#ef5350',
+    });
+    const vSeries = chart.addSeries(HistogramSeries, {
+      color: 'rgba(38,166,154,0.4)', priceFormat: { type: 'volume' }, priceScaleId: 'vol',
+    });
+    chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+
+    const faS = chart.addSeries(LineSeries, { color: '#f5c451', lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+    const slS = chart.addSeries(LineSeries, { color: '#2196f3', lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+
+    chartRef.current  = chart;
+    candleRef.current = cSeries;
+    volRef.current    = vSeries;
+    maFastRef.current = faS;
+    maSlowRef.current = slS;
+
+    const ro = new ResizeObserver(e => { const rw = e[0]?.contentRect.width; if (rw) chart.applyOptions({ width: rw }); });
+    if (containerRef.current) ro.observe(containerRef.current);
+
+    // Load historical
+    fetchCandles(interval).then(({ candles, volumes }) => {
+      if (dead) return;
+      allCandles.current = candles;
+      cSeries.setData(candles);
+      vSeries.setData(volumes);
+      faS.setData(calcMA(candles, 9));
+      slS.setData(calcMA(candles, 21));
+      chart.timeScale().fitContent();
+      
+      if (candles.length) {
+        const last = candles[candles.length - 1];
+        liveCandle.current = { ...last };
+        setLivePrice(last.close);
+      }
+    });
+
+    // WebSocket (resubscribes on tf change, though strictly TWELVE data just sends price)
+    function connectWs() {
+      if (dead) return;
+      const ws = new WebSocket(WS_URL);
+      wsRef.current = ws;
+      ws.onopen = () => { ws.send(JSON.stringify({ action: 'subscribe', params: { symbols: SYMBOL } })); };
+      ws.onmessage = ev => { const m = JSON.parse(ev.data); if (m.event === 'price' && m.price) applyTick(m.price); };
+      ws.onclose   = () => { if (!dead) wsTimer = setTimeout(connectWs, 5000); };
+    }
+    connectWs();
+
+    // REST fallback
+    const restTimer = setInterval(async () => {
+      if (dead) return;
+      if ((Date.now() - lastTickMs.current) / 1000 < 12) return;
+      try { applyTick(await fetchPrice()); } catch { /* ignore */ }
+    }, 10000);
+
+    return () => {
+      dead = true;
+      ro.disconnect();
+      clearTimeout(wsTimer);
+      clearInterval(restTimer);
+      wsRef.current?.close();
+      chart.remove();
+      chartRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tfIdx]);
+
+  const fmtPrice = livePrice?.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) ?? '—';
 
   return (
-    <div className={`flex flex-col bg-slate-900/60 border border-yellow-500/20 rounded-xl overflow-hidden backdrop-blur-sm ${fullscreen ? 'fixed inset-0 z-[9999]' : ''}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-yellow-500/10 bg-slate-800/60 shrink-0">
-        <div className="flex items-center gap-3">
-          <span className="relative flex h-2 w-2">
-            {wsStatus === 'live' ? <><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" /></> : <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500/40 animate-pulse" />}
-          </span>
-          <h2 className="text-[11px] font-bold text-yellow-500 uppercase tracking-widest">{SYMBOL} Gold Spot</h2>
-          <button onClick={forceRefresh} className="p-1 hover:bg-white/10 rounded transition-colors" title="Force Refresh">
-            <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
-          </button>
+    <div className={`flex gap-4 ${fullscreen ? 'fixed inset-0 z-[9999] p-4 bg-[#0a0e17]' : 'h-full w-full'}`}>
+      
+      {/* ── PANEL 1: FTF Selection ── */}
+      <div className="w-[190px] flex flex-col bg-[#0f1420] border border-yellow-500/20 rounded-xl overflow-hidden shrink-0 shadow-lg">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-yellow-500/10">
+          <span className="text-[14px] text-slate-200 tracking-wider">FTF selection</span>
+          <ChevronDown size={14} className="text-slate-500" />
+        </div>
+        
+        {/* Body */}
+        <div className="p-4 flex-1 flex flex-col">
+          <div className="flex justify-between items-center text-[10px] text-slate-500 tracking-[0.15em] font-bold uppercase mb-4">
+            <span>FTF Frames</span>
+            <span>F/F</span>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2 mb-auto">
+            {TIMEFRAMES.map((tf, i) => (
+              <button
+                key={tf.label}
+                onClick={() => setTfIdx(i)}
+                className={`py-3 flex items-center justify-center text-[15px] font-bold rounded-lg transition-all border
+                  ${i === tfIdx 
+                    ? 'bg-slate-800 border-yellow-500/40 text-slate-200 shadow-[inset_0_0_15px_rgba(245,196,81,0.05)]' 
+                    : 'bg-[#181f2d] border-transparent text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+              >
+                {tf.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex justify-center pt-8 pb-2">
+            <Crown size={14} className="text-yellow-500/80" />
+          </div>
+        </div>
+      </div>
+
+      {/* ── PANEL 2: Chart Area ── */}
+      <div className="flex-1 flex flex-col bg-[#0f1420] border border-yellow-500/20 rounded-xl overflow-hidden min-w-0 shadow-lg">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-2.5 border-b border-yellow-500/10 shrink-0">
+          <div className="flex items-center">
+            {/* Empty to maintain layout, #TradingView text removed */}
+          </div>
+
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-1 text-[11px] font-bold">
+              {['1m', '5m', '15m', '30m', '4h', '1D', '1W'].map(lbl => {
+                const isActive = TIMEFRAMES[tfIdx].label === lbl;
+                return (
+                  <span 
+                    key={lbl} 
+                    onClick={() => {
+                      const idx = TIMEFRAMES.findIndex(t => t.label === lbl);
+                      if (idx >= 0) setTfIdx(idx);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg cursor-pointer transition-colors
+                      ${isActive ? 'bg-[#1a2130] text-slate-200' : 'text-slate-500 hover:text-slate-300 hover:bg-[#1a2130]/50'}`}
+                  >
+                    {lbl}
+                  </span>
+                )
+              })}
+            </div>
+            
+            <button className="text-slate-500 hover:text-white transition-colors">
+              <Maximize2 size={14} />
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="relative flex-1 min-h-0 bg-[#0c1117]">
+          
+          <style jsx global>{`
+            #chart-watermark-wrapper a, #chart-watermark-wrapper svg {
+              display: none !important;
+              opacity: 0 !important;
+              visibility: hidden !important;
+              pointer-events: none !important;
+            }
+          `}</style>
+          
+          {/* Big Yellow Price Overlay exactly like screenshot */}
           {livePrice !== null && (
-            <div className="flex items-end gap-2">
-              <span className={`text-[18px] font-black tabular-nums transition-colors duration-300 ${priceUp ? 'text-emerald-400' : 'text-red-400'}`}>${formattedPrice}</span>
-              {priceDelta !== '0.00' && priceDelta !== null && (
-                <span className={`text-[10px] font-bold mb-0.5 flex items-center gap-0.5 ${priceUp ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {priceUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                  {Number(priceDelta) > 0 ? '+' : ''}{priceDelta}
-                </span>
-              )}
+            <div className="absolute top-5 left-6 z-10 pointer-events-none select-none">
+               <h2 className="text-[12px] font-bold text-yellow-500 uppercase tracking-widest mb-1 drop-shadow-md">
+                 XAU/USD GOLD SPOT
+               </h2>
+               <div className="font-black text-[24px] tabular-nums tracking-tight text-yellow-500" style={{ textShadow: '0 4px 12px rgba(234,179,8,0.2)' }}>
+                 ${fmtPrice}
+               </div>
             </div>
           )}
+
+          {/* Chart Canvas */}
+          <div id="chart-watermark-wrapper" ref={containerRef} className="w-full h-full" />
         </div>
       </div>
 
-      {/* Connection Info */}
-      <div className="flex items-center justify-between px-5 py-1.5 bg-slate-950/40 border-b border-yellow-500/05 text-[8px] uppercase tracking-widest text-slate-500">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1">
-             {wsStatus === 'live' ? <><Wifi size={8} className="text-emerald-500" /> Live Stream</> : <><WifiOff size={8} className="text-red-500" /> Offline</>}
-          </span>
-          <span>Twelve Data API</span>
-          <span>{candlesLoaded} Candles</span>
-        </div>
-        {error && <span className="text-red-500 flex items-center gap-1 font-bold animate-pulse"><AlertCircle size={8} /> ERROR: {error}</span>}
-      </div>
-
-      {/* Chart Area */}
-      <div id="gold-chart-container" className="relative flex-1 min-h-0 bg-slate-900/10 p-1">
-        {loading && !candlesLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center z-20 bg-slate-900/40">
-             <RefreshCw size={24} className="text-yellow-500 animate-spin" />
-          </div>
-        )}
-        <div ref={containerRef} className="w-full h-full" />
-      </div>
-
-      {/* Footer */}
-      <div className="px-5 py-2 flex items-center justify-between text-[7px] text-slate-600 uppercase tracking-widest border-t border-yellow-500/05">
-        <div className="flex items-center gap-2">
-          <ShieldOff size={8} /> No Logo Target Active
-        </div>
-        <span>Last Update: {lastUpdated?.toLocaleTimeString() ?? 'Pending'}</span>
-      </div>
     </div>
   );
 }

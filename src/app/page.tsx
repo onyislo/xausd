@@ -9,6 +9,7 @@ import TacticalSessions from '@/components/TacticalSessions';
 import CenterIntelToggle from '@/components/CenterIntelToggle';
 import NewsAggregator from '@/components/NewsAggregator';
 import LiveChat from '@/components/LiveChat';
+import HeaderPrice from '@/components/HeaderPrice';
 
 export default function Home() {
   return (
@@ -58,14 +59,7 @@ export default function Home() {
         {/* Right side — status + market info */}
         <div className="flex items-center gap-5">
           {/* XAU Price */}
-          <div className="hidden sm:flex flex-col items-end">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-[10px] text-slate-500 tracking-widest uppercase">XAU/USD</span>
-              <span className="text-yellow-400 font-mono font-bold text-sm tracking-wider">2,341.50</span>
-              <span className="text-green-400 text-[10px] font-bold">+0.42%</span>
-            </div>
-            <div className="text-[9px] text-slate-600 tracking-wider">Spot Price • Real-time</div>
-          </div>
+          <HeaderPrice />
 
           {/* Divider */}
           <div className="h-7 w-px bg-slate-700/60"></div>
