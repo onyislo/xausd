@@ -1,0 +1,123 @@
+name: 🚦 Blue → Green → Production Pipeline
+
+on:
+  push:
+    branches:
+      - blue       # Triggers when code is pushed to BLUE (testing)
+      - staging    # Triggers when code is promoted to GREEN (staging)
+  pull_request:
+    branches:
+      - main       # Triggers when a PR is opened to merge into PRODUCTION
+
+jobs:
+  # ============================================================
+  # 🔵 BLUE — Run tests on the blue branch
+  # If tests pass, automatically promote code to staging (green)
+  # ============================================================
+  blue-test:
+    name: 🔵 Blue — Test Gate
+    if: github.ref == 'refs/heads/blue'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests (lint + type-check)
+        run: npm test
+
+      - name: ✅ Tests passed — Promote to Green (staging)
+        if: success()
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git fetch origin staging
+          git checkout staging
+          git merge blue --ff-only
+          git push origin staging
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ❌ Tests FAILED — Notify
+        if: failure()
+        run: |
+          echo "🔴 RED: Tests failed on blue branch. Code blocked from promotion."
+          echo "Fix the issues and push again to blue."
+
+  # ============================================================
+  # 🟢 GREEN — Verify staging build before allowing PR to main
+  # ============================================================
+  green-verify:
+    name: 🟢 Green — Build Verification
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests again on staging
+        run: npm test
+
+      - name: Build the app (production simulation)
+        run: npm run build
+
+      - name: ✅ Green passed — Ready for Production PR
+        if: success()
+        run: |
+          echo "🟢 GREEN: All checks passed on staging."
+          echo "Open a Pull Request from staging → main to deploy to Production."
+
+      - name: ❌ Staging build FAILED
+        if: failure()
+        run: |
+          echo "🔴 RED: Build failed on staging. Do NOT merge to main!"
+
+  # ============================================================
+  # ✅ PRODUCTION — Final gate on PR to main
+  # ============================================================
+  production-gate:
+    name: ✅ Production Gate — PR Check
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Final test run
+        run: npm test
+
+      - name: Final build check
+        run: npm run build
+
+      - name: ✅ Production ready!
+        if: success()
+        run: echo "✅ All checks passed. Safe to merge to main → Vercel will deploy to Production."
