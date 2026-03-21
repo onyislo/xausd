@@ -119,7 +119,7 @@ export default function GoldChart({ height = 420, fullscreen = false }: GoldChar
     chartRef.current = null;
 
     const w = containerRef.current.clientWidth || 600;
-    const h = fullscreen ? window.innerHeight - 80 : height;
+    const h = fullscreen ? window.innerHeight - 80 : (containerRef.current.clientHeight || height);
 
     const chart = createChart(containerRef.current, {
       width: w, height: h,
@@ -161,7 +161,12 @@ export default function GoldChart({ height = 420, fullscreen = false }: GoldChar
     maFastRef.current = faS;
     maSlowRef.current = slS;
 
-    const ro = new ResizeObserver(e => { const rw = e[0]?.contentRect.width; if (rw) chart.applyOptions({ width: rw }); });
+    const ro = new ResizeObserver(e => { 
+      const rw = e[0]?.contentRect.width; 
+      const rh = e[0]?.contentRect.height;
+      if (rw && rh) chart.applyOptions({ width: rw, height: rh });
+      else if (rw) chart.applyOptions({ width: rw });
+    });
     if (containerRef.current) ro.observe(containerRef.current);
 
     // Load historical
