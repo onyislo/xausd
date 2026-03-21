@@ -13,7 +13,7 @@ interface Ticker {
 const SYMBOLS = [
   { symbol: 'XAU/USD', label: 'XAU/USD' },
   { symbol: 'DX-Y.NYB', label: 'DXY' },
-  { symbol: 'US10Y',    label: 'US10Y' },
+  { symbol: 'US10Y', label: 'US10Y' },
 ];
 
 export default function LiveTicker() {

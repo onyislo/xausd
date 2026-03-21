@@ -21,9 +21,9 @@ export default function HomePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg,#f5c451,#b8860b)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(245,196,81,0.3)' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200"/>
-                <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200"/>
-                <rect x="6" y="4" width="12" height="5" rx="1" fill="#1a1200"/>
+                <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200" />
+                <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200" />
+                <rect x="6" y="4" width="12" height="5" rx="1" fill="#1a1200" />
               </svg>
             </div>
             <span style={{ fontFamily: "'Chakra Petch',sans-serif", fontWeight: 700, fontSize: '14px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#f5c451' }}>AuScope</span>
@@ -31,21 +31,21 @@ export default function HomePage() {
 
           {/* Desktop links */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }} className="desktop-nav">
-            {[['#home','Home'],['#about','About Us'],['#pricing','Subscription']].map(([href,label]) => (
+            {[['#home', 'Home'], ['#about', 'About Us'], ['#pricing', 'Subscription']].map(([href, label]) => (
               <a key={href} href={href} style={{ fontSize: '13px', color: '#8a9bb2', textDecoration: 'none', letterSpacing: '0.04em', transition: 'color 0.2s' }}
-                onMouseEnter={e=>(e.currentTarget.style.color='#e0e6ed')}
-                onMouseLeave={e=>(e.currentTarget.style.color='#8a9bb2')}>{label}</a>
+                onMouseEnter={e => (e.currentTarget.style.color = '#e0e6ed')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#8a9bb2')}>{label}</a>
             ))}
           </div>
 
           {/* Auth links — text only, no boxes */}
           <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
             <Link href="/login" style={{ fontSize: '13px', fontWeight: 400, color: '#8a9bb2', textDecoration: 'none', transition: 'color 0.2s' }}
-              onMouseEnter={e=>(e.currentTarget.style.color='#e0e6ed')}
-              onMouseLeave={e=>(e.currentTarget.style.color='#8a9bb2')}>Log in</Link>
+              onMouseEnter={e => (e.currentTarget.style.color = '#e0e6ed')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#8a9bb2')}>Log in</Link>
             <Link href="/register" style={{ fontSize: '13px', fontWeight: 600, color: '#f5c451', textDecoration: 'none', borderBottom: '1px solid rgba(245,196,81,0.4)', paddingBottom: '1px', transition: 'border-color 0.2s' }}
-              onMouseEnter={e=>(e.currentTarget.style.borderColor='#f5c451')}
-              onMouseLeave={e=>(e.currentTarget.style.borderColor='rgba(245,196,81,0.4)')}>Get started →</Link>
+              onMouseEnter={e => (e.currentTarget.style.borderColor = '#f5c451')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(245,196,81,0.4)')}>Get started →</Link>
           </div>
         </div>
       </nav>
@@ -71,13 +71,13 @@ export default function HomePage() {
 
           <div style={{ display: 'flex', gap: '32px', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'baseline', marginBottom: '8px' }}>
             <Link href="/login" style={{ fontSize: '16px', fontWeight: 600, color: '#f5c451', textDecoration: 'none', borderBottom: '1px solid #f5c451', paddingBottom: '2px', letterSpacing: '-0.01em', transition: 'opacity 0.2s' }}
-              onMouseEnter={e=>(e.currentTarget.style.opacity='0.75')}
-              onMouseLeave={e=>(e.currentTarget.style.opacity='1')}>
+              onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}>
               Open the terminal →
             </Link>
             <a href="#about" style={{ fontSize: '14px', fontWeight: 400, color: '#6b7a8d', textDecoration: 'none', letterSpacing: '0em', transition: 'color 0.2s' }}
-              onMouseEnter={e=>(e.currentTarget.style.color='#8a9bb2')}
-              onMouseLeave={e=>(e.currentTarget.style.color='#6b7a8d')}>How it works ↓</a>
+              onMouseEnter={e => (e.currentTarget.style.color = '#8a9bb2')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#6b7a8d')}>How it works ↓</a>
           </div>
 
           <LiveTicker />
@@ -99,9 +99,9 @@ export default function HomePage() {
             <div style={{ padding: '36px 32px', background: '#141c2e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px' }}>
               <div style={{ marginBottom: '24px' }}>
                 <svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="#f5c451" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="26" cy="26" r="20"/><ellipse cx="26" cy="26" rx="8" ry="20"/>
-                  <line x1="6" y1="26" x2="46" y2="26"/>
-                  <path d="M9 16 Q26 22 43 16"/><path d="M9 36 Q26 30 43 36"/>
+                  <circle cx="26" cy="26" r="20" /><ellipse cx="26" cy="26" rx="8" ry="20" />
+                  <line x1="6" y1="26" x2="46" y2="26" />
+                  <path d="M9 16 Q26 22 43 16" /><path d="M9 36 Q26 30 43 36" />
                 </svg>
               </div>
               <h3 style={{ fontFamily: "'Chakra Petch',sans-serif", fontSize: '15px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#ffffff', marginBottom: '12px' }}>Multi-Factor Analysis</h3>
@@ -111,11 +111,11 @@ export default function HomePage() {
             <div style={{ padding: '36px 32px', background: '#141c2e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px' }}>
               <div style={{ marginBottom: '24px' }}>
                 <svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="#f5c451" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="13" y="10" width="26" height="24" rx="7"/>
-                  <circle cx="20" cy="22" r="3"/><circle cx="32" cy="22" r="3"/>
-                  <path d="M20 30 Q26 35 32 30"/>
-                  <line x1="26" y1="34" x2="26" y2="44"/><line x1="18" y1="44" x2="34" y2="44"/>
-                  <line x1="7" y1="20" x2="13" y2="20"/><line x1="39" y1="20" x2="45" y2="20"/>
+                  <rect x="13" y="10" width="26" height="24" rx="7" />
+                  <circle cx="20" cy="22" r="3" /><circle cx="32" cy="22" r="3" />
+                  <path d="M20 30 Q26 35 32 30" />
+                  <line x1="26" y1="34" x2="26" y2="44" /><line x1="18" y1="44" x2="34" y2="44" />
+                  <line x1="7" y1="20" x2="13" y2="20" /><line x1="39" y1="20" x2="45" y2="20" />
                 </svg>
               </div>
               <h3 style={{ fontFamily: "'Chakra Petch',sans-serif", fontSize: '15px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#ffffff', marginBottom: '12px' }}>AI-Powered Signals</h3>
@@ -125,10 +125,10 @@ export default function HomePage() {
             <div style={{ padding: '36px 32px', background: '#141c2e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px' }}>
               <div style={{ marginBottom: '24px' }}>
                 <svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="#f5c451" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="26" y1="42" x2="26" y2="30"/><line x1="16" y1="46" x2="36" y2="46"/>
-                  <path d="M8 24 Q17 10 26 10 Q35 10 44 24"/>
-                  <path d="M13 30 Q19 20 26 20 Q33 20 39 30"/>
-                  <circle cx="26" cy="30" r="3" fill="#f5c451" stroke="none"/>
+                  <line x1="26" y1="42" x2="26" y2="30" /><line x1="16" y1="46" x2="36" y2="46" />
+                  <path d="M8 24 Q17 10 26 10 Q35 10 44 24" />
+                  <path d="M13 30 Q19 20 26 20 Q33 20 39 30" />
+                  <circle cx="26" cy="30" r="3" fill="#f5c451" stroke="none" />
                 </svg>
               </div>
               <h3 style={{ fontFamily: "'Chakra Petch',sans-serif", fontSize: '15px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#ffffff', marginBottom: '12px' }}>Real-Time Data</h3>
@@ -148,9 +148,9 @@ export default function HomePage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '24px' }}>
             {[
-              { name: 'Starter', price: 'Free', period: 'forever', color: '#4a5568', features: ['Live XAU/USD chart','Basic news feed','1 AI signal/day','Community access'], cta: 'Get Started', href: '/register', highlight: false },
-              { name: 'Pro', price: '$49', period: '/month', color: '#f5c451', features: ['Everything in Starter','Unlimited AI signals','Geopolitical heat map','Economic calendar','Priority support'], cta: 'Start Free Trial', href: '/register', highlight: true },
-              { name: 'Institutional', price: '$199', period: '/month', color: '#3b82f6', features: ['Everything in Pro','API data access','Custom alerts','White-label reports','Dedicated analyst'], cta: 'Contact Sales', href: '/register', highlight: false },
+              { name: 'Starter', price: 'Free', period: 'forever', color: '#4a5568', features: ['Live XAU/USD chart', 'Basic news feed', '1 AI signal/day', 'Community access'], cta: 'Get Started', href: '/register', highlight: false },
+              { name: 'Pro', price: '$49', period: '/month', color: '#f5c451', features: ['Everything in Starter', 'Unlimited AI signals', 'Geopolitical heat map', 'Economic calendar', 'Priority support'], cta: 'Start Free Trial', href: '/register', highlight: true },
+              { name: 'Institutional', price: '$199', period: '/month', color: '#3b82f6', features: ['Everything in Pro', 'API data access', 'Custom alerts', 'White-label reports', 'Dedicated analyst'], cta: 'Contact Sales', href: '/register', highlight: false },
             ].map(plan => (
               <div key={plan.name} style={{
                 padding: '36px 28px',
@@ -181,8 +181,8 @@ export default function HomePage() {
                   letterSpacing: '-0.01em', textDecoration: 'none',
                   boxSizing: 'border-box', textAlign: 'center', transition: 'background 0.2s, color 0.2s',
                 }}
-                  onMouseEnter={e=>{ e.currentTarget.style.background = plan.highlight ? '#ffd166' : 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = plan.highlight ? '#0a0e17' : '#c9d1da'; }}
-                  onMouseLeave={e=>{ e.currentTarget.style.background = plan.highlight ? '#f5c451' : 'transparent'; e.currentTarget.style.color = plan.highlight ? '#0a0e17' : '#8a9bb2'; }}>
+                  onMouseEnter={e => { e.currentTarget.style.background = plan.highlight ? '#ffd166' : 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = plan.highlight ? '#0a0e17' : '#c9d1da'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = plan.highlight ? '#f5c451' : 'transparent'; e.currentTarget.style.color = plan.highlight ? '#0a0e17' : '#8a9bb2'; }}>
                   {plan.cta}
                 </Link>
               </div>
@@ -195,10 +195,10 @@ export default function HomePage() {
       <footer style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '40px 24px', textAlign: 'center' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
           <div style={{ display: 'flex', gap: '28px', flexWrap: 'wrap', justifyContent: 'center' }}>
-            {[['#home','Home'],['#about','About'],['#pricing','Pricing'],['/login','Login'],['/register','Sign Up']].map(([href,label]) => (
+            {[['#home', 'Home'], ['#about', 'About'], ['#pricing', 'Pricing'], ['/login', 'Login'], ['/register', 'Sign Up']].map(([href, label]) => (
               <a key={href} href={href} style={{ fontSize: '12px', color: '#4a5568', textDecoration: 'none', letterSpacing: '0.06em' }}
-                onMouseEnter={e=>(e.currentTarget.style.color='#8a9bb2')}
-                onMouseLeave={e=>(e.currentTarget.style.color='#4a5568')}>{label}</a>
+                onMouseEnter={e => (e.currentTarget.style.color = '#8a9bb2')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#4a5568')}>{label}</a>
             ))}
           </div>
           <p style={{ fontSize: '11px', color: '#2a3441', letterSpacing: '0.08em' }}>

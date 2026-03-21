@@ -84,11 +84,10 @@ export default function LiveChat() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`whitespace-nowrap px-2.5 py-1 text-[9px] font-bold rounded transition-all duration-200 border ${
-              activeTab === tab
+            className={`whitespace-nowrap px-2.5 py-1 text-[9px] font-bold rounded transition-all duration-200 border ${activeTab === tab
                 ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40 shadow-[0_0_8px_rgba(245,196,81,0.15)]'
                 : 'bg-slate-800/60 text-slate-500 border-slate-700 hover:text-slate-200 hover:border-slate-500'
-            }`}
+              }`}
           >
             {tab}
           </button>
