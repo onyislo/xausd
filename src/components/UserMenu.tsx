@@ -37,7 +37,7 @@ export default function UserMenu() {
           </div>
 
           {[
-            { icon: '👤', label: 'Profile',           href: '#' },
+            { icon: '👤', label: 'Profile',           href: '/profile' },
             { icon: '⚙️', label: 'Account Settings',  href: '/settings' },
           ].map(item => (
             <Link key={item.label} href={item.href} onClick={() => setOpen(false)} style={{

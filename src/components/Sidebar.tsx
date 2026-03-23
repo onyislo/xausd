@@ -88,15 +88,26 @@ export default function Sidebar() {
           );
         })}
         
-        {/* User / Logout */}
-        <button className="w-full aspect-square rounded-xl flex flex-col items-center justify-center gap-1 group relative text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all mt-2">
-          <div className="w-8 h-8 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center group-hover:border-red-500/50 transition-colors overflow-hidden">
-             <span className="text-xs font-bold text-slate-400 group-hover:text-red-400">T</span>
+        {/* User / Profile */}
+        <Link 
+          href="/profile"
+          className={`w-full aspect-square rounded-xl flex flex-col items-center justify-center gap-1 group relative transition-all ${
+            pathname === '/profile' 
+              ? 'bg-yellow-500/10 text-yellow-500 shadow-[inset_2px_0_0_#f5c451]' 
+              : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/50'
+          }`}
+        >
+          <div className={`w-8 h-8 rounded-full bg-slate-800 border-2 flex items-center justify-center transition-colors overflow-hidden ${
+            pathname === '/profile' ? 'border-yellow-500' : 'border-slate-700 group-hover:border-slate-500'
+          }`}>
+             <span className={`text-xs font-bold transition-colors ${
+               pathname === '/profile' ? 'text-yellow-500' : 'text-slate-400 group-hover:text-slate-200'
+             }`}>T</span>
           </div>
           <div className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-slate-200 text-[10px] font-bold tracking-widest uppercase rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 border border-slate-700">
-            Sign Out
+            Profile Hub
           </div>
-        </button>
+        </Link>
       </nav>
     </aside>
   );
