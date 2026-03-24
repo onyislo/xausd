@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 import LiveNewsStream from '@/components/LiveNewsStream';
 import NewsAggregator from '@/components/NewsAggregator';
-import GlobeVisualization from '@/components/GlobeVisualization';
+import FlatMapVisualization from '@/components/FlatMapVisualization';
 import GoldChart from '@/components/GoldChart';
 import Sidebar from '@/components/Sidebar';
 import HeaderPrice from '@/components/HeaderPrice';
@@ -65,7 +65,7 @@ export default function Dashboard() {
                <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Global Intelligence Map</span>
              </div>
              <div className="flex-1 relative min-h-0">
-               <GlobeVisualization />
+               <FlatMapVisualization />
              </div>
           </div>
         </div>
