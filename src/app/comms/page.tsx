@@ -52,6 +52,7 @@ export default function CommsPage() {
   const [filter, setFilter] = useState('all');
   const [chatData, setChatData] = useState(INITIAL_CHAT_DATA);
   const [isCreating, setIsCreating] = useState(false);
+  const [isCalling, setIsCalling] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -314,7 +315,11 @@ export default function CommsPage() {
                  </div>
               </div>
               <div className="flex items-center gap-4 text-slate-400">
-                <Phone size={18} className="cursor-pointer hover:text-white transition-colors" />
+                <Phone 
+                  size={18} 
+                  className="cursor-pointer hover:text-white transition-colors" 
+                  onClick={() => setIsCalling(true)}
+                />
                 <MoreVertical size={18} className="cursor-pointer hover:text-white transition-colors" />
               </div>
             </div>
@@ -421,6 +426,64 @@ export default function CommsPage() {
           </div>
 
         </div>
+
+        {/* ── CALLING OVERLAY ── */}
+        {isCalling && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-300">
+            <div className="max-w-[400px] w-full bg-slate-900 border border-yellow-500/30 rounded-[2rem] p-10 flex flex-col items-center shadow-[0_0_100px_rgba(245,196,81,0.15)] relative overflow-hidden">
+              {/* Background Glow */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-yellow-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+              {/* Status */}
+              <div className="mb-8 flex flex-col items-center">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  <span className="text-[10px] text-yellow-500 font-black tracking-[0.3em] uppercase">
+                    {activeChat.type === 'group' ? 'Secure Group Call' : 'Secure Private Call'}
+                  </span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-200 tracking-tight">{activeChat.name}</h3>
+                <span className="text-slate-500 text-sm mt-2 font-medium">Attempting secure connection...</span>
+              </div>
+
+              {/* Pulse Avatar */}
+              <div className="relative mb-12">
+                <div className="absolute inset-0 bg-yellow-500/20 rounded-full animate-ping"></div>
+                <div className="absolute inset-0 bg-yellow-500/10 rounded-full animate-ping delay-300"></div>
+                <div className="w-32 h-32 rounded-full bg-slate-800 border-2 border-yellow-500/40 flex items-center justify-center shadow-2xl relative z-10">
+                   <div className="text-yellow-500">
+                     {activeChat.type === 'ai' ? <Bot size={64} /> : activeChat.type === 'group' ? <Users size={64} /> : <User size={64} />}
+                   </div>
+                </div>
+              </div>
+
+              {/* Call Controls */}
+              <div className="flex gap-6 items-center">
+                <button 
+                  onClick={() => setIsCalling(false)}
+                  className="w-20 h-20 rounded-full bg-red-500 hover:bg-red-400 text-white flex items-center justify-center shadow-[0_8px_25px_rgba(239,68,68,0.4)] transition-all hover:scale-110 active:scale-95 group"
+                >
+                  <Phone size={32} className="rotate-[135deg] group-hover:animate-shake" />
+                </button>
+              </div>
+
+              <div className="mt-10 flex gap-8">
+                 <div className="flex flex-col items-center gap-2 opacity-40">
+                   <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 cursor-not-allowed">
+                     <Users size={18} />
+                   </div>
+                   <span className="text-[9px] uppercase tracking-widest font-bold">Encrypted</span>
+                 </div>
+                 <div className="flex flex-col items-center gap-2 opacity-40">
+                   <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 cursor-not-allowed">
+                     <Bot size={18} />
+                   </div>
+                   <span className="text-[9px] uppercase tracking-widest font-bold">VoIP</span>
+                 </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </main>
