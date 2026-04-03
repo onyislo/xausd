@@ -33,13 +33,15 @@ export default function Sidebar() {
   return (
     <aside className="w-[64px] h-screen bg-slate-900 border-r border-slate-800/60 flex flex-col items-center py-4 z-40 shrink-0">
       {/* Brand Icon */}
-      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-700 shadow-[0_0_12px_rgba(245,196,81,0.4)] flex items-center justify-center mb-8 shrink-0">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200" opacity="0.9" />
-          <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200" opacity="0.9" />
-          <rect x="6" y="4" width="12" height="5" rx="1" fill="#1a1200" opacity="0.9" />
-        </svg>
-      </div>
+      <Link href="/" className="mb-8 shrink-0">
+        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-700 shadow-[0_0_12px_rgba(245,196,81,0.4)] flex items-center justify-center transition-transform hover:scale-105 active:scale-95">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200" opacity="0.9" />
+            <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200" opacity="0.9" />
+            <rect x="6" y="4" width="12" height="5" rx="1" fill="#1a1200" opacity="0.9" />
+          </svg>
+        </div>
+      </Link>
 
       {/* Main Nav */}
       <nav className="flex-1 flex flex-col gap-4 w-full px-2">

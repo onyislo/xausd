@@ -39,7 +39,7 @@ export default function AuthCard({ mode, fields, onSubmit }: AuthCardProps) {
       alignItems: 'center',
       justifyContent: 'center',
       fontFamily: "'Inter', sans-serif",
-      padding: '24px',
+      padding: '16px',
     }}>
       {/* Animated background grid */}
       <div style={{
@@ -48,18 +48,18 @@ export default function AuthCard({ mode, fields, onSubmit }: AuthCardProps) {
         backgroundSize: '40px 40px',
       }} />
 
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '420px' }}>
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '380px' }}>
 
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        {/* Logo - Clickable to Home */}
+        <Link href="/" style={{ textDecoration: 'none', display: 'block', textAlign: 'center', marginBottom: '24px' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: '52px', height: '52px', borderRadius: '14px',
+            width: '44px', height: '44px', borderRadius: '12px',
             background: 'linear-gradient(135deg, #f5c451, #b8860b)',
-            boxShadow: '0 0 24px rgba(245,196,81,0.35)',
-            marginBottom: '16px',
+            boxShadow: '0 0 20px rgba(245,196,81,0.3)',
+            marginBottom: '12px',
           }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200" opacity="0.9"/>
               <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200" opacity="0.9"/>
               <rect x="6" y="4" width="12" height="5" rx="1" fill="#1a1200" opacity="0.9"/>
@@ -67,21 +67,21 @@ export default function AuthCard({ mode, fields, onSubmit }: AuthCardProps) {
           </div>
           <h1 style={{
             fontFamily: "'Chakra Petch', sans-serif",
-            fontSize: '13px', fontWeight: 700, letterSpacing: '0.18em',
-            textTransform: 'uppercase', color: '#f5c451', marginBottom: '4px',
+            fontSize: '12px', fontWeight: 700, letterSpacing: '0.18em',
+            textTransform: 'uppercase', color: '#f5c451', marginBottom: '2px',
           }}>AuScope</h1>
-          <p style={{ fontSize: '11px', color: '#4a5568', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          <p style={{ fontSize: '10px', color: '#4a5568', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             XAU/USD Terminal
           </p>
-        </div>
+        </Link>
 
         {/* Card */}
         <div style={{
           background: 'linear-gradient(180deg, rgba(19,26,38,0.98) 0%, rgba(10,14,23,0.98) 100%)',
           border: '1px solid #2a3441',
-          borderRadius: '16px',
-          padding: '32px',
-          boxShadow: '0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(245,196,81,0.06)',
+          borderRadius: '12px',
+          padding: '24px',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(245,196,81,0.05)',
           backdropFilter: 'blur(20px)',
           position: 'relative',
           overflow: 'hidden',
@@ -94,25 +94,25 @@ export default function AuthCard({ mode, fields, onSubmit }: AuthCardProps) {
 
           <h2 style={{
             fontFamily: "'Chakra Petch', sans-serif",
-            fontSize: '16px', fontWeight: 700, letterSpacing: '0.1em',
+            fontSize: '15px', fontWeight: 700, letterSpacing: '0.08em',
             textTransform: 'uppercase', color: '#e0e6ed',
-            marginBottom: '6px',
+            marginBottom: '4px',
           }}>
-            {isLogin ? 'Sign In to Terminal' : 'Create Account'}
+            {isLogin ? 'Sign In' : 'Register'}
           </h2>
-          <p style={{ fontSize: '12px', color: '#4a5568', marginBottom: '28px' }}>
-            {isLogin ? 'Access your trading intelligence dashboard' : 'Join the XAU/USD trading platform'}
+          <p style={{ fontSize: '11px', color: '#4a5568', marginBottom: '20px' }}>
+            {isLogin ? 'Access your dashboard' : 'Join the gold trading platform'}
           </p>
 
           <form onSubmit={handle}>
             {fields.map(field => {
               const isPass = field.type === 'password';
               return (
-                <div key={field.id} style={{ marginBottom: '16px' }}>
+                <div key={field.id} style={{ marginBottom: '12px' }}>
                   <label style={{
-                    display: 'block', fontSize: '11px', fontWeight: 600,
-                    color: '#8a9bb2', textTransform: 'uppercase', letterSpacing: '0.1em',
-                    marginBottom: '8px',
+                    display: 'block', fontSize: '10px', fontWeight: 600,
+                    color: '#8a9bb2', textTransform: 'uppercase', letterSpacing: '0.08em',
+                    marginBottom: '6px',
                   }}>{field.label}</label>
                   <div style={{ position: 'relative' }}>
                     <input
@@ -122,12 +122,12 @@ export default function AuthCard({ mode, fields, onSubmit }: AuthCardProps) {
                       required
                       onChange={e => setForm(f => ({ ...f, [field.id]: e.target.value }))}
                       style={{
-                        width: '100%', padding: '11px 14px',
-                        paddingRight: isPass ? '44px' : '14px',
+                        width: '100%', padding: '9px 12px',
+                        paddingRight: isPass ? '40px' : '12px',
                         background: 'rgba(10,14,23,0.8)',
                         border: '1px solid #2a3441',
-                        borderRadius: '8px',
-                        color: '#e0e6ed', fontSize: '14px',
+                        borderRadius: '6px',
+                        color: '#e0e6ed', fontSize: '13px',
                         outline: 'none', boxSizing: 'border-box',
                         transition: 'border-color 0.2s',
                         fontFamily: "'Inter', sans-serif",
@@ -139,9 +139,9 @@ export default function AuthCard({ mode, fields, onSubmit }: AuthCardProps) {
                       <button type="button"
                         onClick={() => setShow(s => ({ ...s, [field.id]: !s[field.id] }))}
                         style={{
-                          position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                          position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
                           background: 'none', border: 'none', cursor: 'pointer',
-                          color: '#4a5568', fontSize: '16px', padding: '4px',
+                          color: '#4a5568', fontSize: '14px', padding: '2px',
                         }}>
                         {show[field.id] ? '🙈' : '👁'}
                       </button>
@@ -152,75 +152,75 @@ export default function AuthCard({ mode, fields, onSubmit }: AuthCardProps) {
             })}
 
             {isLogin && (
-              <div style={{ textAlign: 'right', marginBottom: '20px', marginTop: '-8px' }}>
-                <Link href="#" style={{ fontSize: '11px', color: '#f5c451', textDecoration: 'none' }}>
+              <div style={{ textAlign: 'right', marginBottom: '16px', marginTop: '-6px' }}>
+                <Link href="#" style={{ fontSize: '10px', color: '#f5c451', textDecoration: 'none' }}>
                   Forgot password?
                 </Link>
               </div>
             )}
 
             <button type="submit" disabled={loading} style={{
-              width: '100%', padding: '13px',
+              width: '100%', padding: '11px',
               background: loading
-                ? 'rgba(245,196,81,0.3)'
+                ? 'rgba(245,196,81,0.2)'
                 : 'linear-gradient(135deg, #f5c451, #d4a017)',
-              border: 'none', borderRadius: '8px',
-              color: '#0a0e17', fontSize: '13px', fontWeight: 800,
+              border: 'none', borderRadius: '6px',
+              color: '#0a0e17', fontSize: '12px', fontWeight: 800,
               fontFamily: "'Chakra Petch', sans-serif",
-              letterSpacing: '0.12em', textTransform: 'uppercase',
+              letterSpacing: '0.1em', textTransform: 'uppercase',
               cursor: loading ? 'not-allowed' : 'pointer',
-              boxShadow: loading ? 'none' : '0 0 20px rgba(245,196,81,0.3)',
+              boxShadow: loading ? 'none' : '0 0 15px rgba(245,196,81,0.25)',
               transition: 'all 0.2s',
-              marginBottom: '20px',
+              marginBottom: '16px',
             }}>
-              {loading ? '⟳ Authenticating...' : (isLogin ? 'Access Terminal' : 'Create Account')}
+              {loading ? 'Authenticating...' : (isLogin ? 'Access Terminal' : 'Start Trading')}
             </button>
 
             {/* Divider */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <div style={{ flex: 1, height: '1px', background: '#1e2a3a' }} />
-              <span style={{ fontSize: '11px', color: '#2a3441', textTransform: 'uppercase', letterSpacing: '0.1em' }}>or continue with</span>
+              <span style={{ fontSize: '10px', color: '#2a3441', textTransform: 'uppercase' }}>or</span>
               <div style={{ flex: 1, height: '1px', background: '#1e2a3a' }} />
             </div>
 
             {/* Social Buttons */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
               {[
                 { label: 'Google', icon: 'G', color: '#4285F4' },
-                { label: 'Microsoft', icon: 'M', color: '#00A4EF' },
+                { label: 'Apple', icon: '', color: '#ffffff' },
               ].map(s => (
                 <button key={s.label} type="button" style={{
-                  flex: 1, padding: '10px',
+                  flex: 1, padding: '8px',
                   background: 'rgba(10,14,23,0.8)',
                   border: '1px solid #2a3441',
-                  borderRadius: '8px', color: '#8a9bb2',
-                  fontSize: '12px', fontWeight: 600,
+                  borderRadius: '6px', color: '#8a9bb2',
+                  fontSize: '11px', fontWeight: 600,
                   cursor: 'pointer', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', gap: '8px',
-                  transition: 'border-color 0.2s',
+                  alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  transition: 'all 0.2s',
                   fontFamily: "'Inter', sans-serif",
                 }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = s.color; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#2a3441'; }}>
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = s.color; e.currentTarget.style.color = '#e0e6ed'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#2a3441'; e.currentTarget.style.color = '#8a9bb2'; }}>
                   <span style={{ color: s.color, fontWeight: 800 }}>{s.icon}</span>
                   {s.label}
                 </button>
               ))}
             </div>
 
-            <p style={{ textAlign: 'center', fontSize: '12px', color: '#4a5568' }}>
-              {isLogin ? "Don't have an account? " : 'Already have an account? '}
+            <p style={{ textAlign: 'center', fontSize: '11px', color: '#4a5568' }}>
+              {isLogin ? "New to Terminal? " : 'Known user? '}
               <Link href={isLogin ? '/register' : '/login'}
                 style={{ color: '#f5c451', textDecoration: 'none', fontWeight: 600 }}>
-                {isLogin ? 'Sign up' : 'Sign in'}
+                {isLogin ? 'Create Account' : 'Sign In'}
               </Link>
             </p>
           </form>
         </div>
 
         {/* Footer */}
-        <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '10px', color: '#2a3441', letterSpacing: '0.08em' }}>
-          © 2025 AUSCOPE · SECURE CONNECTION · SSL ENCRYPTED
+        <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '9px', color: '#2a3441', letterSpacing: '0.08em' }}>
+          © 2025 AUSCOPE · SSL SECURE
         </p>
       </div>
     </div>
