@@ -10,32 +10,49 @@ export function useAuth() {
   const signUp = async (email: string, pass: string, metadata: any = {}) => {
     setLoading(true);
     setError(null);
-    const { data, error } = await supabase.auth.signUp({ 
-      email, 
-      password: pass,
-      options: { data: metadata } 
-    });
-    
-    if (error) setError(error.message);
-    else if (data.user) {
-      // Auto-create profile in our profile table
-      await supabase.from('profiles').insert([{ 
-        id: data.user.id, 
-        username: email.split('@')[0],
-        full_name: metadata.full_name || ''
-      }]);
-      router.push('/login?msg=Check email to confirm');
+    try {
+      const { data, error: authError } = await supabase.auth.signUp({ 
+        email, 
+        password: pass,
+        options: { data: metadata } 
+      });
+      
+      if (authError) throw authError;
+
+      if (data.user) {
+        // Try creating the profile record
+        const { error: profileError } = await supabase.from('profiles').insert([{ 
+          id: data.user.id, 
+          username: email.split('@')[0],
+          full_name: metadata.full_name || ''
+        }]);
+
+        if (profileError) {
+          console.warn("Profile creation log:", profileError);
+          // Don't stop the whole process if only profile creation fails
+        }
+        
+        router.push('/login?msg=Account Created! Check email.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Authentication issue');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const signIn = async (email: string, pass: string) => {
     setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-    if (error) setError(error.message);
-    else router.push('/dashboard');
-    setLoading(false);
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password: pass });
+      if (authError) throw authError;
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signOut = async () => {
