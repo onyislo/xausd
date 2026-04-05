@@ -11,34 +11,43 @@ export function useChat() {
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
   }, []);
 
-  // 2. Fetch Channels (Real Database only)
+  // 2. Fetch Channels & Subscribe to new ones
   useEffect(() => {
     const fetchChannels = async () => {
-      const { data: channels, error } = await supabase
-        .from('channels')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (channels && !error) {
-        const mapped = channels.map(c => ({
+      const { data: channels } = await supabase.from('channels').select('*').order('created_at', { ascending: false });
+      if (channels) {
+        setChatData(channels.map(c => ({
           id: c.id,
           type: c.type,
           name: c.name || (c.type === 'dm' ? 'Direct Message' : 'Secure Channel'),
           status: 'Encrypted Link Active',
           lastMsg: 'Connect to begin sync',
-          time: new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          time: 'Active',
           messages: []
-        }));
-        
-        setChatData(mapped);
-        
-        // Auto-select the first channel if none is active
-        if (mapped.length > 0 && !activeId) {
-          setActiveId(mapped[0].id);
-        }
+        })));
+        if (channels.length > 0 && !activeId) setActiveId(channels[0].id);
       }
     };
+
     fetchChannels();
+
+    const channelSub = supabase.channel('channels_realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channels' }, (payload) => {
+        const c = payload.new as any;
+        const newChat = {
+          id: c.id,
+          type: c.type,
+          name: c.name || 'Secure Channel',
+          status: 'Encrypted Link Active',
+          lastMsg: 'Channel Initialized',
+          time: 'Just now',
+          messages: []
+        };
+        setChatData(prev => [newChat, ...prev]);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channelSub); };
   }, [currentUser]);
 
   // 3. Real-time Subscription for Messages

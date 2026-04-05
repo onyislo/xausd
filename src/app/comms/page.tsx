@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import Sidebar from '@/components/Sidebar';
 import HeaderPrice from '@/components/HeaderPrice';
 import { useChat } from '@/hooks/useChat';
+import { supabase } from '@/lib/supabase';
 import { Search, Send, FileText, Image as ImageIcon, Bot, Users, User, Phone, MoreVertical, Plus, Trash2 } from 'lucide-react';
 
 export default function CommsPage() {
@@ -11,6 +12,8 @@ export default function CommsPage() {
   const [inputText, setInputText] = useState('');
   const [filter, setFilter] = useState('all');
   const [isCalling, setIsCalling] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
   
   const activeChat = chatData.find(c => c.id === activeId) || chatData[0] || null;
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -43,9 +46,48 @@ export default function CommsPage() {
           <section className="w-[300px] bg-[#0f1420] border border-yellow-500/20 rounded-xl flex flex-col shrink-0 overflow-hidden">
             <div className="p-4 border-b border-yellow-500/10 flex flex-col gap-4">
                <span className="text-[11px] text-yellow-500 font-bold uppercase tracking-widest">Secure Comms Array</span>
-               <button className="flex items-center justify-center gap-2 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-500 text-[10px] font-bold uppercase tracking-widest hover:bg-yellow-500/20 transition-all">
-                  <Plus size={14} /> Initialize Channel
-               </button>
+               
+               {isCreating ? (
+                 <div className="flex flex-col gap-2 p-2 bg-slate-900 border border-yellow-500/30 rounded-lg animate-in slide-in-from-top-4 duration-300">
+                   <input 
+                     className="w-full bg-[#0a0e17] text-xs px-3 py-2 rounded border border-slate-700 outline-none focus:border-yellow-500/50"
+                     placeholder="Group Name..."
+                     value={newGroupName}
+                     onChange={e => setNewGroupName(e.target.value)}
+                     autoFocus
+                   />
+                   <div className="flex gap-2">
+                     <button 
+                       onClick={async () => {
+                         if (newGroupName.trim() && currentUser) {
+                           const { data: channel } = await supabase
+                            .from('channels')
+                            .insert([{ name: newGroupName.trim(), type: 'group' }])
+                            .select().single();
+                           
+                           if (channel) {
+                             await supabase.from('channel_members').insert([{ channel_id: channel.id, user_id: currentUser.id }]);
+                             // Hook will pick up the new channel automatically
+                             setIsCreating(false);
+                             setNewGroupName('');
+                           }
+                         } else if (!currentUser) alert("Please log in.");
+                       }}
+                       className="flex-1 bg-yellow-500 text-[#1a1200] text-[9px] font-bold py-1.5 rounded uppercase tracking-widest"
+                     >
+                       CREATE
+                     </button>
+                     <button onClick={() => setIsCreating(false)} className="flex-1 bg-slate-800 text-slate-400 text-[9px] font-bold py-1.5 rounded uppercase tracking-widest">CANCEL</button>
+                   </div>
+                 </div>
+               ) : (
+                 <button 
+                   onClick={() => setIsCreating(true)}
+                   className="flex items-center justify-center gap-2 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-500 text-[10px] font-bold uppercase tracking-widest hover:bg-yellow-500/20 transition-all"
+                 >
+                    <Plus size={14} /> Initialize Channel
+                 </button>
+               )}
                <div className="relative">
                  <input className="w-full bg-[#0a0e17] border border-slate-700 text-xs px-8 py-2 rounded" placeholder="Search..." />
                  <Search size={14} className="absolute left-3 top-2.5 text-slate-500" />
