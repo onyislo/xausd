@@ -1,69 +1,73 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
-const INITIAL_CHAT_DATA = [
-  {
-    id: 'ai',
-    type: 'ai',
-    name: 'AuScope AI Sentinel',
-    status: 'Online • Real-time Data',
-    lastMsg: 'Fed swaps currently indicate a 65% probability of a rate cut.',
-    time: 'Just now',
-    messages: [
-      { sender: 'AI', text: 'Terminal initialized. How can I assist your trading today?', time: '09:00 AM' },
-      { sender: 'User', text: 'Give me the latest read on XAU order flow.', time: '09:05 AM' },
-      { sender: 'AI', text: 'Currently detecting 64% buyer dominance in the dark pools with a massive 12,500 oz block buy at 2,325.00.', time: '09:05 AM' }
-    ]
-  }
-];
-
 export function useChat() {
-  const [activeId, setActiveId] = useState('ai');
-  const [chatData, setChatData] = useState<any[]>(INITIAL_CHAT_DATA);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [chatData, setChatData] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // Auth User
+  // 1. Get Authentication
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
   }, []);
 
-  // Fetch Channels
+  // 2. Fetch Channels (Real Database only)
   useEffect(() => {
     const fetchChannels = async () => {
-      const { data: channels } = await supabase.from('channels').select('*');
-      if (channels) {
+      const { data: channels, error } = await supabase
+        .from('channels')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (channels && !error) {
         const mapped = channels.map(c => ({
           id: c.id,
           type: c.type,
-          name: c.name || 'Secure Chat',
+          name: c.name || (c.type === 'dm' ? 'Direct Message' : 'Secure Channel'),
           status: 'Encrypted Link Active',
-          lastMsg: 'Ready for Comms',
-          time: 'Active',
+          lastMsg: 'Connect to begin sync',
+          time: new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           messages: []
         }));
-        setChatData(prev => [...INITIAL_CHAT_DATA, ...mapped]);
+        
+        setChatData(mapped);
+        
+        // Auto-select the first channel if none is active
+        if (mapped.length > 0 && !activeId) {
+          setActiveId(mapped[0].id);
+        }
       }
     };
     fetchChannels();
-  }, []);
+  }, [currentUser]);
 
-  // Real-time Sub
+  // 3. Real-time Subscription for Messages
   useEffect(() => {
+    if (!currentUser) return;
+
     const channel = supabase.channel('realtime_comms')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'messages' 
+      }, (payload) => {
         const newMsg = payload.new as any;
+        
         setChatData(prev => prev.map(chat => {
           if (chat.id === newMsg.channel_id) {
             const formatted = {
-              sender: newMsg.user_id === currentUser?.id ? 'User' : 'Contact',
+              sender: newMsg.user_id === currentUser.id ? 'User' : 'Contact',
               text: newMsg.content,
               time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
+            
+            // Prevent duplicates
             if (chat.messages.some((m: any) => m.text === formatted.text && m.time === formatted.time)) return chat;
+
             return {
               ...chat,
               messages: [...chat.messages, formatted],
-              lastMsg: formatted.text.substring(0, 30),
+              lastMsg: formatted.text.length > 30 ? formatted.text.substring(0, 30) + '...' : formatted.text,
               time: 'Just now'
             };
           }
@@ -71,38 +75,46 @@ export function useChat() {
         }));
       })
       .subscribe();
+
     return () => { supabase.removeChannel(channel); };
   }, [currentUser]);
 
-  // Fetch Messages for active
+  // 4. Fetch Messages for Active Channel
   useEffect(() => {
-    if (!activeId || activeId.length < 20) return;
+    if (!activeId || !currentUser) return;
+
     const fetchMsgs = async () => {
-      const { data: messages } = await supabase.from('messages').select('*').eq('channel_id', activeId).order('created_at', { ascending: true });
-      if (messages) {
-        setChatData(prev => prev.map(chat => chat.id === activeId ? {
-          ...chat,
-          messages: messages.map(m => ({
-            sender: m.user_id === currentUser?.id ? 'User' : 'Contact',
-            text: m.content,
-            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }))
-        } : chat));
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('channel_id', activeId)
+        .order('created_at', { ascending: true });
+
+      if (messages && !error) {
+        setChatData(prev => prev.map(chat => 
+          chat.id === activeId ? {
+            ...chat,
+            messages: messages.map(m => ({
+              sender: m.user_id === currentUser.id ? 'User' : 'Contact',
+              text: m.content,
+              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }))
+          } : chat
+        ));
       }
     };
     fetchMsgs();
   }, [activeId, currentUser]);
 
   const sendMessage = async (text: string) => {
-    if (!text.trim()) return;
-    if (activeId.length > 20 && currentUser) {
-      await supabase.from('messages').insert([{ channel_id: activeId, user_id: currentUser.id, content: text.trim() }]);
-    } else {
-      // Local Echo for AI
-      const echo = { sender: 'User', text, time: 'Just now' };
-      setChatData(prev => prev.map(c => c.id === activeId ? { ...c, messages: [...c.messages, echo] } : c));
-    }
+    if (!text.trim() || !activeId || !currentUser) return;
+    
+    await supabase.from('messages').insert([{ 
+      channel_id: activeId, 
+      user_id: currentUser.id, 
+      content: text.trim() 
+    }]);
   };
 
-  return { activeId, setActiveId, chatData, setChatData, sendMessage, currentUser };
+  return { activeId, setActiveId, chatData, sendMessage, currentUser };
 }

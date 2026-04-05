@@ -12,7 +12,7 @@ export default function CommsPage() {
   const [filter, setFilter] = useState('all');
   const [isCalling, setIsCalling] = useState(false);
   
-  const activeChat = chatData.find(c => c.id === activeId) || chatData[0];
+  const activeChat = chatData.find(c => c.id === activeId) || chatData[0] || null;
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -61,40 +61,59 @@ export default function CommsPage() {
 
           {/* ACTIVE CHAT */}
           <section className="flex-1 bg-[#0f1420] border border-yellow-500/20 rounded-xl flex flex-col overflow-hidden relative shadow-2xl">
-            {/* Chat Head */}
-            <div className="h-[70px] border-b border-yellow-500/10 flex justify-between items-center px-6 shrink-0 bg-slate-800/40">
-              <div className="flex items-center gap-4">
-                 <div className="w-10 h-10 rounded-full border border-yellow-500/30 flex items-center justify-center bg-yellow-500/10 text-yellow-500">
-                    {activeChat.type === 'ai' ? <Bot size={20} /> : <User size={20} />}
-                 </div>
-                 <div className="flex flex-col">
-                   <h2 className="text-sm font-bold text-slate-200">{activeChat.name}</h2>
-                   <span className="text-[10px] text-green-400">{activeChat.status}</span>
-                 </div>
+            {!activeChat ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-4">
+                <Users size={64} className="opacity-20 animate-pulse" />
+                <span className="text-[10px] font-bold tracking-widest uppercase opacity-50">No Active Comms Detected</span>
+                <span className="text-[9px] uppercase tracking-widest opacity-30 italic">Initialize a channel to begin secure transmission</span>
               </div>
-              <div className="flex items-center gap-4 text-slate-400">
-                <Phone size={18} className="cursor-pointer hover:text-yellow-500 transition-colors" onClick={() => setIsCalling(true)} />
-                <MoreVertical size={18} />
-              </div>
-            </div>
-
-            {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 bg-[#0a0e17] custom-scrollbar">
-               {activeChat.messages?.map((msg: any, i: number) => <MessageItem key={i} msg={msg} />)}
-            </div>
-
-            {/* Input */}
-            <div className="p-4 bg-[#0f1420] border-t border-slate-800">
-               <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex items-center p-2 focus-within:border-yellow-500/50 transition-all">
-                  <div className="flex gap-2 px-2 text-slate-400">
-                    <ImageIcon size={18} className="cursor-pointer hover:text-white" />
+            ) : (
+              <>
+                {/* Chat Head */}
+                <div className="h-[70px] border-b border-yellow-500/10 flex justify-between items-center px-6 shrink-0 bg-slate-800/40">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full border border-yellow-500/30 flex items-center justify-center bg-yellow-500/10 text-yellow-500">
+                      {activeChat.type === 'ai' ? <Bot size={20} /> : <User size={20} />}
+                    </div>
+                    <div className="flex flex-col">
+                      <h2 className="text-sm font-bold text-slate-200">{activeChat.name}</h2>
+                      <span className="text-[10px] text-green-400">{activeChat.status}</span>
+                    </div>
                   </div>
-                  <input className="flex-1 bg-transparent border-none text-sm text-slate-200 focus:outline-none px-2" placeholder="Send message..." value={inputText} onChange={e => setInputText(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} />
-                  <button className="w-10 h-10 bg-yellow-500 hover:bg-yellow-400 text-[#1a1200] rounded-lg flex items-center justify-center transition-all shadow-lg active:scale-95" onClick={handleSend}>
-                    <Send size={16} />
-                  </button>
-               </div>
-            </div>
+                  <div className="flex items-center gap-4 text-slate-400">
+                    <Phone size={18} className="cursor-pointer hover:text-yellow-500 transition-colors" onClick={() => setIsCalling(true)} />
+                    <MoreVertical size={18} />
+                  </div>
+                </div>
+
+                {/* Chat Messages */}
+                <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 bg-[#0a0e17] custom-scrollbar">
+                  {activeChat.messages?.map((msg: any, i: number) => <MessageItem key={i} msg={msg} />)}
+                </div>
+
+                {/* Input */}
+                <div className="p-4 bg-[#0f1420] border-t border-slate-800">
+                  <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex items-center p-2 focus-within:border-yellow-500/50 transition-all">
+                    <div className="flex gap-2 px-2 text-slate-400">
+                      <ImageIcon size={18} className="cursor-pointer hover:text-white" />
+                    </div>
+                    <input 
+                      className="flex-1 bg-transparent border-none text-sm text-slate-200 focus:outline-none px-2" 
+                      placeholder="Send message..." 
+                      value={inputText} 
+                      onChange={e => setInputText(e.target.value)} 
+                      onKeyDown={e => e.key === 'Enter' && handleSend()} 
+                    />
+                    <button 
+                      className="w-10 h-10 bg-yellow-500 hover:bg-yellow-400 text-[#1a1200] rounded-lg flex items-center justify-center transition-all shadow-lg active:scale-95" 
+                      onClick={handleSend}
+                    >
+                      <Send size={16} />
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </section>
 
         </div>
