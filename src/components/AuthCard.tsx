@@ -14,20 +14,18 @@ interface AuthCardProps {
   mode: 'login' | 'register';
   fields: Field[];
   onSubmit: (data: Record<string, string>) => void;
+  loading?: boolean;
+  error?: string | null;
 }
 
-export default function AuthCard({ mode, fields, onSubmit }: AuthCardProps) {
+export default function AuthCard({ mode, fields, onSubmit, loading, error }: AuthCardProps) {
   const [form, setForm] = useState<Record<string, string>>({});
   const [show, setShow] = useState<Record<string, boolean>>({});
-  const [loading, setLoading] = useState(false);
 
   const isLogin = mode === 'login';
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setLoading(false);
     onSubmit(form);
   };
 
@@ -100,9 +98,15 @@ export default function AuthCard({ mode, fields, onSubmit }: AuthCardProps) {
           }}>
             {isLogin ? 'Sign In' : 'Register'}
           </h2>
-          <p style={{ fontSize: '11px', color: '#4a5568', marginBottom: '20px' }}>
+          <p style={{ fontSize: '11px', color: '#4a5568', marginBottom: '10px' }}>
             {isLogin ? 'Access your dashboard' : 'Join the gold trading platform'}
           </p>
+
+          {error && (
+            <div style={{ fontSize: '10px', color: '#f87171', background: 'rgba(239, 68, 68, 0.1)', padding: '8px', borderRadius: '4px', marginBottom: '16px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+              ⚠️ {error}
+            </div>
+          )}
 
           <form onSubmit={handle}>
             {fields.map(field => {

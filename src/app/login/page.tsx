@@ -1,10 +1,10 @@
 'use client';
 
 import AuthCard from '@/components/AuthCard';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function LoginPage() {
-  const router = useRouter();
+  const { signIn, loading, error } = useAuth();
 
   return (
     <AuthCard
@@ -13,7 +13,9 @@ export default function LoginPage() {
         { id: 'email',    label: 'Email Address', type: 'email',    placeholder: 'trader@example.com' },
         { id: 'password', label: 'Password',       type: 'password', placeholder: '••••••••••••' },
       ]}
-      onSubmit={() => router.push('/dashboard')}
+      loading={loading}
+      error={error}
+      onSubmit={(data) => signIn(data.email, data.password)}
     />
   );
 }

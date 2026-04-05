@@ -1,10 +1,18 @@
 'use client';
 
 import AuthCard from '@/components/AuthCard';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function RegisterPage() {
-  const router = useRouter();
+  const { signUp, loading, error } = useAuth();
+
+  const handleRegister = (data: Record<string, string>) => {
+    if (data.password !== data.confirm) {
+      alert("Passwords do not match!");
+      return;
+    }
+    signUp(data.email, data.password, { full_name: data.name });
+  };
 
   return (
     <AuthCard
@@ -15,7 +23,9 @@ export default function RegisterPage() {
         { id: 'password', label: 'Password',       type: 'password', placeholder: '••••••••••••' },
         { id: 'confirm',  label: 'Confirm Password',type: 'password', placeholder: '••••••••••••' },
       ]}
-      onSubmit={() => router.push('/login')}
+      loading={loading}
+      error={error}
+      onSubmit={handleRegister}
     />
   );
 }
