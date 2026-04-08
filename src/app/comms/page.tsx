@@ -44,55 +44,82 @@ export default function CommsPage() {
           
           {/* SIDEBAR: Channels */}
           <section className="w-[300px] bg-[#0f1420] border border-yellow-500/20 rounded-xl flex flex-col shrink-0 overflow-hidden">
-            <div className="p-4 border-b border-yellow-500/10 flex flex-col gap-4">
-               <span className="text-[11px] text-yellow-500 font-bold uppercase tracking-widest">Secure Comms Array</span>
-               
-               {isCreating ? (
-                 <div className="flex flex-col gap-2 p-2 bg-slate-900 border border-yellow-500/30 rounded-lg animate-in slide-in-from-top-4 duration-300">
-                   <input 
-                     className="w-full bg-[#0a0e17] text-xs px-3 py-2 rounded border border-slate-700 outline-none focus:border-yellow-500/50"
-                     placeholder="Group Name..."
-                     value={newGroupName}
-                     onChange={e => setNewGroupName(e.target.value)}
-                     autoFocus
-                   />
-                   <div className="flex gap-2">
-                     <button 
-                       onClick={async () => {
-                         if (newGroupName.trim() && currentUser) {
-                           const { data: channel } = await supabase
+             <div className="p-4 border-b border-yellow-500/10 flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-[11px] text-yellow-500 font-bold uppercase tracking-widest">Secure Comms Array</span>
+                  <button 
+                    onClick={() => setIsCreating(true)}
+                    className="p-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-500 hover:bg-yellow-500/20 transition-all"
+                    title="Initialize New Channel"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+                
+                <div className="relative">
+                  <input className="w-full bg-[#0a0e17] border border-slate-700 text-xs px-8 py-2 rounded-lg" placeholder="Search decrypted streams..." />
+                  <Search size={14} className="absolute left-3 top-2.5 text-slate-500" />
+                </div>
+             </div>
+
+             {isCreating && (
+               <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+                 <div className="w-[400px] bg-[#0f1420] border border-yellow-500/30 rounded-2xl p-6 shadow-2xl relative overflow-hidden group">
+                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent" />
+                   
+                   <div className="flex flex-col items-center mb-8">
+                     <div className="w-20 h-20 rounded-2xl bg-yellow-500/10 flex items-center justify-center border border-yellow-500/20 mb-4 shadow-inner">
+                       <Bot size={40} className="text-yellow-500" />
+                     </div>
+                     <h2 className="text-xl font-black text-slate-100 uppercase tracking-widest" style={{ fontFamily: "'Chakra Petch', sans-serif" }}>Initialize Hub</h2>
+                     <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mt-1">Establish Encrypted Group Protocol</p>
+                   </div>
+
+                   <div className="space-y-6">
+                     <div>
+                       <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 block ml-1">Channel Designation</label>
+                       <input 
+                         className="w-full bg-[#0a0e17] text-slate-100 text-sm px-4 py-3.5 rounded-xl border border-slate-700 outline-none focus:border-yellow-500/50 focus:ring-1 focus:ring-yellow-500/20 transition-all font-mono"
+                         placeholder="IDENTIFY_GROUP_NAME..."
+                         value={newGroupName}
+                         onChange={e => setNewGroupName(e.target.value)}
+                         autoFocus
+                       />
+                     </div>
+                     
+                     <div className="flex gap-3">
+                       <button 
+                         onClick={() => { setIsCreating(false); setNewGroupName(''); }}
+                         className="flex-1 px-4 py-3 bg-slate-800/50 text-slate-400 text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-slate-800 hover:text-slate-200 transition-all border border-slate-700/50"
+                       >
+                         Abort
+                       </button>
+                       <button 
+                         onClick={async () => {
+                           if (!newGroupName.trim() || !currentUser) return;
+                           const { data: channel, error } = await supabase
                             .from('channels')
                             .insert([{ name: newGroupName.trim(), type: 'group' }])
                             .select().single();
                            
                            if (channel) {
                              await supabase.from('channel_members').insert([{ channel_id: channel.id, user_id: currentUser.id }]);
-                             // Hook will pick up the new channel automatically
                              setIsCreating(false);
                              setNewGroupName('');
+                           } else {
+                             console.error(error);
+                             alert("SECURE_ACCESS_DENIED: Critical database restriction detected.");
                            }
-                         } else if (!currentUser) alert("Please log in.");
-                       }}
-                       className="flex-1 bg-yellow-500 text-[#1a1200] text-[9px] font-bold py-1.5 rounded uppercase tracking-widest"
-                     >
-                       CREATE
-                     </button>
-                     <button onClick={() => setIsCreating(false)} className="flex-1 bg-slate-800 text-slate-400 text-[9px] font-bold py-1.5 rounded uppercase tracking-widest">CANCEL</button>
+                         }}
+                         className="flex-1 px-4 py-3 bg-yellow-500 hover:bg-yellow-400 text-[#1a1200] text-[10px] font-black rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-yellow-500/10 active:scale-[0.98]"
+                       >
+                         Finalize Hub
+                       </button>
+                     </div>
                    </div>
                  </div>
-               ) : (
-                 <button 
-                   onClick={() => setIsCreating(true)}
-                   className="flex items-center justify-center gap-2 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-500 text-[10px] font-bold uppercase tracking-widest hover:bg-yellow-500/20 transition-all"
-                 >
-                    <Plus size={14} /> Initialize Channel
-                 </button>
-               )}
-               <div className="relative">
-                 <input className="w-full bg-[#0a0e17] border border-slate-700 text-xs px-8 py-2 rounded" placeholder="Search..." />
-                 <Search size={14} className="absolute left-3 top-2.5 text-slate-500" />
                </div>
-            </div>
+             )}
             
             <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1 custom-scrollbar">
                {chatData.map(chat => (
