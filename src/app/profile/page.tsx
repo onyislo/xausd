@@ -18,17 +18,21 @@ import {
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
-          .then(({ data }) => setProfile({ 
-            ...data, 
-            email: user.email,
-            full_name: data?.full_name || user.user_metadata?.full_name,
-            avatar_url: data?.avatar_url || user.user_metadata?.avatar_url
-          }));
+          .then(({ data }) => {
+            setProfile({ 
+              ...data, 
+              email: user.email,
+              full_name: data?.full_name || user.user_metadata?.full_name,
+              avatar_url: data?.avatar_url || user.user_metadata?.avatar_url
+            });
+            setLoading(false);
+          });
       }
     });
   }, []);
@@ -44,11 +48,9 @@ export default function ProfilePage() {
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
 
     await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
-    await supabase.from('profiles').upsert({ id: user.id, avatar_url: publicUrl, username: profile.username || user.email?.split('@')[0] });
+    await supabase.from('profiles').upsert({ id: user.id, avatar_url: publicUrl, username: profile?.username || user.email?.split('@')[0] });
     setProfile({ ...profile, avatar_url: publicUrl });
   };
-
-  if (!profile) return null;
 
   return (
     <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans">
@@ -70,9 +72,14 @@ export default function ProfilePage() {
         </header>
 
         <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-gradient-to-b from-slate-900/20 to-transparent">
-          <div className="max-w-3xl mx-auto space-y-6 pb-20">
-            
-            <section className="bg-slate-900/60 border border-slate-800/50 rounded-2xl p-6 relative overflow-hidden group">
+          {!profile && loading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="w-8 h-8 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+            </div>
+          ) : profile ? (
+            <div className="max-w-3xl mx-auto space-y-6 pb-20 animate-in fade-in duration-500">
+              
+              <section className="bg-slate-900/60 border border-slate-800/50 rounded-2xl p-6 relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
               
               <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
@@ -173,8 +180,8 @@ export default function ProfilePage() {
                 Terminate Session (Logout)
               </Link>
             </section>
-
           </div>
+        ) : null}
         </div>
       </div>
     </main>
