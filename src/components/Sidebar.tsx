@@ -16,17 +16,27 @@ import {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('user-profile');
+      return cached ? JSON.parse(cached) : null;
+    }
+    return null;
+  });
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
-          .then(({ data }) => setProfile({ 
-            ...data, 
-            full_name: data?.full_name || user.user_metadata?.full_name,
-            avatar_url: data?.avatar_url || user.user_metadata?.avatar_url
-          }));
+          .then(({ data }) => {
+            const p = { 
+              ...data, 
+              full_name: data?.full_name || user.user_metadata?.full_name,
+              avatar_url: data?.avatar_url || user.user_metadata?.avatar_url
+            };
+            setProfile(p);
+            localStorage.setItem('user-profile', JSON.stringify(p));
+          });
       }
     });
   }, []);
