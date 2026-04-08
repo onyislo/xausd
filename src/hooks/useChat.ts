@@ -20,6 +20,7 @@ export function useChat() {
           id: c.id,
           type: c.type,
           name: c.name || (c.type === 'dm' ? 'Direct Message' : 'Secure Channel'),
+          created_by: c.created_by,
           status: 'Encrypted Link Active',
           lastMsg: 'Connect to begin sync',
           time: 'Active',
@@ -36,13 +37,17 @@ export function useChat() {
         const c = payload.new as any;
         setChatData(prev => {
           if (prev.some(ch => ch.id === c.id)) return prev; // skip duplicate
-          return [{ id: c.id, type: c.type, name: c.name || 'Secure Channel', status: 'Encrypted Link Active', lastMsg: 'Channel Initialized', time: 'Just now', messages: [] }, ...prev];
+          return [{ id: c.id, type: c.type, name: c.name || 'Secure Channel', created_by: c.created_by, status: 'Encrypted Link Active', lastMsg: 'Channel Initialized', time: 'Just now', messages: [] }, ...prev];
         });
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'channels' }, (payload) => {
+        setChatData(prev => prev.filter(ch => ch.id !== payload.old.id));
+        if (activeId === payload.old.id) setActiveId(null);
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channelSub); };
-  }, [currentUser]);
+  }, [currentUser, activeId]);
 
   // 3. Real-time Subscription for Messages
   useEffect(() => {
@@ -120,7 +125,7 @@ export function useChat() {
   };
 
   const pushChannel = (c: any) => {
-    const newChat = { id: c.id, type: c.type, name: c.name || 'Secure Channel', status: 'Encrypted Link Active', lastMsg: 'Channel Initialized', time: 'Just now', messages: [] };
+    const newChat = { id: c.id, type: c.type, name: c.name || 'Secure Channel', created_by: c.created_by, status: 'Encrypted Link Active', lastMsg: 'Channel Initialized', time: 'Just now', messages: [] };
     setChatData(prev => [newChat, ...prev]);
     setActiveId(c.id);
   };
