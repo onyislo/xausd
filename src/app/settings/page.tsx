@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
+import { supabase } from '@/lib/supabase';
 import { 
   User, 
   Settings as SettingsIcon, 
@@ -18,16 +19,30 @@ import {
 } from 'lucide-react';
 
 export default function SettingsPage() {
+  const [profile, setProfile] = useState<any>(null);
   const [newsInstant, setNewsInstant] = useState(true);
   const [aiSignals, setAiSignals] = useState(true);
-  const [darkMode, setDarkMode] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
+          .then(({ data }) => setProfile({ 
+            ...data, 
+            email: user.email,
+            full_name: data?.full_name || user.user_metadata?.full_name
+          }));
+      }
+    });
+  }, []);
+
+  if (!profile) return null;
 
   return (
     <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         
-        {/* ── HEADER ── */}
         <header className="h-[64px] border-b border-slate-800/60 bg-slate-900/40 backdrop-blur-md flex items-center justify-between px-6 shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
@@ -48,11 +63,9 @@ export default function SettingsPage() {
           </div>
         </header>
 
-        {/* ── SETTINGS CONTENT ── */}
         <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-gradient-to-b from-slate-900/20 to-transparent">
           <div className="max-w-4xl mx-auto space-y-8 pb-20">
             
-            {/* Account Settings */}
             <section className="space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-800/40">
                 <User size={16} className="text-yellow-500/80" />
@@ -63,11 +76,11 @@ export default function SettingsPage() {
                 <div className="bg-slate-900/60 border border-slate-800/50 p-5 rounded-xl hover:border-slate-700/50 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-xl font-bold text-yellow-500">
-                      T
+                      {profile.full_name?.[0] || profile.username?.[0] || 'U'}
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-200">Terminal User</h3>
-                      <p className="text-xs text-slate-500">trader@auscope.com</p>
+                      <h3 className="text-sm font-bold text-slate-200">{profile.full_name || profile.username}</h3>
+                      <p className="text-xs text-slate-500">{profile.email}</p>
                     </div>
                   </div>
                 </div>
@@ -87,7 +100,6 @@ export default function SettingsPage() {
               </div>
             </section>
 
-            {/* AI Intelligence Settings */}
             <section className="space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-800/40">
                 <Cpu size={16} className="text-blue-400/80" />
@@ -129,7 +141,6 @@ export default function SettingsPage() {
               </div>
             </section>
 
-            {/* News Feed Settings */}
             <section className="space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-800/40">
                 <Bell size={16} className="text-amber-500/80" />
@@ -149,21 +160,9 @@ export default function SettingsPage() {
                     <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${newsInstant ? 'left-7' : 'left-1'}`} />
                   </button>
                 </div>
-                
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 bg-slate-900/60 border border-slate-800/40 rounded-lg">
-                    <CheckCircle2 size={16} className="text-green-500" />
-                    <span className="text-xs text-slate-300">Filtering noise: <b className="text-slate-100">ON</b></span>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-slate-900/60 border border-slate-800/40 rounded-lg opacity-60">
-                    <AlertTriangle size={16} className="text-amber-500" />
-                    <span className="text-xs text-slate-300">Priority alerts only: <b className="text-slate-100">OFF</b></span>
-                  </div>
-                </div>
               </div>
             </section>
 
-            {/* Charting & Visuals */}
             <section className="space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-800/40">
                 <BarChart3 size={16} className="text-green-400/80" />
@@ -180,99 +179,6 @@ export default function SettingsPage() {
                       </button>
                     ))}
                   </div>
-                </div>
-                
-                <div className="bg-slate-900/40 border border-slate-800/50 p-5 rounded-xl">
-                  <div className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-4">Color Palette</div>
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-800 border-2 border-yellow-500 flex items-center justify-center cursor-pointer">
-                      <div className="w-4 h-4 rounded-full bg-yellow-500" />
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center cursor-pointer hover:border-slate-500">
-                      <div className="w-4 h-4 rounded-full bg-blue-500" />
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center cursor-pointer hover:border-slate-500">
-                      <div className="w-4 h-4 rounded-full bg-emerald-500" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Notifications & Sound Alerts */}
-            <section className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-slate-800/40">
-                <Volume2 size={16} className="text-purple-400/80" />
-                <h2 className="text-[12px] font-bold text-slate-400 tracking-[.2em] uppercase">System Alerts & Audio</h2>
-              </div>
-              
-              <div className="bg-slate-900/40 border border-slate-800/50 rounded-xl p-5">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-200">Terminal Sound Effects</h3>
-                    <p className="text-xs text-slate-500 mt-1">Auditory cues for market volatility and news spikes.</p>
-                  </div>
-                  <button className="w-12 h-6 rounded-full bg-purple-600 transition-colors relative">
-                    <div className="absolute top-1 left-7 w-4 h-4 rounded-full bg-white transition-all" />
-                  </button>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {[
-                    { label: 'Market Hits', icon: BarChart3 },
-                    { label: 'Intelligence', icon: Cpu },
-                    { label: 'News Spikes', icon: Zap }
-                  ].map(item => (
-                    <div key={item.label} className="p-3 border border-slate-800/50 bg-slate-900/60 rounded-lg flex items-center gap-3">
-                      <item.icon size={14} className="text-slate-500" />
-                      <span className="text-[11px] text-slate-300 font-medium">{item.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* Data Stream & Refresh Rate */}
-            <section className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-slate-800/40">
-                <Activity size={16} className="text-cyan-400/80" />
-                <h2 className="text-[12px] font-bold text-slate-400 tracking-[.2em] uppercase">Data Engine & Latency</h2>
-              </div>
-              
-              <div className="bg-slate-900/40 border border-slate-800/50 rounded-xl p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-200">Refresh Interval</h3>
-                    <p className="text-xs text-slate-500 mt-1">Control how frequently the terminal syncs with global markets.</p>
-                  </div>
-                  <div className="text-[11px] font-bold text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full border border-cyan-400/20">
-                    CURRENT: 500ms
-                  </div>
-                </div>
-                
-                <input type="range" className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400" />
-                <div className="flex justify-between mt-2 text-[9px] text-slate-600 font-bold uppercase tracking-widest">
-                  <span>Ultra (100ms)</span>
-                  <span>Balanced (1s)</span>
-                  <span>Eco (5s)</span>
-                </div>
-              </div>
-            </section>
-
-            {/* Security */}
-            <section className="space-y-4">
-               <div className="flex items-center gap-2 pb-2 border-b border-slate-800/40">
-                <Shield size={16} className="text-slate-400" />
-                <h2 className="text-[12px] font-bold text-slate-400 tracking-[.2em] uppercase">Security & Privacy</h2>
-              </div>
-              <div className="bg-slate-900/40 border border-slate-800/50 rounded-xl p-5 flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-200">End-to-End Encryption</h3>
-                  <p className="text-xs text-slate-500 mt-1">All terminal data is secured using AES-256 standard.</p>
-                </div>
-                <div className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 rounded-full">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                  <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Active</span>
                 </div>
               </div>
             </section>
