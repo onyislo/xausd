@@ -34,16 +34,10 @@ export function useChat() {
     const channelSub = supabase.channel('channels_realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channels' }, (payload) => {
         const c = payload.new as any;
-        const newChat = {
-          id: c.id,
-          type: c.type,
-          name: c.name || 'Secure Channel',
-          status: 'Encrypted Link Active',
-          lastMsg: 'Channel Initialized',
-          time: 'Just now',
-          messages: []
-        };
-        setChatData(prev => [newChat, ...prev]);
+        setChatData(prev => {
+          if (prev.some(ch => ch.id === c.id)) return prev; // skip duplicate
+          return [{ id: c.id, type: c.type, name: c.name || 'Secure Channel', status: 'Encrypted Link Active', lastMsg: 'Channel Initialized', time: 'Just now', messages: [] }, ...prev];
+        });
       })
       .subscribe();
 
@@ -125,5 +119,11 @@ export function useChat() {
     }]);
   };
 
-  return { activeId, setActiveId, chatData, sendMessage, currentUser };
+  const pushChannel = (c: any) => {
+    const newChat = { id: c.id, type: c.type, name: c.name || 'Secure Channel', status: 'Encrypted Link Active', lastMsg: 'Channel Initialized', time: 'Just now', messages: [] };
+    setChatData(prev => [newChat, ...prev]);
+    setActiveId(c.id);
+  };
+
+  return { activeId, setActiveId, chatData, sendMessage, currentUser, pushChannel };
 }
