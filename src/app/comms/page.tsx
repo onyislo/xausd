@@ -103,7 +103,7 @@ export default function CommsPage() {
                             .select().single();
                            
                            if (channel) {
-                             await supabase.from('channel_members').insert([{ channel_id: channel.id, user_id: currentUser.id }]);
+                             await supabase.from('channel_members').upsert([{ channel_id: channel.id, user_id: currentUser.id }], { onConflict: 'channel_id,user_id', ignoreDuplicates: true });
                              setIsCreating(false);
                              setNewGroupName('');
                            } else {
