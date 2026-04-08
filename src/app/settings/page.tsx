@@ -30,7 +30,8 @@ export default function SettingsPage() {
           .then(({ data }) => setProfile({ 
             ...data, 
             email: user.email,
-            full_name: data?.full_name || user.user_metadata?.full_name
+            full_name: data?.full_name || user.user_metadata?.full_name,
+            avatar_url: data?.avatar_url || user.user_metadata?.avatar_url
           }));
       }
     });
@@ -75,8 +76,12 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-slate-900/60 border border-slate-800/50 p-5 rounded-xl hover:border-slate-700/50 transition-colors">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-xl font-bold text-yellow-500">
-                      {profile.full_name?.[0] || profile.username?.[0] || 'U'}
+                    <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-xl font-bold text-yellow-500 overflow-hidden">
+                      {profile.avatar_url ? (
+                        <img src={profile.avatar_url} className="w-full h-full object-cover" alt="" />
+                      ) : (
+                        profile.full_name?.[0] || profile.username?.[0] || 'U'
+                      )}
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-slate-200">{profile.full_name || profile.username}</h3>

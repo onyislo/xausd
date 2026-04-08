@@ -15,7 +15,8 @@ export default function UserMenu() {
           .then(({ data }) => setProfile({ 
             ...data, 
             email: user.email,
-            full_name: data?.full_name || user.user_metadata?.full_name
+            full_name: data?.full_name || user.user_metadata?.full_name,
+            avatar_url: data?.avatar_url || user.user_metadata?.avatar_url
           }));
       }
     });
@@ -34,8 +35,12 @@ export default function UserMenu() {
         background: 'rgba(245,196,81,0.08)', border: '1px solid rgba(245,196,81,0.2)',
         borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', color: '#e0e6ed',
       }}>
-        <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'linear-gradient(135deg,#f5c451,#b8860b)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#0a0e17' }}>
-          {profile.full_name?.[0] || profile.username?.[0] || 'U'}
+        <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'linear-gradient(135deg,#f5c451,#b8860b)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#0a0e17', overflow: 'hidden' }}>
+          {profile.avatar_url ? (
+            <img src={profile.avatar_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+          ) : (
+            profile.full_name?.[0] || profile.username?.[0] || 'U'
+          )}
         </div>
         <span style={{ fontSize: '12px', fontWeight: 500 }}>{profile.full_name?.split(' ')[0] || profile.username}</span>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="#8a9bb2" strokeWidth="1.5" strokeLinecap="round"/></svg>

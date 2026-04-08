@@ -26,11 +26,27 @@ export default function ProfilePage() {
           .then(({ data }) => setProfile({ 
             ...data, 
             email: user.email,
-            full_name: data?.full_name || user.user_metadata?.full_name
+            full_name: data?.full_name || user.user_metadata?.full_name,
+            avatar_url: data?.avatar_url || user.user_metadata?.avatar_url
           }));
       }
     });
   }, []);
+
+  const uploadAvatar = async (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const filePath = `${user.id}-${Math.random()}.${file.name.split('.').pop()}`;
+    await supabase.storage.from('avatars').upload(filePath, file);
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+
+    await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
+    await supabase.from('profiles').upsert({ id: user.id, avatar_url: publicUrl, username: profile.username || user.email?.split('@')[0] });
+    setProfile({ ...profile, avatar_url: publicUrl });
+  };
 
   if (!profile) return null;
 
@@ -61,10 +77,17 @@ export default function ProfilePage() {
               
               <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
                 <div className="relative">
-                  <div className="w-28 h-28 rounded-full bg-slate-800 border-4 border-slate-700 flex items-center justify-center text-4xl font-black text-yellow-500 shadow-2xl">
-                    {profile.full_name?.[0] || profile.username?.[0] || 'U'}
+                  <div className="w-28 h-28 rounded-full bg-slate-800 border-4 border-slate-700 flex items-center justify-center text-4xl font-black text-yellow-500 shadow-2xl overflow-hidden">
+                    {profile.avatar_url ? (
+                      <img src={profile.avatar_url} className="w-full h-full object-cover" />
+                    ) : (
+                      profile.full_name?.[0] || profile.username?.[0] || 'U'
+                    )}
                   </div>
-                  <button className="absolute bottom-1 right-1 p-2 bg-blue-600 rounded-full border-2 border-slate-900 text-white hover:bg-blue-500 transition-colors shadow-lg">
+                  <input type="file" id="avatar-input" className="hidden" accept="image/*" onChange={uploadAvatar} />
+                  <button 
+                    onClick={() => document.getElementById('avatar-input')?.click()}
+                    className="absolute bottom-1 right-1 p-2 bg-blue-600 rounded-full border-2 border-slate-900 text-white hover:bg-blue-500 transition-colors shadow-lg">
                     <Camera size={14} />
                   </button>
                 </div>

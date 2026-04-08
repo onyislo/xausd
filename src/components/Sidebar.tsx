@@ -1,8 +1,8 @@
 'use client';
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { 
   LayoutDashboard, 
   Globe, 
@@ -16,6 +16,20 @@ import {
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
+          .then(({ data }) => setProfile({ 
+            ...data, 
+            full_name: data?.full_name || user.user_metadata?.full_name,
+            avatar_url: data?.avatar_url || user.user_metadata?.avatar_url
+          }));
+      }
+    });
+  }, []);
 
   const navItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
@@ -90,7 +104,6 @@ export default function Sidebar() {
           );
         })}
         
-        {/* User / Profile */}
         <Link 
           href="/profile"
           className={`w-full aspect-square rounded-xl flex flex-col items-center justify-center gap-1 group relative transition-all ${
@@ -102,9 +115,15 @@ export default function Sidebar() {
           <div className={`w-8 h-8 rounded-full bg-slate-800 border-2 flex items-center justify-center transition-colors overflow-hidden ${
             pathname === '/profile' ? 'border-yellow-500' : 'border-slate-700 group-hover:border-slate-500'
           }`}>
-             <span className={`text-xs font-bold transition-colors ${
-               pathname === '/profile' ? 'text-yellow-500' : 'text-slate-400 group-hover:text-slate-200'
-             }`}>T</span>
+             {profile?.avatar_url ? (
+               <img src={profile.avatar_url} className="w-full h-full object-cover" alt="" />
+             ) : (
+               <span className={`text-xs font-bold transition-colors ${
+                 pathname === '/profile' ? 'text-yellow-500' : 'text-slate-400 group-hover:text-slate-200'
+               }`}>
+                 {profile?.full_name?.[0] || profile?.username?.[0] || 'U'}
+               </span>
+             )}
           </div>
           <div className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-slate-200 text-[10px] font-bold tracking-widest uppercase rounded shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 border border-slate-700">
             Profile Hub
