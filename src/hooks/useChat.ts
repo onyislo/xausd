@@ -13,6 +13,7 @@ export function useChat() {
 
   // 2. Fetch Channels & Subscribe to new ones
   useEffect(() => {
+    if (!currentUser) return;
     const fetchChannels = async () => {
       const { data: channels } = await supabase.from('channels').select('*').order('created_at', { ascending: false });
       if (channels) {
@@ -47,7 +48,7 @@ export function useChat() {
       .subscribe();
 
     return () => { supabase.removeChannel(channelSub); };
-  }, [currentUser, activeId]);
+  }, [currentUser]); // Removed activeId to prevent reset
 
   // 3. Real-time Subscription for Messages
   useEffect(() => {
@@ -69,7 +70,7 @@ export function useChat() {
               time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
             
-            // Prevent duplicates
+            // Prevent duplicates (including optimistic ones)
             if (chat.messages.some((m: any) => m.text === formatted.text && m.time === formatted.time)) return chat;
 
             return {
@@ -117,6 +118,22 @@ export function useChat() {
   const sendMessage = async (text: string) => {
     if (!text.trim() || !activeId || !currentUser) return;
     
+    // OPTIMISTIC UPDATE: Add message to UI immediately
+    const formatted = {
+      sender: 'User',
+      text: text.trim(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setChatData(prev => prev.map(chat => 
+      chat.id === activeId ? {
+        ...chat,
+        messages: [...chat.messages, formatted],
+        lastMsg: formatted.text,
+        time: 'Just now'
+      } : chat
+    ));
+
     await supabase.from('messages').insert([{ 
       channel_id: activeId, 
       user_id: currentUser.id, 
