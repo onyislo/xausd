@@ -70,12 +70,18 @@ export function useChat() {
               time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
             
-            // Prevent duplicates (including optimistic ones)
-            if (chat.messages.some((m: any) => m.text === formatted.text && m.time === formatted.time)) return chat;
+            // Smarter duplicate check: if the text and sender and time (within the same minute) match, skip
+            const isDuplicate = chat.messages.some((m: any) => 
+              m.text === formatted.text && 
+              m.sender === formatted.sender &&
+              m.time === formatted.time
+            );
+
+            if (isDuplicate) return chat;
 
             return {
               ...chat,
-              messages: [...chat.messages, formatted],
+              messages: [...(chat.messages || []), formatted],
               lastMsg: formatted.text.length > 30 ? formatted.text.substring(0, 30) + '...' : formatted.text,
               time: 'Just now'
             };
@@ -100,16 +106,28 @@ export function useChat() {
         .order('created_at', { ascending: true });
 
       if (messages && !error) {
-        setChatData(prev => prev.map(chat => 
-          chat.id === activeId ? {
-            ...chat,
-            messages: messages.map(m => ({
+        setChatData(prev => prev.map(chat => {
+          if (chat.id === activeId) {
+            // Merge messages: Keep all database messages, and add optimistic ones that aren't in the DB yet
+            const dbMessages = messages.map(m => ({
+              id: m.id, // Keep the real ID
               sender: m.user_id === currentUser.id ? 'User' : 'Contact',
               text: m.content,
               time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            }))
-          } : chat
-        ));
+            }));
+
+            // Filter existing local messages to find ones that aren't in the DB yet
+            const optimisticOnly = (chat.messages || []).filter((local: any) => 
+               !dbMessages.some(db => db.text === local.text && db.sender === local.sender)
+            );
+
+            return {
+              ...chat,
+              messages: [...dbMessages, ...optimisticOnly]
+            };
+          }
+          return chat;
+        }));
       }
     };
     fetchMsgs();

@@ -70,23 +70,26 @@ export default function LiveChat() {
   return (
     <div className="panel flex flex-col h-full bg-slate-900/80 border border-slate-800 rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="bg-slate-800/50 px-3 py-1.5 border-b border-slate-700 flex justify-between items-center shrink-0">
-        <span className="text-yellow-500 text-[10px] font-bold uppercase tracking-widest">Live Chat</span>
+      <div className="bg-slate-800/40 px-4 py-2 border-b border-slate-700/50 flex justify-between items-center shrink-0 backdrop-blur-md">
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse shadow-[0_0_8px_#f5c451]" />
+          <span className="text-yellow-500 text-[10px] font-black uppercase tracking-[0.2em] font-mono">Live Intelligence</span>
+        </div>
         <div className="flex gap-2">
-          <span className="text-[10px] text-slate-400 cursor-pointer hover:text-white leading-none">—</span>
-          <span className="text-[10px] text-slate-400 cursor-pointer hover:text-white leading-none">✕</span>
+          <div className="w-2 h-2 rounded-full bg-slate-700 hover:bg-slate-600 cursor-pointer transition-colors" />
+          <div className="w-2 h-2 rounded-full bg-red-500/50 hover:bg-red-500 cursor-pointer transition-colors" />
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1.5 px-2 py-1.5 border-b border-slate-800 overflow-x-auto shrink-0" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex gap-1.5 px-3 py-2 border-b border-slate-800/80 overflow-x-auto shrink-0 scrollbar-hide">
         {TABS.map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`whitespace-nowrap px-2.5 py-1 text-[9px] font-bold rounded transition-all duration-200 border ${activeTab === tab
-                ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40 shadow-[0_0_8px_rgba(245,196,81,0.15)]'
-                : 'bg-slate-800/60 text-slate-500 border-slate-700 hover:text-slate-200 hover:border-slate-500'
+            className={`whitespace-nowrap px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all duration-300 border ${activeTab === tab
+                ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30 shadow-[0_0_15px_rgba(245,196,81,0.1)]'
+                : 'bg-slate-800/40 text-slate-500 border-slate-700/50 hover:text-slate-300 hover:bg-slate-800/60'
               }`}
           >
             {tab}
@@ -144,21 +147,21 @@ export default function LiveChat() {
       </div>
 
       {/* Input */}
-      <div className="p-2 border-t border-slate-700 bg-slate-800/30 shrink-0">
-        <div className="relative">
+      <div className="p-3 border-t border-slate-700/50 bg-slate-900/60 backdrop-blur-md shrink-0">
+        <div className="relative group">
           <input
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
-            placeholder="Ask the AI analyst…"
-            className="w-full bg-slate-900 border border-slate-700 rounded-full py-1.5 pl-3 pr-16 text-[11px] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-yellow-500/50 transition-colors"
+            placeholder="Interrogate AI Core…"
+            className="w-full bg-[#0a0e17] border border-slate-700 rounded-xl py-2 pl-4 pr-12 text-[11px] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-yellow-500/50 focus:ring-1 focus:ring-yellow-500/20 transition-all"
           />
           <button
             onClick={handleSend}
-            className="absolute right-1 top-1 bottom-1 px-3 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-[9px] font-bold rounded-full transition-colors flex items-center gap-1"
+            className="absolute right-1.5 top-1.5 bottom-1.5 px-3 bg-yellow-500 hover:bg-yellow-400 text-[#1a1200] rounded-lg transition-all flex items-center justify-center active:scale-95 shadow-[0_0_10px_rgba(245,196,81,0.2)]"
           >
-            SEND <Send size={9} />
+            <Send size={12} className="stroke-[2.5px]" />
           </button>
         </div>
       </div>

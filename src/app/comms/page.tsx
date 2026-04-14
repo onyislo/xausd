@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import HeaderPrice from '@/components/HeaderPrice';
 import { useChat } from '@/hooks/useChat';
 import { supabase } from '@/lib/supabase';
-import { Search, Send, Users, User, Phone, MoreVertical, Plus, Shield, Trash2, UserPlus, UserMinus, Copy, Check, Link as LinkIcon, X, Info, BellOff, LogOut, CheckCircle } from 'lucide-react';
+import { Search, Send, Users, User, Phone, MoreVertical, Plus, Shield, Trash2, UserPlus, UserMinus, Copy, Check, Link as LinkIcon, X, Info, BellOff, LogOut, CheckCircle, Hash, MessageSquare, Bot } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 
 export default function CommsPage() {
@@ -19,9 +19,15 @@ export default function CommsPage() {
   const [members, setMembers] = useState<any[]>([]);
   const [copied, setCopied] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const chatEndRef = React.useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
   const activeChat = chatData.find(c => c.id === activeId) || null;
+
+  // Auto-scroll to bottom
+  React.useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [activeChat?.messages]);
   const filtered = tab === 'channels'
     ? chatData.filter(c => c.type === 'group')
     : tab === 'dms'
@@ -141,34 +147,45 @@ export default function CommsPage() {
           {/* LEFT PANEL */}
           <section className="w-[290px] bg-[#0f1420] border border-yellow-500/20 rounded-xl flex flex-col shrink-0 overflow-hidden">
 
-            {/* Tabs — compact icons */}
-            <div className="flex border-b border-yellow-500/10 shrink-0">
+            {/* Tabs — premium icons */}
+            <div className="flex border-b border-yellow-500/10 shrink-0 p-1 bg-slate-900/50">
               {([
-                { key: 'channels', label: '#', title: 'Channels' },
-                { key: 'dms',      label: '💬', title: 'Direct'  },
-                { key: 'ai',       label: '🤖', title: 'AI Chat' },
+                { key: 'channels', icon: <Hash size={16} />, title: 'Channels' },
+                { key: 'dms',      icon: <MessageSquare size={16} />, title: 'Direct'  },
+                { key: 'ai',       icon: <Bot size={16} />, title: 'AI Chat' },
               ] as const).map(t => (
-                <button key={t.key} onClick={() => setTab(t.key)} title={t.title}
-                  className={`flex-1 py-2.5 text-sm font-black transition-all ${
+                <button 
+                  key={t.key} 
+                  onClick={() => setTab(t.key)} 
+                  title={t.title}
+                  className={`flex-1 py-2 flex items-center justify-center rounded-lg transition-all duration-300 ${
                     tab === t.key
-                      ? 'text-yellow-500 border-b-2 border-yellow-500 bg-yellow-500/5'
-                      : 'text-slate-500 hover:text-slate-300'
-                  }`}>
-                  {t.label}
+                      ? 'text-yellow-500 bg-yellow-500/10 shadow-[inset_0_0_10px_rgba(245,196,81,0.1)]'
+                      : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'
+                  }`}
+                >
+                  <div className={`transition-transform duration-300 ${tab === t.key ? 'scale-110' : 'scale-100'}`}>
+                    {t.icon}
+                  </div>
                 </button>
               ))}
             </div>
 
             {/* Search + Create */}
-            <div className="p-3 flex gap-2 border-b border-yellow-500/10 shrink-0">
-              <div className="relative flex-1">
-                <input className="w-full bg-[#0a0e17] border border-slate-700 text-xs px-7 py-2 rounded-lg" placeholder="Search..." />
-                <Search size={13} className="absolute left-2.5 top-2.5 text-slate-500" />
+            <div className="p-3 flex gap-2 border-b border-yellow-500/10 shrink-0 bg-slate-900/20">
+              <div className="relative flex-1 group">
+                <input 
+                  className="w-full bg-[#0a0e17]/80 border border-slate-700/50 text-[11px] px-8 py-2 rounded-xl focus:border-yellow-500/40 focus:bg-[#0a0e17] transition-all outline-none placeholder:text-slate-600 text-slate-300 font-medium" 
+                  placeholder="Intercept communications..." 
+                />
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-yellow-500/60 transition-colors" />
               </div>
               {tab === 'channels' && (
-                <button onClick={() => setIsCreating(true)}
-                  className="p-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-500 hover:bg-yellow-500/20 transition-all">
-                  <Plus size={15} />
+                <button 
+                  onClick={() => setIsCreating(true)}
+                  className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl text-[#1a1200] hover:shadow-[0_0_15px_rgba(245,196,81,0.3)] transition-all active:scale-95 group"
+                >
+                  <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
                 </button>
               )}
             </div>
@@ -267,6 +284,7 @@ export default function CommsPage() {
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-3 bg-[#0a0e17] custom-scrollbar">
                   {activeChat.messages?.map((msg: any, i: number) => <MessageItem key={i} msg={msg} />)}
+                  <div ref={chatEndRef} />
                 </div>
 
                 {/* Input */}
@@ -403,18 +421,33 @@ export default function CommsPage() {
 
 function ChatListItem({ chat, active, onSelect }: any) {
   return (
-    <div onClick={onSelect} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all border ${
-      active ? 'bg-slate-800 border-slate-600' : 'border-transparent hover:bg-slate-800/40'
+    <div onClick={onSelect} className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all border group relative ${
+      active 
+        ? 'bg-yellow-500/5 border-yellow-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.2)]' 
+        : 'border-transparent hover:bg-slate-800/40'
     }`}>
-      <div className="w-9 h-9 rounded-full bg-slate-700/50 border border-slate-600 flex items-center justify-center shrink-0 text-slate-400">
-        {chat.type === 'dm' ? <User size={16} /> : <Users size={16} />}
+      {active && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-yellow-500 rounded-r-full shadow-[0_0_10px_#f5c451]" />
+      )}
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all duration-300 ${
+        active 
+          ? 'bg-yellow-500/20 border-yellow-500/40 shadow-[0_0_15px_rgba(245,196,81,0.2)] scale-105' 
+          : 'bg-slate-800/60 border-slate-700/50 group-hover:border-slate-500'
+      }`}>
+        {chat.type === 'dm' ? <User size={18} className={active ? 'text-yellow-500' : 'text-slate-500'} /> : <Users size={18} className={active ? 'text-yellow-500' : 'text-slate-500'} />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
-          <span className="text-xs font-bold truncate text-slate-300">{chat.name}</span>
-          <span className="text-[9px] text-slate-500 shrink-0 ml-1">{chat.time}</span>
+          <span className={`text-[12px] font-bold truncate tracking-tight transition-colors ${active ? 'text-yellow-500' : 'text-slate-300 group-hover:text-white'}`}>
+            {chat.name}
+          </span>
+          <span className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter shrink-0 ml-2">
+            {chat.time}
+          </span>
         </div>
-        <span className="text-[10px] text-slate-500 truncate block">{chat.lastMsg}</span>
+        <span className={`text-[10px] truncate block font-medium transition-colors ${active ? 'text-yellow-500/70' : 'text-slate-500 group-hover:text-slate-400'}`}>
+          {chat.lastMsg}
+        </span>
       </div>
     </div>
   );
@@ -423,12 +456,24 @@ function ChatListItem({ chat, active, onSelect }: any) {
 function MessageItem({ msg }: any) {
   const isSelf = msg.sender === 'User';
   return (
-    <div className={`flex max-w-[75%] ${isSelf ? 'ml-auto flex-row-reverse' : 'mr-auto'} items-end`}>
-      <div className={`px-4 py-2 rounded-2xl text-sm ${
-        isSelf ? 'bg-yellow-500 text-[#1a1200] rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'
+    <div className={`flex max-w-[75%] ${isSelf ? 'ml-auto flex-row-reverse' : 'mr-auto'} items-end gap-2`}>
+      {!isSelf && (
+        <div className="w-6 h-6 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mb-1">
+          <User size={12} className="text-slate-500" />
+        </div>
+      )}
+      <div className={`px-4 py-2 rounded-2xl text-[11px] leading-relaxed relative ${
+        isSelf 
+          ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-[#1a1200] rounded-br-none font-medium' 
+          : 'bg-[#1a1f2e] text-slate-200 rounded-bl-none border border-slate-700/50 shadow-xl'
       }`}>
         {msg.text}
-        <div className={`text-[8px] mt-1 opacity-50 ${isSelf ? 'text-right' : 'text-left'}`}>{msg.time}</div>
+        <div className={`text-[8px] mt-1.5 opacity-60 ${isSelf ? 'text-[#1a1200]/70' : 'text-slate-500'} ${isSelf ? 'text-right' : 'text-left'}`}>
+          {msg.time}
+        </div>
+        {isSelf && (
+          <div className="absolute -left-1 bottom-0 w-2 h-2 bg-yellow-600 rounded-bl-full" style={{ clipPath: 'polygon(100% 0, 0% 100%, 100% 100%)' }} />
+        )}
       </div>
     </div>
   );
