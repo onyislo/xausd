@@ -27,10 +27,12 @@ function LoginContent() {
         </div>
       )}
       <AuthCard
-        type="login"
-        title="SYSTEM_ACCESS"
-        subtitle="ENTER ENCRYPTION KEY"
-        onSubmit={signIn}
+        mode="login"
+        fields={[
+          { id: 'email', label: 'Email Address', type: 'email', placeholder: 'trader@example.com' },
+          { id: 'password', label: 'Password', type: 'password', placeholder: '••••••••••••' },
+        ]}
+        onSubmit={(form) => signIn(form.email, form.password)}
         loading={loading}
         error={error}
       />
