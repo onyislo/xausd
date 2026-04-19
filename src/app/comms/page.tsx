@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Sidebar from '@/components/Sidebar';
 import HeaderPrice from '@/components/HeaderPrice';
 import { useChat } from '@/hooks/useChat';
@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { Search, Send, Users, User, Phone, MoreVertical, Plus, Shield, Trash2, UserPlus, UserMinus, Copy, Check, Link as LinkIcon, X, Info, BellOff, LogOut, CheckCircle, Hash, MessageSquare, Bot } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 
-export default function CommsPage() {
+function CommsContent() {
   const { activeId, setActiveId, chatData, contacts: friends, addContact: addFriend, removeContact: removeFriend, searchProfiles, startDM, sendMessage, deleteMessage, currentUser, pushChannel } = useChat();
   const [inputText, setInputText] = useState('');
   const [tab, setTab] = useState<'channels' | 'dms' | 'friends' | 'ai'>('channels');
@@ -506,9 +506,19 @@ export default function CommsPage() {
           onDelete={(mid: string) => deleteMessage(mid, activeId as string)} 
         />
       )}
+      {/* existing JSX components ... */}
     </main>
   );
 }
+
+export default function CommsPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#0a0e17] text-yellow-500 font-mono">LOADING ENCRYPTED CHANNEL...</div>}>
+      <CommsContent />
+    </Suspense>
+  );
+}
+
 
 function ContextMenu({ x, y, msgId, onDelete }: any) {
   return (
