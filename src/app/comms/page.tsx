@@ -16,6 +16,7 @@ function CommsContent() {
   const [isSearching, setIsSearching] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isManaging, setIsManaging] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [members, setMembers] = useState<any[]>([]);
