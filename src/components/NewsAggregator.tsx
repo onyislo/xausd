@@ -34,33 +34,32 @@ export default function NewsAggregator() {
               </div>
           </div>
 
-          {/* News Card 1 */}
-          <div className="bg-slate-800/50 rounded border border-red-500/30 p-3">
-              <div className="flex justify-between items-center text-[10px] text-red-400 mb-1">
-                  <span>RED RATED (HIGH)</span>
-                  <span>14:38:05 UTC</span>
+          {/* AI Signal Card */}
+          <div className="bg-red-500/10 rounded border border-red-500/50 p-3 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+              <div className="flex justify-between items-center text-[10px] text-red-400 mb-1 font-bold">
+                  <span className="flex items-center gap-1"><span className="animate-pulse w-2 h-2 bg-red-500 rounded-full inline-block"></span> SYSTEM ALERT: AI SELL SIGNAL</span>
+                  <span>LIVE</span>
               </div>
-              <h3 className="text-slate-200 text-sm font-bold leading-tight mb-2">
-                  Global Tension Spike: Naval Confrontation in South China Sea
+              <h3 className="text-red-100 text-sm font-black leading-tight mb-2 uppercase">
+                  Hormuz Blockade: Institutional Liquidity Sell-Off
               </h3>
-              <div className="text-[10px] text-slate-500 flex justify-between">
-                  <span>Source: REUTERS & BBC</span>
-                  <span>IMPACT: HIGH</span>
+              <div className="text-xs text-slate-300 leading-snug mb-3">
+                  <span className="font-bold text-red-400">AI Analysis:</span> Escalation in Arabian Sea (US Navy seized M/V Touska). While war typically drives gold up, our AI detects threat levels hitting peak, triggering <strong>big institutions to sell gold for cash (USD) liquidity</strong>.
               </div>
-          </div>
-
-          {/* News Card 2 */}
-          <div className="bg-slate-800/50 rounded border border-yellow-500/30 p-3">
-              <div className="flex justify-between items-center text-[10px] text-yellow-500 mb-1">
-                  <span>AMBER RATED (MED)</span>
-                  <span>14:35:05 UTC</span>
+              <div className="bg-black/50 p-2 rounded border border-red-500/30 flex justify-between items-center mb-2">
+                 <div className="text-[10px] text-slate-400 font-mono">
+                   <div className="mb-0.5">TARGET ZONE:</div>
+                   <div className="text-red-400 font-bold text-xs">4750.00 → 4723.00</div>
+                 </div>
+                 <div className="text-[10px] text-slate-400 font-mono text-right">
+                   <div className="mb-0.5">ACTION:</div>
+                   <div className="text-red-500 font-black text-xs animate-pulse">STRONG SELL</div>
+                 </div>
               </div>
-              <h3 className="text-slate-200 text-sm font-bold leading-tight mb-2">
-                  Central Bank Meeting: ECB Hints at Rate Hike
-              </h3>
-              <div className="text-[10px] text-slate-500 flex justify-between">
-                  <span>Source: BLOOMBERG</span>
-                  <span>IMPACT: MED</span>
+              <div className="text-[9px] text-slate-500 flex justify-between uppercase">
+                  <span>Source: AI MARKET SENTIMENT</span>
+                  <span>IMPACT: CRITICAL</span>
               </div>
           </div>
           
