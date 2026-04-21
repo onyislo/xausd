@@ -8,6 +8,61 @@ export default function HomePage() {
 
   return (
     <div style={{ background: '#0a0e17', color: '#e0e6ed', fontFamily: "'Inter',sans-serif", minHeight: '100vh' }}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .mobile-nav-btn { display: none !important; }
+        .desktop-nav { display: flex !important; }
+        .nav-logo-icon { display: flex; }
+        @media (max-width: 768px) {
+          .desktop-nav { display: none !important; }
+          .mobile-nav-btn { display: block !important; }
+          .nav-logo-icon { display: none !important; }
+          .hero-buttons { flex-direction: column; gap: 20px !important; align-items: center !important; }
+        }
+      `}} />
+
+      {/* ── MOBILE DRAWER ── */}
+      <div style={{
+        position: 'fixed', top: 0, left: 0, bottom: 0, width: '280px',
+        background: 'rgba(10,14,23,0.98)', backdropFilter: 'blur(20px)', zIndex: 200,
+        borderRight: '1px solid rgba(255,255,255,0.06)',
+        transform: nav ? 'translateX(0)' : 'translateX(-100%)', 
+        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        display: 'flex', flexDirection: 'column', padding: '24px'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg,#f5c451,#b8860b)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200" />
+                <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200" />
+                <rect x="6" y="4" width="12" height="5" rx="1" fill="#1a1200" />
+              </svg>
+            </div>
+            <span style={{ fontFamily: "'Chakra Petch',sans-serif", fontWeight: 700, fontSize: '13px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#f5c451' }}>AuScope</span>
+          </div>
+          <button onClick={() => setNav(false)} style={{ background: 'none', border: 'none', color: '#8a9bb2', cursor: 'pointer', padding: '4px' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+               <line x1="18" y1="6" x2="6" y2="18"></line>
+               <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {[['#home', 'Home'], ['#about', 'About Us'], ['#pricing', 'Subscription']].map(([href, label]) => (
+            <a key={href} href={href} onClick={() => setNav(false)} style={{ fontSize: '16px', color: '#e0e6ed', textDecoration: 'none', letterSpacing: '0.04em' }}>{label}</a>
+          ))}
+          <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '8px 0' }} />
+          <Link href="/login" onClick={() => setNav(false)} style={{ fontSize: '16px', color: '#8a9bb2', textDecoration: 'none' }}>Log in</Link>
+          <Link href="/register" onClick={() => setNav(false)} style={{ fontSize: '16px', fontWeight: 600, color: '#f5c451', textDecoration: 'none' }}>Get started →</Link>
+        </div>
+      </div>
+      {nav && (
+        <div 
+          onClick={() => setNav(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 150 }} 
+        />
+      )}
 
       {/* ── NAV ── */}
       <nav style={{
@@ -17,16 +72,25 @@ export default function HomePage() {
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg,#f5c451,#b8860b)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(245,196,81,0.3)' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200" />
-                <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200" />
-                <rect x="6" y="4" width="12" height="5" rx="1" fill="#1a1200" />
+          {/* Left Menu / Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button className="mobile-nav-btn" onClick={() => setNav(true)} style={{ background: 'none', border: 'none', color: '#f5c451', cursor: 'pointer', padding: '4px', marginLeft: '-4px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
               </svg>
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="nav-logo-icon" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg,#f5c451,#b8860b)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(245,196,81,0.3)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200" />
+                  <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200" />
+                  <rect x="6" y="4" width="12" height="5" rx="1" fill="#1a1200" />
+                </svg>
+              </div>
+              <span style={{ fontFamily: "'Chakra Petch',sans-serif", fontWeight: 700, fontSize: '14px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#f5c451' }}>AuScope</span>
             </div>
-            <span style={{ fontFamily: "'Chakra Petch',sans-serif", fontWeight: 700, fontSize: '14px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#f5c451' }}>AuScope</span>
           </div>
 
           {/* Desktop links */}
@@ -39,7 +103,7 @@ export default function HomePage() {
           </div>
 
           {/* Auth links — text only, no boxes */}
-          <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+          <div className="desktop-nav" style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
             <Link href="/login" style={{ fontSize: '13px', fontWeight: 400, color: '#8a9bb2', textDecoration: 'none', transition: 'color 0.2s' }}
               onMouseEnter={e => (e.currentTarget.style.color = '#e0e6ed')}
               onMouseLeave={e => (e.currentTarget.style.color = '#8a9bb2')}>Log in</Link>
@@ -69,7 +133,7 @@ export default function HomePage() {
             Real-time XAU/USD signals driven by macro, central bank policy, technical analysis, and market sentiment — all in one terminal.
           </p>
 
-          <div style={{ display: 'flex', gap: '32px', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'baseline', marginBottom: '8px' }}>
+          <div className="hero-buttons" style={{ display: 'flex', gap: '32px', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'baseline', marginBottom: '8px' }}>
             <Link href="/login" style={{ fontSize: '16px', fontWeight: 600, color: '#f5c451', textDecoration: 'none', borderBottom: '1px solid #f5c451', paddingBottom: '2px', letterSpacing: '-0.01em', transition: 'opacity 0.2s' }}
               onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
               onMouseLeave={e => (e.currentTarget.style.opacity = '1')}>
