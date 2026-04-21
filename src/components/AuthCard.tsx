@@ -16,13 +16,15 @@ interface AuthCardProps {
   onSubmit: (data: Record<string, string>) => void;
   loading?: boolean;
   error?: string | null;
+  successMessage?: React.ReactNode;
 }
 
-export default function AuthCard({ mode, fields, onSubmit, loading, error }: AuthCardProps) {
+export default function AuthCard({ mode, fields, onSubmit, loading, error, successMessage }: AuthCardProps) {
   const [form, setForm] = useState<Record<string, string>>({});
   const [show, setShow] = useState<Record<string, boolean>>({});
 
   const isLogin = mode === 'login';
+  const isProd = process.env.NODE_ENV === 'production';
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,14 +101,42 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error }: Aut
             {isLogin ? 'Sign In' : 'Register'}
           </h2>
           <p style={{ fontSize: '11px', color: '#4a5568', marginBottom: '10px' }}>
-            {isLogin ? 'Access your dashboard' : 'Join the gold trading platform'}
+            {isLogin ? 'Access your dashboard' : (successMessage ? 'Registration Status' : (isProd ? 'Request Early Access' : 'Create your account'))}
           </p>
 
-          {error && (
-            <div style={{ fontSize: '10px', color: '#f87171', background: 'rgba(239, 68, 68, 0.1)', padding: '8px', borderRadius: '4px', marginBottom: '16px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-              ⚠️ {error}
+          {successMessage ? (
+            <div style={{ textAlign: 'center', padding: '30px 10px' }}>
+              <div style={{
+                width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(245,196,81,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px',
+                border: '1px solid rgba(245,196,81,0.3)',
+              }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f5c451" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <h3 style={{ color: '#f5c451', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', textTransform: 'uppercase' }}>
+                Access Requested
+              </h3>
+              <div style={{ color: '#8a9bb2', fontSize: '12px', lineHeight: '1.5' }}>
+                {successMessage}
+              </div>
+              <Link href="/" style={{
+                 display: 'block', marginTop: '30px', color: '#f5c451', textDecoration: 'none',
+                 fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', border: '1px solid #f5c451',
+                 padding: '10px', borderRadius: '6px', textAlign: 'center', textTransform: 'uppercase'
+              }}>
+                Return to Home
+              </Link>
             </div>
-          )}
+          ) : (
+            <React.Fragment>
+              {error && (
+                <div style={{ fontSize: '10px', color: '#f87171', background: 'rgba(239, 68, 68, 0.1)', padding: '8px', borderRadius: '4px', marginBottom: '16px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                  ⚠️ {error}
+                </div>
+              )}
 
           <form onSubmit={handle}>
             {fields.map(field => {
@@ -177,7 +207,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error }: Aut
               transition: 'all 0.2s',
               marginBottom: '16px',
             }}>
-              {loading ? 'Authenticating...' : (isLogin ? 'Access Terminal' : 'Start Trading')}
+              {loading ? (isLogin ? 'Authenticating...' : 'Processing...') : (isLogin ? 'Access Terminal' : (isProd ? 'Join Waitlist' : 'Create Account'))}
             </button>
 
             {/* Divider */}
@@ -220,6 +250,8 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error }: Aut
               </Link>
             </p>
           </form>
+            </React.Fragment>
+          )}
         </div>
 
         {/* Footer */}

@@ -11,12 +11,12 @@ export interface NewsItem {
 export const newsData: NewsItem[] = [
   {
     id: '1',
-    title: 'Global Tension Spike: Naval Confrontation in South China Sea',
-    source: 'REUTERS & BBC',
+    title: 'Hormuz Blockade: Institutional Liquidity Sell-Off',
+    source: 'AI SENTIMENT / REUTERS',
     impact: 'HIGH',
-    timestamp: '14:38:05 UTC',
-    category: 'GEOPOLITICAL',
-    content: 'Naval confrontation in South China Sea. This has increased demand for safe haven assets as a new geopolitical conflict has triggered a secure asset run mainly by institutions. Gold (XAUUSD) is expected to see significant flow report.'
+    timestamp: 'LIVE UTC',
+    category: 'GEOPOLITICAL / MARKET',
+    content: 'CRITICAL ALERT: The US Navy has fired upon and seized the Iranian-flagged tanker M/V Touska in the Arabian Sea. While standard market behavior dictates gold prices rise during conflict, AI detection shows threat levels have hit peak thresholds, triggering massive institutional sell-offs. Large entities are liquidating gold to secure cash (USD) in anticipation of broader market crashes. \n\nAI SIGNAL DETECTED: STRONG SELL.\nTarget Zone: 4750.00 to 4723.00.'
   },
   {
     id: '2',
