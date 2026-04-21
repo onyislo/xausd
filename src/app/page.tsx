@@ -11,9 +11,11 @@ export default function HomePage() {
       <style dangerouslySetInnerHTML={{ __html: `
         .mobile-nav-btn { display: none !important; }
         .desktop-nav { display: flex !important; }
+        .nav-logo-icon { display: flex; }
         @media (max-width: 768px) {
           .desktop-nav { display: none !important; }
           .mobile-nav-btn { display: block !important; }
+          .nav-logo-icon { display: none !important; }
           .hero-buttons { flex-direction: column; gap: 20px !important; align-items: center !important; }
         }
       `}} />
@@ -80,7 +82,7 @@ export default function HomePage() {
               </svg>
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg,#f5c451,#b8860b)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(245,196,81,0.3)' }}>
+              <div className="nav-logo-icon" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg,#f5c451,#b8860b)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(245,196,81,0.3)' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200" />
                   <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200" />
