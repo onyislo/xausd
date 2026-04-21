@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import AuthCard from '@/components/AuthCard';
+import { supabase } from '@/lib/supabase';
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
@@ -17,17 +18,33 @@ export default function RegisterPage() {
         { id: 'password', label: 'Password', type: 'password', placeholder: '••••••••' }
       ];
 
-  const handleRegister = (data: Record<string, string>) => {
+  const handleRegister = async (data: Record<string, string>) => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    
+    try {
       if (isProd) {
+        // Insert the email into a Supabase table named 'waitlist'
+        const { error } = await supabase.from('waitlist').insert([{ email: data.email }]);
+        
+        if (error) {
+          console.error("Waitlist error:", error);
+          // If the user already exists in waitlist (unique constraint), we can still show success
+          if (error.code !== '23505') throw error; 
+        }
+
         setSuccessMsg("System not launched yet. You have been added to the exclusive waitlist. We will communicate further instructions via email.");
       } else {
-        setSuccessMsg("Registration successful! Welcome to AuScope.");
+        // Local Dev simulation (you can replace this with your actual useAuth signUp if needed)
+        setTimeout(() => {
+          setSuccessMsg("Registration successful! Welcome to AuScope.");
+        }, 500);
       }
-    }, 800);
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
