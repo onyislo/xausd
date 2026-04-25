@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import nodemailer from 'nodemailer';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -82,25 +83,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
-  // 2. Send email via Brevo
-  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'api-key': process.env.BREVO_API_KEY!,
-    },
-    body: JSON.stringify({
-      sender: { name: 'AuScope', email: 'waitlist@yourdomain.com' },
-      to: [{ email }],
-      subject: "You're on the AuScope Waitlist — Access Coming Soon",
-      htmlContent: emailHtml(email),
-    }),
-  });
+  // 2. Send email via Zoho (Nodemailer) only in Production
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.zoho.com',
+        port: 465,
+        secure: true,
+        auth: {
+          user: process.env.ZOHO_EMAIL,
+          pass: process.env.ZOHO_PASSWORD,
+        },
+      });
 
-  if (!res.ok) {
-    const err = await res.json();
-    console.error('Resend error:', err);
-    // Still return success — user is on the waitlist even if email fails
+      await transporter.sendMail({
+        from: `"AuScope" <${process.env.ZOHO_EMAIL}>`,
+        to: email,
+        subject: "You're on the AuScope Waitlist — Access Coming Soon",
+        html: emailHtml(email),
+      });
+    } catch (err) {
+      console.error('Zoho email error:', err);
+      // Still return success — user is on the waitlist even if email fails
+    }
+  } else {
+    console.log('Local Environment: Skipped sending waitlist email to', email);
   }
 
   return NextResponse.json({ success: true });
