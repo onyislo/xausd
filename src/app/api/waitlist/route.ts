@@ -83,10 +83,11 @@ export async function POST(req: NextRequest) {
   }
 
   // 2. Send email via Zoho (Nodemailer) only in Production
+  let emailStatus = 'skipped';
   if (process.env.NODE_ENV === 'production') {
     try {
       const transporter = nodemailer.createTransport({
-        host: 'smtp.zoho.com',
+        host: 'smtppro.zoho.com',
         port: 465,
         secure: true,
         auth: {
@@ -101,13 +102,15 @@ export async function POST(req: NextRequest) {
         subject: "You're on the AuScope Waitlist — Access Coming Soon",
         html: emailHtml(email),
       });
-    } catch (err) {
-      console.error('Zoho email error:', err);
-      // Still return success — user is on the waitlist even if email fails
+      emailStatus = 'sent';
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error('Zoho email error:', errMsg);
+      emailStatus = errMsg;
     }
   } else {
     console.log('Local Environment: Skipped sending waitlist email to', email);
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, emailStatus });
 }
