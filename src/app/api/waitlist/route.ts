@@ -113,7 +113,13 @@ export async function POST(req: NextRequest) {
       await transporter.sendMail({
         from: `"AuScope" <${process.env.ZOHO_EMAIL}>`,
         to: email,
+        replyTo: process.env.ZOHO_EMAIL,
         subject: "You're on the AuScope Waitlist — Access Coming Soon",
+        headers: {
+          'X-Priority': '3',
+          'List-Unsubscribe': `<mailto:${process.env.ZOHO_EMAIL}?subject=unsubscribe>`,
+        },
+        text: `You're on the AuScope Waitlist!\n\nWelcome to AuScope early access. You've secured a priority spot ahead of our official launch.\n\nHere's what's waiting for you:\n\n- Live Intelligence Dashboard: Real-time XAU/USD price streaming, interactive charts, and market overview.\n- AI-Powered Trade Signals: Daily buy/sell/hold signals with confidence scores.\n- Geopolitical Heat Map: Global conflicts and central bank moves scored by gold price impact.\n- Curated Gold News Feed: AI-filtered market-moving stories from global financial sources.\n- Economic Calendar & Comms: Fed decisions, CPI, NFP reports + built-in trader messaging.\n\nYour reserved email: ${email}\nWe'll notify you the moment access opens. No action needed.\n\n© 2026 AuScope. All rights reserved.`,
         html: emailHtml(email),
       });
       emailStatus = 'sent';
