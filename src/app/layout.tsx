@@ -15,8 +15,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "AuScope | Terminal",
-  description: "XAU/USD Gold Analysis Terminal",
+  title: "AuScope — Advanced XAU/USD Intelligence Terminal",
+  description: "Real-time gold market analytics, AI-powered trade signals, and geopolitical intelligence for professional XAU/USD traders.",
   icons: {
     icon: "/logo.svg",
   },
