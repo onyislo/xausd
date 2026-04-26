@@ -27,7 +27,13 @@ export default function RegisterPage() {
           body: JSON.stringify({ email: data.email }),
         });
         if (!res.ok) throw new Error('Failed');
-        setSuccessMsg("You're on the list! Check your email — we've sent you a confirmation from AuScope.");
+        
+        const result = await res.json();
+        if (result.alreadyRegistered) {
+          setSuccessMsg("You're already on our waitlist! We'll notify you as soon as access opens up.");
+        } else {
+          setSuccessMsg("You're on the list! Check your email — we've sent you a confirmation from AuScope.");
+        }
       } else {
         setTimeout(() => setSuccessMsg("Registration successful! Welcome to AuScope."), 500);
       }

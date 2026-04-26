@@ -91,7 +91,13 @@ export async function POST(req: NextRequest) {
 
   // 1. Save to Supabase
   const { error: dbError } = await supabase.from('waitlist').insert([{ email }]);
-  if (dbError && dbError.code !== '23505') {
+  
+  // If email already exists (Postgres error 23505)
+  if (dbError?.code === '23505') {
+    return NextResponse.json({ success: true, alreadyRegistered: true });
+  }
+
+  if (dbError) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
