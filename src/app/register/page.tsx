@@ -6,6 +6,7 @@ import AuthCard from '@/components/AuthCard';
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [successTitle, setSuccessTitle] = useState('');
 
   const isProd = process.env.NODE_ENV === 'production';
 
@@ -30,11 +31,14 @@ export default function RegisterPage() {
         
         const result = await res.json();
         if (result.alreadyRegistered) {
+          setSuccessTitle("Already Registered");
           setSuccessMsg("You're already on our waitlist! We'll notify you as soon as access opens up.");
         } else {
+          setSuccessTitle("Access Requested");
           setSuccessMsg("You're on the list! Check your email — we've sent you a confirmation from AuScope.");
         }
       } else {
+        setSuccessTitle("Welcome");
         setTimeout(() => setSuccessMsg("Registration successful! Welcome to AuScope."), 500);
       }
     } catch {
@@ -50,6 +54,7 @@ export default function RegisterPage() {
       fields={fields}
       loading={loading}
       successMessage={successMsg}
+      successTitle={successTitle}
       onSubmit={handleRegister}
     />
   );

@@ -17,9 +17,10 @@ interface AuthCardProps {
   loading?: boolean;
   error?: string | null;
   successMessage?: React.ReactNode;
+  successTitle?: string;
 }
 
-export default function AuthCard({ mode, fields, onSubmit, loading, error, successMessage }: AuthCardProps) {
+export default function AuthCard({ mode, fields, onSubmit, loading, error, successMessage, successTitle }: AuthCardProps) {
   const [form, setForm] = useState<Record<string, string>>({});
   const [show, setShow] = useState<Record<string, boolean>>({});
 
@@ -117,7 +118,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
                 </svg>
               </div>
               <h3 style={{ color: '#f5c451', fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', textTransform: 'uppercase' }}>
-                Access Requested
+                {successTitle || 'Access Requested'}
               </h3>
               <div style={{ color: '#8a9bb2', fontSize: '12px', lineHeight: '1.5' }}>
                 {successMessage}
