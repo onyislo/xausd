@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import nodemailer from 'nodemailer';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
@@ -96,36 +95,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
-  // 2. Send email via Zoho (Nodemailer) only in Production
+  // 2. Send email via Brevo only in Production
   let emailStatus = 'skipped';
   if (process.env.NODE_ENV === 'production') {
     try {
-      const transporter = nodemailer.createTransport({
-        host: 'smtppro.zoho.com',
-        port: 465,
-        secure: true,
-        auth: {
-          user: process.env.ZOHO_EMAIL,
-          pass: process.env.ZOHO_PASSWORD,
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': process.env.BREVO_API_KEY!,
         },
+        body: JSON.stringify({
+          sender: { name: 'AuScope', email: 'waitlist@mic3solutiongroup.com' }, // Ensure this is authenticated in Brevo
+          to: [{ email }],
+          subject: "You're on the AuScope Waitlist — Access Coming Soon",
+          htmlContent: emailHtml(email),
+          textContent: `You're on the AuScope Waitlist!\n\nWelcome to AuScope early access. You've secured a priority spot ahead of our official launch.\n\nYour reserved email: ${email}\n\n© 2026 AuScope. All rights reserved.`,
+        }),
       });
 
-      await transporter.sendMail({
-        from: `"AuScope" <${process.env.ZOHO_EMAIL}>`,
-        to: email,
-        replyTo: process.env.ZOHO_EMAIL,
-        subject: "You're on the AuScope Waitlist — Access Coming Soon",
-        headers: {
-          'X-Priority': '3',
-          'List-Unsubscribe': `<mailto:${process.env.ZOHO_EMAIL}?subject=unsubscribe>`,
-        },
-        text: `You're on the AuScope Waitlist!\n\nWelcome to AuScope early access. You've secured a priority spot ahead of our official launch.\n\nHere's what's waiting for you:\n\n- Live Intelligence Dashboard: Real-time XAU/USD price streaming, interactive charts, and market overview.\n- AI-Powered Trade Signals: Daily buy/sell/hold signals with confidence scores.\n- Geopolitical Heat Map: Global conflicts and central bank moves scored by gold price impact.\n- Curated Gold News Feed: AI-filtered market-moving stories from global financial sources.\n- Economic Calendar & Comms: Fed decisions, CPI, NFP reports + built-in trader messaging.\n\nYour reserved email: ${email}\nWe'll notify you the moment access opens. No action needed.\n\n© 2026 AuScope. All rights reserved.`,
-        html: emailHtml(email),
-      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(JSON.stringify(err));
+      }
       emailStatus = 'sent';
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      console.error('Zoho email error:', errMsg);
+      console.error('Brevo email error:', errMsg);
       emailStatus = errMsg;
     }
   } else {
