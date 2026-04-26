@@ -121,12 +121,18 @@ export async function POST(req: NextRequest) {
       emailStatus = 'sent';
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      console.error('Brevo email error:', errMsg);
+      console.error('--- BREVO API ERROR ---');
+      console.error(errMsg);
+      console.error('-----------------------');
       emailStatus = errMsg;
     }
   } else {
-    console.log('Local Environment: Skipped sending waitlist email to', email);
+    console.log('Local Environment: Skipping email send.');
   }
 
-  return NextResponse.json({ success: true, emailStatus });
+  return NextResponse.json({ 
+    success: true, 
+    emailStatus,
+    debug: process.env.NODE_ENV === 'production' ? 'Check Vercel logs for full error' : 'Local'
+  });
 }
