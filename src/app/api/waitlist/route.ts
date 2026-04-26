@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
           'api-key': process.env.BREVO_API_KEY!,
         },
         body: JSON.stringify({
-          sender: { name: 'AuScope', email: 'waitlist@mic3solutiongroup.com' }, // Ensure this is authenticated in Brevo
+          sender: { name: 'AuScope', email: 'waitlist@auscope.mic3solutiongroup.com' }, // Updated to match verified Brevo sender
           to: [{ email }],
           subject: "You're on the AuScope Waitlist — Access Coming Soon",
           htmlContent: emailHtml(email),
