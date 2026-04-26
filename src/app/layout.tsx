@@ -17,6 +17,9 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "AuScope | Terminal",
   description: "XAU/USD Gold Analysis Terminal",
+  icons: {
+    icon: "/logo.svg",
+  },
 };
 
 export default function RootLayout({
