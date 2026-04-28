@@ -11,7 +11,6 @@ import {
   Lock, 
   LogOut, 
   ShieldCheck, 
-  Globe,
   Clock,
   ChevronRight
 } from 'lucide-react';
@@ -19,6 +18,27 @@ import {
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
+  const [lastSync, setLastSync] = useState<string>('Just now');
+
+  // Track real online/offline status
+  useEffect(() => {
+    // Set initial state from browser
+    setIsOnline(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      setLastSync(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -31,6 +51,7 @@ export default function ProfilePage() {
               full_name: data?.full_name || user.user_metadata?.full_name,
               avatar_url: data?.avatar_url || user.user_metadata?.avatar_url
             });
+            setLastSync(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
             setLoading(false);
           });
       }
@@ -107,11 +128,16 @@ export default function ProfilePage() {
                   <p className="text-slate-500 text-sm font-medium">Global Markets Intelligence Operator</p>
                   
                   <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4 pt-4 border-t border-slate-800/50">
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold tracking-wider uppercase">
-                      <Globe size={12} /> Live Connection
+                    <div className={`flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase ${
+                      isOnline ? 'text-emerald-400' : 'text-red-400'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'
+                      }`} />
+                      {isOnline ? 'Online' : 'Offline'}
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold tracking-wider uppercase">
-                      <Clock size={12} /> Last Sync: Just now
+                      <Clock size={12} /> Last Sync: {isOnline ? lastSync : 'Disconnected'}
                     </div>
                   </div>
                 </div>
