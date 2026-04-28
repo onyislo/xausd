@@ -16,17 +16,20 @@ import {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [profile, setProfile] = useState<any>(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('user-profile');
-      return cached ? JSON.parse(cached) : null;
-    }
-    return null;
-  });
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
+    // Load from cache on mount
+    const cached = localStorage.getItem('user-profile');
+    if (cached) setProfile(JSON.parse(cached));
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
+        // Mark user as online in DB globally (Try both ID and Email to catch waitlist rows)
+        supabase.from('profiles').update({ status: 'online' }).eq('id', user.id).then();
+        if (user.email) {
+          supabase.from('profiles').update({ status: 'online' }).eq('email', user.email).then();
+        }
+
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
           .then(({ data }) => {
             const p = { 

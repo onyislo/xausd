@@ -43,8 +43,15 @@ export default function ProfilePage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
+        // Force update status to online in DB when viewing profile
+        supabase.from('profiles').update({ status: 'online' }).eq('id', user.id).then();
+        if (user.email) {
+          supabase.from('profiles').update({ status: 'online' }).eq('email', user.email).then();
+        }
+
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
           .then(({ data }) => {
+            if (data) setIsOnline(true); // If we got data, we are definitely online
             setProfile({ 
               ...data, 
               email: user.email,
@@ -57,6 +64,14 @@ export default function ProfilePage() {
       }
     });
   }, []);
+
+  const handleLogout = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('profiles').update({ status: 'offline' }).eq('id', user.id);
+    }
+    await supabase.auth.signOut();
+  };
 
   const uploadAvatar = async (e: any) => {
     const file = e.target.files?.[0];
@@ -200,7 +215,7 @@ export default function ProfilePage() {
 
             <section className="pt-4">
               <Link href="/login" 
-                onClick={() => supabase.auth.signOut()}
+                onClick={handleLogout}
                 className="flex items-center justify-center gap-3 w-full p-4 bg-red-500/5 border border-red-500/20 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold text-sm tracking-widest uppercase group">
                 <LogOut size={18} className="group-hover:translate-x-1 transition-transform" />
                 Terminate Session (Logout)

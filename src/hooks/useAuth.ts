@@ -45,8 +45,15 @@ export function useAuth() {
     setLoading(true);
     setError(null);
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password: pass });
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password: pass });
       if (authError) throw authError;
+      // Mark user as online
+      if (data.user) {
+        await supabase.from('profiles').update({ status: 'online' }).eq('id', data.user.id);
+        if (data.user.email) {
+          await supabase.from('profiles').update({ status: 'online' }).eq('email', data.user.email);
+        }
+      }
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed');
@@ -56,6 +63,14 @@ export function useAuth() {
   };
 
   const signOut = async () => {
+    // Mark user as offline before signing out
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('profiles').update({ status: 'offline' }).eq('id', user.id);
+      if (user.email) {
+        await supabase.from('profiles').update({ status: 'offline' }).eq('email', user.email);
+      }
+    }
     await supabase.auth.signOut();
     router.refresh();
   };
