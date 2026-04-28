@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
 
   // 1. Save to Supabase
   const { error: dbError } = await supabase.from('waitlist').insert([{ email }]);
-  
+
   // If email already exists (Postgres error 23505)
   if (dbError?.code === '23505') {
     return NextResponse.json({ success: true, alreadyRegistered: true });
@@ -101,7 +101,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
-  // 2. Send email via Brevo only in Production
+  // 2. Upsert a profile record for this waitlist user
+  // We use email as the lookup key since they don't have an auth account yet.
+  // When they later sign up via auth, the trigger will update this with their real user.id.
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .upsert([{ email, username: email.split('@')[0], created_at: new Date().toISOString() }], {
+      onConflict: 'email',
+      ignoreDuplicates: true,
+    });
+
+  if (profileError) {
+    console.warn('Profile upsert warning (non-fatal):', profileError.message);
+  }
+
+  // 3. Send email via Brevo only in Production
   let emailStatus = 'skipped';
   if (process.env.NODE_ENV === 'production') {
     try {
@@ -136,8 +150,8 @@ export async function POST(req: NextRequest) {
     console.log('Local Environment: Skipping email send.');
   }
 
-  return NextResponse.json({ 
-    success: true, 
+  return NextResponse.json({
+    success: true,
     emailStatus,
     debug: process.env.NODE_ENV === 'production' ? 'Check Vercel logs for full error' : 'Local'
   });

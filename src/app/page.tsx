@@ -8,7 +8,8 @@ export default function HomePage() {
 
   return (
     <div style={{ background: '#0a0e17', color: '#e0e6ed', fontFamily: "'Inter',sans-serif", minHeight: '100vh' }}>
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .mobile-nav-btn { display: none !important; }
         .desktop-nav { display: flex !important; }
         .nav-logo-icon { display: flex; }
@@ -25,7 +26,7 @@ export default function HomePage() {
         position: 'fixed', top: 0, left: 0, bottom: 0, width: '280px',
         background: 'rgba(10,14,23,0.98)', backdropFilter: 'blur(20px)', zIndex: 200,
         borderRight: '1px solid rgba(255,255,255,0.06)',
-        transform: nav ? 'translateX(0)' : 'translateX(-100%)', 
+        transform: nav ? 'translateX(0)' : 'translateX(-100%)',
         transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         display: 'flex', flexDirection: 'column', padding: '24px'
       }}>
@@ -42,8 +43,8 @@ export default function HomePage() {
           </div>
           <button onClick={() => setNav(false)} style={{ background: 'none', border: 'none', color: '#8a9bb2', cursor: 'pointer', padding: '4px' }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-               <line x1="18" y1="6" x2="6" y2="18"></line>
-               <line x1="6" y1="6" x2="18" y2="18"></line>
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </button>
         </div>
@@ -58,9 +59,9 @@ export default function HomePage() {
         </div>
       </div>
       {nav && (
-        <div 
+        <div
           onClick={() => setNav(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 150 }} 
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 150 }}
         />
       )}
 

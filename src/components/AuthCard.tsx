@@ -61,9 +61,9 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
             marginBottom: '12px',
           }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200" opacity="0.9"/>
-              <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200" opacity="0.9"/>
-              <rect x="6" y="4" width="12" height="5" rx="1" fill="#1a1200" opacity="0.9"/>
+              <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200" opacity="0.9" />
+              <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200" opacity="0.9" />
+              <rect x="6" y="4" width="12" height="5" rx="1" fill="#1a1200" opacity="0.9" />
             </svg>
           </div>
           <h1 style={{
@@ -124,9 +124,9 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
                 {successMessage}
               </div>
               <Link href="/" style={{
-                 display: 'block', marginTop: '30px', color: '#f5c451', textDecoration: 'none',
-                 fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', border: '1px solid #f5c451',
-                 padding: '10px', borderRadius: '6px', textAlign: 'center', textTransform: 'uppercase'
+                display: 'block', marginTop: '30px', color: '#f5c451', textDecoration: 'none',
+                fontSize: '11px', fontWeight: 600, letterSpacing: '0.05em', border: '1px solid #f5c451',
+                padding: '10px', borderRadius: '6px', textAlign: 'center', textTransform: 'uppercase'
               }}>
                 Return to Home
               </Link>
@@ -139,118 +139,118 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
                 </div>
               )}
 
-          <form onSubmit={handle}>
-            {fields.map(field => {
-              const isPass = field.type === 'password';
-              return (
-                <div key={field.id} style={{ marginBottom: '12px' }}>
-                  <label style={{
-                    display: 'block', fontSize: '10px', fontWeight: 600,
-                    color: '#8a9bb2', textTransform: 'uppercase', letterSpacing: '0.08em',
-                    marginBottom: '6px',
-                  }}>{field.label}</label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      id={field.id}
-                      type={isPass && show[field.id] ? 'text' : field.type}
-                      placeholder={field.placeholder}
-                      required
-                      onChange={e => setForm(f => ({ ...f, [field.id]: e.target.value }))}
-                      style={{
-                        width: '100%', padding: '9px 12px',
-                        paddingRight: isPass ? '40px' : '12px',
-                        background: 'rgba(10,14,23,0.8)',
-                        border: '1px solid #2a3441',
-                        borderRadius: '6px',
-                        color: '#e0e6ed', fontSize: '13px',
-                        outline: 'none', boxSizing: 'border-box',
-                        transition: 'border-color 0.2s',
-                        fontFamily: "'Inter', sans-serif",
-                      }}
-                      onFocus={e => { e.target.style.borderColor = 'rgba(245,196,81,0.5)'; }}
-                      onBlur={e => { e.target.style.borderColor = '#2a3441'; }}
-                    />
-                    {isPass && (
-                      <button type="button"
-                        onClick={() => setShow(s => ({ ...s, [field.id]: !s[field.id] }))}
-                        style={{
-                          position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          color: '#4a5568', fontSize: '14px', padding: '2px',
-                        }}>
-                        {show[field.id] ? '🙈' : '👁'}
-                      </button>
-                    )}
+              <form onSubmit={handle}>
+                {fields.map(field => {
+                  const isPass = field.type === 'password';
+                  return (
+                    <div key={field.id} style={{ marginBottom: '12px' }}>
+                      <label style={{
+                        display: 'block', fontSize: '10px', fontWeight: 600,
+                        color: '#8a9bb2', textTransform: 'uppercase', letterSpacing: '0.08em',
+                        marginBottom: '6px',
+                      }}>{field.label}</label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          id={field.id}
+                          type={isPass && show[field.id] ? 'text' : field.type}
+                          placeholder={field.placeholder}
+                          required
+                          onChange={e => setForm(f => ({ ...f, [field.id]: e.target.value }))}
+                          style={{
+                            width: '100%', padding: '9px 12px',
+                            paddingRight: isPass ? '40px' : '12px',
+                            background: 'rgba(10,14,23,0.8)',
+                            border: '1px solid #2a3441',
+                            borderRadius: '6px',
+                            color: '#e0e6ed', fontSize: '13px',
+                            outline: 'none', boxSizing: 'border-box',
+                            transition: 'border-color 0.2s',
+                            fontFamily: "'Inter', sans-serif",
+                          }}
+                          onFocus={e => { e.target.style.borderColor = 'rgba(245,196,81,0.5)'; }}
+                          onBlur={e => { e.target.style.borderColor = '#2a3441'; }}
+                        />
+                        {isPass && (
+                          <button type="button"
+                            onClick={() => setShow(s => ({ ...s, [field.id]: !s[field.id] }))}
+                            style={{
+                              position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                              background: 'none', border: 'none', cursor: 'pointer',
+                              color: '#4a5568', fontSize: '14px', padding: '2px',
+                            }}>
+                            {show[field.id] ? '🙈' : '👁'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {isLogin && (
+                  <div style={{ textAlign: 'right', marginBottom: '16px', marginTop: '-6px' }}>
+                    <Link href="#" style={{ fontSize: '10px', color: '#f5c451', textDecoration: 'none' }}>
+                      Forgot password?
+                    </Link>
                   </div>
-                </div>
-              );
-            })}
+                )}
 
-            {isLogin && (
-              <div style={{ textAlign: 'right', marginBottom: '16px', marginTop: '-6px' }}>
-                <Link href="#" style={{ fontSize: '10px', color: '#f5c451', textDecoration: 'none' }}>
-                  Forgot password?
-                </Link>
-              </div>
-            )}
-
-            <button type="submit" disabled={loading} style={{
-              width: '100%', padding: '11px',
-              background: loading
-                ? 'rgba(245,196,81,0.2)'
-                : 'linear-gradient(135deg, #f5c451, #d4a017)',
-              border: 'none', borderRadius: '6px',
-              color: '#0a0e17', fontSize: '12px', fontWeight: 800,
-              fontFamily: "'Chakra Petch', sans-serif",
-              letterSpacing: '0.1em', textTransform: 'uppercase',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              boxShadow: loading ? 'none' : '0 0 15px rgba(245,196,81,0.25)',
-              transition: 'all 0.2s',
-              marginBottom: '16px',
-            }}>
-              {loading ? (isLogin ? 'Authenticating...' : 'Processing...') : (isLogin ? 'Access Terminal' : (isProd ? 'Join Waitlist' : 'Create Account'))}
-            </button>
-
-            {/* Divider */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <div style={{ flex: 1, height: '1px', background: '#1e2a3a' }} />
-              <span style={{ fontSize: '10px', color: '#2a3441', textTransform: 'uppercase' }}>or</span>
-              <div style={{ flex: 1, height: '1px', background: '#1e2a3a' }} />
-            </div>
-
-            {/* Social Buttons */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-              {[
-                { label: 'Google', icon: 'G', color: '#4285F4' },
-                { label: 'Apple', icon: '', color: '#ffffff' },
-              ].map(s => (
-                <button key={s.label} type="button" style={{
-                  flex: 1, padding: '8px',
-                  background: 'rgba(10,14,23,0.8)',
-                  border: '1px solid #2a3441',
-                  borderRadius: '6px', color: '#8a9bb2',
-                  fontSize: '11px', fontWeight: 600,
-                  cursor: 'pointer', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', gap: '6px',
+                <button type="submit" disabled={loading} style={{
+                  width: '100%', padding: '11px',
+                  background: loading
+                    ? 'rgba(245,196,81,0.2)'
+                    : 'linear-gradient(135deg, #f5c451, #d4a017)',
+                  border: 'none', borderRadius: '6px',
+                  color: '#0a0e17', fontSize: '12px', fontWeight: 800,
+                  fontFamily: "'Chakra Petch', sans-serif",
+                  letterSpacing: '0.1em', textTransform: 'uppercase',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  boxShadow: loading ? 'none' : '0 0 15px rgba(245,196,81,0.25)',
                   transition: 'all 0.2s',
-                  fontFamily: "'Inter', sans-serif",
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = s.color; e.currentTarget.style.color = '#e0e6ed'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#2a3441'; e.currentTarget.style.color = '#8a9bb2'; }}>
-                  <span style={{ color: s.color, fontWeight: 800 }}>{s.icon}</span>
-                  {s.label}
+                  marginBottom: '16px',
+                }}>
+                  {loading ? (isLogin ? 'Authenticating...' : 'Processing...') : (isLogin ? 'Access Terminal' : (isProd ? 'Join Waitlist' : 'Create Account'))}
                 </button>
-              ))}
-            </div>
 
-            <p style={{ textAlign: 'center', fontSize: '11px', color: '#4a5568' }}>
-              {isLogin ? "New to Terminal? " : 'Known user? '}
-              <Link href={isLogin ? '/register' : '/login'}
-                style={{ color: '#f5c451', textDecoration: 'none', fontWeight: 600 }}>
-                {isLogin ? 'Create Account' : 'Sign In'}
-              </Link>
-            </p>
-          </form>
+                {/* Divider */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <div style={{ flex: 1, height: '1px', background: '#1e2a3a' }} />
+                  <span style={{ fontSize: '10px', color: '#2a3441', textTransform: 'uppercase' }}>or</span>
+                  <div style={{ flex: 1, height: '1px', background: '#1e2a3a' }} />
+                </div>
+
+                {/* Social Buttons */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                  {[
+                    { label: 'Google', icon: 'G', color: '#4285F4' },
+                    { label: 'Apple', icon: '', color: '#ffffff' },
+                  ].map(s => (
+                    <button key={s.label} type="button" style={{
+                      flex: 1, padding: '8px',
+                      background: 'rgba(10,14,23,0.8)',
+                      border: '1px solid #2a3441',
+                      borderRadius: '6px', color: '#8a9bb2',
+                      fontSize: '11px', fontWeight: 600,
+                      cursor: 'pointer', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center', gap: '6px',
+                      transition: 'all 0.2s',
+                      fontFamily: "'Inter', sans-serif",
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = s.color; e.currentTarget.style.color = '#e0e6ed'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = '#2a3441'; e.currentTarget.style.color = '#8a9bb2'; }}>
+                      <span style={{ color: s.color, fontWeight: 800 }}>{s.icon}</span>
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+
+                <p style={{ textAlign: 'center', fontSize: '11px', color: '#4a5568' }}>
+                  {isLogin ? "New to Terminal? " : 'Known user? '}
+                  <Link href={isLogin ? '/register' : '/login'}
+                    style={{ color: '#f5c451', textDecoration: 'none', fontWeight: 600 }}>
+                    {isLogin ? 'Create Account' : 'Sign In'}
+                  </Link>
+                </p>
+              </form>
             </React.Fragment>
           )}
         </div>
