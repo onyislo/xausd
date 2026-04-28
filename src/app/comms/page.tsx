@@ -34,8 +34,8 @@ export default function CommsPage() {
   const filtered = tab === 'channels'
     ? chatData.filter(c => c.type === 'group')
     : tab === 'dms'
-    ? chatData.filter(c => c.type === 'dm')
-    : chatData.filter(c => c.type === 'ai');
+      ? chatData.filter(c => c.type === 'dm')
+      : chatData.filter(c => c.type === 'ai');
 
   const handleSend = () => {
     if (!inputText.trim()) return;
@@ -104,7 +104,7 @@ export default function CommsPage() {
       .select('id')
       .eq('username', inviteEmail.trim())
       .single();
-    
+
     if (user) {
       await supabase.from('channel_members').insert([{ channel_id: activeId, user_id: user.id }]);
       setInviteEmail('');
@@ -151,8 +151,8 @@ export default function CommsPage() {
     setSearchResults(results);
   };
 
-  const onStartDM = async (uid: string) => {
-    await startDM(uid);
+  const onStartDM = async (uid: string, username?: string) => {
+    await startDM(uid, username);
     setTab('dms');
     setSearchResults([]);
   };
@@ -178,19 +178,18 @@ export default function CommsPage() {
             <div className="flex border-b border-yellow-500/10 shrink-0 p-1 bg-slate-900/50">
               {([
                 { key: 'channels', icon: <Hash size={16} />, title: 'Channels' },
-                { key: 'dms',      icon: <MessageSquare size={16} />, title: 'Direct'  },
-                { key: 'friends',  icon: <Users size={16} />, title: 'Friends' },
-                { key: 'ai',       icon: <Bot size={16} />, title: 'AI Chat' },
+                { key: 'dms', icon: <MessageSquare size={16} />, title: 'Direct' },
+                { key: 'friends', icon: <Users size={16} />, title: 'Friends' },
+                { key: 'ai', icon: <Bot size={16} />, title: 'AI Chat' },
               ] as const).map(t => (
-                <button 
-                  key={t.key} 
-                  onClick={() => setTab(t.key)} 
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
                   title={t.title}
-                  className={`flex-1 py-2 flex items-center justify-center rounded-lg transition-all duration-300 ${
-                    tab === t.key
+                  className={`flex-1 py-2 flex items-center justify-center rounded-lg transition-all duration-300 ${tab === t.key
                       ? 'text-yellow-500 bg-yellow-500/10 shadow-[inset_0_0_10px_rgba(245,196,81,0.1)]'
                       : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'
-                  }`}
+                    }`}
                 >
                   <div className={`transition-transform duration-300 ${tab === t.key ? 'scale-110' : 'scale-100'}`}>
                     {t.icon}
@@ -202,16 +201,16 @@ export default function CommsPage() {
             {/* Search + Create */}
             <div className="p-3 flex gap-2 border-b border-yellow-500/10 shrink-0 bg-slate-900/20">
               <div className="relative flex-1 group">
-                <input 
+                <input
                   id="comms-search"
-                  className="w-full bg-[#0a0e17]/80 border border-slate-700/50 text-[11px] px-8 py-2 rounded-xl focus:border-yellow-500/40 focus:bg-[#0a0e17] transition-all outline-none placeholder:text-slate-600 text-slate-300 font-medium" 
+                  className="w-full bg-[#0a0e17]/80 border border-slate-700/50 text-[11px] px-8 py-2 rounded-xl focus:border-yellow-500/40 focus:bg-[#0a0e17] transition-all outline-none placeholder:text-slate-600 text-slate-300 font-medium"
                   placeholder={tab === 'friends' ? "Search by username to add friends..." : "Intercept communications..."}
                   onChange={(e) => handleSearch(e.target.value)}
                 />
                 <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-yellow-500/60 transition-colors" />
               </div>
               {(tab === 'channels' || tab === 'friends') && (
-                <button 
+                <button
                   onClick={() => tab === 'channels' ? setIsCreating(true) : document.getElementById('comms-search')?.focus()}
                   className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl text-[#1a1200] hover:shadow-[0_0_15px_rgba(245,196,81,0.3)] transition-all active:scale-95 group"
                 >
@@ -238,7 +237,7 @@ export default function CommsPage() {
                       </div>
                       <div className="flex gap-1 shrink-0">
                         <button onClick={() => addFriend(u.id)} className="p-1.5 text-slate-500 hover:text-yellow-500 transition-colors" title="Add Friend"><UserPlus size={14} /></button>
-                        <button onClick={() => onStartDM(u.id)} className="p-1.5 text-slate-500 hover:text-green-500 transition-colors" title="Message"><MessageSquare size={14} /></button>
+                        <button onClick={() => onStartDM(u.id, u.username)} className="p-1.5 text-slate-500 hover:text-green-500 transition-colors" title="Message"><MessageSquare size={14} /></button>
                       </div>
                     </div>
                   ))}
@@ -268,7 +267,7 @@ export default function CommsPage() {
                         </div>
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => onStartDM(f.id)} className="p-2 text-slate-400 hover:text-yellow-500"><MessageSquare size={18} /></button>
+                        <button onClick={() => onStartDM(f.id, f.username)} className="p-2 text-slate-400 hover:text-yellow-500"><MessageSquare size={18} /></button>
                         <button onClick={() => removeFriend(f.id)} className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={18} /></button>
                       </div>
                     </div>
@@ -312,9 +311,9 @@ export default function CommsPage() {
                   </div>
                   <div className="flex items-center gap-4 text-slate-400">
                     <Phone size={17} className="cursor-pointer hover:text-yellow-500 transition-colors" />
-                    
+
                     <div className="relative">
-                      <button 
+                      <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                         className={`p-1.5 rounded-lg transition-all ${isMenuOpen ? 'bg-yellow-500/20 text-yellow-500' : 'hover:bg-slate-700/50'}`}
                       >
@@ -326,7 +325,7 @@ export default function CommsPage() {
                           <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
                             <Info size={14} /> Group Info
                           </button>
-                          
+
                           {(activeChat.created_by === currentUser?.id || !activeChat.created_by) && (
                             <button onClick={() => { setIsManaging(true); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-xs text-yellow-500/80 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all font-bold">
                               <Shield size={14} /> Manage Group
@@ -336,7 +335,7 @@ export default function CommsPage() {
                           <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
                             <CheckCircle size={14} /> Select Messages
                           </button>
-                          
+
                           <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
                             <BellOff size={14} /> Mute Chats
                           </button>
@@ -368,10 +367,10 @@ export default function CommsPage() {
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 bg-[#0a0e17] custom-scrollbar">
                   {activeChat.messages?.map((msg: any, i: number) => (
-                    <MessageItem 
-                      key={msg.id || i} 
-                      msg={msg} 
-                      onDelete={(mid: string) => deleteMessage(mid, activeId as string)} 
+                    <MessageItem
+                      key={msg.id || i}
+                      msg={msg}
+                      onDelete={(mid: string) => deleteMessage(mid, activeId as string)}
                       onContextMenu={(e: React.MouseEvent) => msg.id && msg.sender === 'User' && onRightClick(e, msg.id)}
                     />
                   ))}
@@ -440,7 +439,7 @@ export default function CommsPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-[450px] bg-[#0f1420] border border-yellow-500/30 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-yellow-500 to-transparent" />
-            
+
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-xl font-black text-slate-100 uppercase tracking-widest">Manage Hub</h2>
@@ -466,10 +465,10 @@ export default function CommsPage() {
                     <UserPlus size={18} />
                   </button>
                 </div>
-                
+
                 <button onClick={copyInviteLink} className="w-full flex items-center justify-center gap-2 py-3 bg-slate-800/40 border border-slate-700 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 transition-all group">
-                   {copied ? <Check size={14} className="text-green-500" /> : <LinkIcon size={14} className="group-hover:text-yellow-500" />}
-                   {copied ? 'LINK COPIED TO CLIPBOARD' : 'GENERATE & COPY INVITE LINK'}
+                  {copied ? <Check size={14} className="text-green-500" /> : <LinkIcon size={14} className="group-hover:text-yellow-500" />}
+                  {copied ? 'LINK COPIED TO CLIPBOARD' : 'GENERATE & COPY INVITE LINK'}
                 </button>
               </div>
 
@@ -507,11 +506,11 @@ export default function CommsPage() {
         </div>
       )}
       {contextMenu && (
-        <ContextMenu 
-          x={contextMenu.x} 
-          y={contextMenu.y} 
-          msgId={contextMenu.msgId} 
-          onDelete={(mid: string) => deleteMessage(mid, activeId as string)} 
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          msgId={contextMenu.msgId}
+          onDelete={(mid: string) => deleteMessage(mid, activeId as string)}
         />
       )}
     </main>
@@ -520,18 +519,18 @@ export default function CommsPage() {
 
 function ContextMenu({ x, y, msgId, onDelete }: any) {
   return (
-    <div 
+    <div
       className="fixed z-[1000] bg-[#0f1420] border border-yellow-500/30 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] py-1.5 min-w-[140px] animate-in fade-in zoom-in-95 duration-100 backdrop-blur-md"
       style={{ top: y, left: x }}
     >
-      <button 
+      <button
         onClick={() => onDelete(msgId)}
         className="w-full text-left px-4 py-2.5 text-[11px] font-black text-red-500/80 hover:text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition-colors uppercase tracking-widest"
       >
         <Trash2 size={13} /> Delete Message
       </button>
       <div className="h-[1px] bg-yellow-500/5 my-1" />
-      <button 
+      <button
         className="w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-400 hover:bg-slate-800 flex items-center gap-3 transition-colors uppercase tracking-widest"
       >
         <Copy size={13} /> Copy Text
@@ -542,19 +541,17 @@ function ContextMenu({ x, y, msgId, onDelete }: any) {
 
 function ChatListItem({ chat, active, onSelect }: any) {
   return (
-    <div onClick={onSelect} className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all border group relative ${
-      active 
-        ? 'bg-yellow-500/5 border-yellow-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.2)]' 
+    <div onClick={onSelect} className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all border group relative ${active
+        ? 'bg-yellow-500/5 border-yellow-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
         : 'border-transparent hover:bg-slate-800/40'
-    }`}>
+      }`}>
       {active && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-yellow-500 rounded-r-full shadow-[0_0_10px_#f5c451]" />
       )}
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all duration-300 ${
-        active 
-          ? 'bg-yellow-500/20 border-yellow-500/40 shadow-[0_0_15px_rgba(245,196,81,0.2)] scale-105' 
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all duration-300 ${active
+          ? 'bg-yellow-500/20 border-yellow-500/40 shadow-[0_0_15px_rgba(245,196,81,0.2)] scale-105'
           : 'bg-slate-800/60 border-slate-700/50 group-hover:border-slate-500'
-      }`}>
+        }`}>
         {chat.type === 'dm' ? <User size={18} className={active ? 'text-yellow-500' : 'text-slate-500'} /> : <Users size={18} className={active ? 'text-yellow-500' : 'text-slate-500'} />}
       </div>
       <div className="flex-1 min-w-0">
@@ -577,7 +574,7 @@ function ChatListItem({ chat, active, onSelect }: any) {
 function MessageItem({ msg, onDelete, onContextMenu }: any) {
   const isSelf = msg.sender === 'User';
   return (
-    <div 
+    <div
       onContextMenu={(e) => isSelf && onContextMenu(e)}
       className={`flex flex-col ${isSelf ? 'items-end' : 'items-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300`}
     >
@@ -588,16 +585,15 @@ function MessageItem({ msg, onDelete, onContextMenu }: any) {
           </div>
         )}
         <div className="relative group/bubble">
-          <div className={`px-4 py-2.5 rounded-[20px] text-[12px] leading-relaxed font-medium transition-all ${
-            isSelf 
-              ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-[#1a1200] rounded-br-none shadow-[0_4px_15px_rgba(245,196,81,0.15)] hover:shadow-[0_4px_20px_rgba(245,196,81,0.25)]' 
+          <div className={`px-4 py-2.5 rounded-[20px] text-[12px] leading-relaxed font-medium transition-all ${isSelf
+              ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-[#1a1200] rounded-br-none shadow-[0_4px_15px_rgba(245,196,81,0.15)] hover:shadow-[0_4px_20px_rgba(245,196,81,0.25)]'
               : 'bg-[#1a2333] text-slate-200 rounded-bl-none border border-slate-700/30 shadow-lg hover:border-slate-600/50'
-          }`}>
+            }`}>
             {msg.text}
           </div>
-          
+
           {isSelf && msg.id && (
-            <button 
+            <button
               onClick={() => onDelete(msg.id)}
               className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 bg-red-500/5 text-red-500/20 hover:text-red-500 hover:bg-red-500/10 rounded-xl opacity-0 group-hover/bubble:opacity-100 transition-all duration-200"
               title="Delete Message"

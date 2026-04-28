@@ -16,30 +16,71 @@ export function useChat() {
   useEffect(() => {
     if (!currentUser) return;
     const fetchChannels = async () => {
-      const { data: channels } = await supabase.from('channels').select('*').order('created_at', { ascending: false });
+      const { data: channels } = await supabase
+        .from('channels')
+        .select('*, channel_members!inner(*, profiles(*))')
+        .eq('channel_members.user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
       if (channels) {
-        setChatData(channels.map(c => ({
-          id: c.id,
-          type: c.type,
-          name: c.name || (c.type === 'dm' ? 'Direct Message' : 'Secure Channel'),
-          created_by: c.created_by,
-          status: 'Encrypted Link Active',
-          lastMsg: 'Connect to begin sync',
-          time: 'Active',
-          messages: []
-        })));
-        if (channels.length > 0 && !activeId) setActiveId(channels[0].id);
+        const formatted = await Promise.all(channels.map(async (c: any) => {
+          let name = c.name;
+
+          if (c.type === 'dm') {
+            // Find the OTHER member's profile
+            const { data: otherMember } = await supabase
+              .from('channel_members')
+              .select('profiles(username)')
+              .eq('channel_id', c.id)
+              .neq('user_id', currentUser.id)
+              .single();
+
+            name = (otherMember as any)?.profiles?.username || 'Private Comms';
+          }
+
+          return {
+            id: c.id,
+            type: c.type,
+            name: name || (c.type === 'dm' ? 'Private Operative' : 'Broadcast Channel'),
+            created_by: c.created_by,
+            status: 'Encrypted Link Active',
+            lastMsg: 'Connect to begin sync',
+            time: 'Active',
+            messages: []
+          };
+        }));
+
+        setChatData(formatted);
+        if (formatted.length > 0 && !activeId) setActiveId(formatted[0].id);
       }
     };
 
     fetchChannels();
 
     const channelSub = supabase.channel('channels_realtime')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channels' }, (payload) => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channels' }, async (payload) => {
         const c = payload.new as any;
-        setChatData(prev => {
-          if (prev.some(ch => ch.id === c.id)) return prev; // skip duplicate
-          return [{ id: c.id, type: c.type, name: c.name || 'Secure Channel', created_by: c.created_by, status: 'Encrypted Link Active', lastMsg: 'Channel Initialized', time: 'Just now', messages: [] }, ...prev];
+
+        let name = c.name;
+        if (c.type === 'dm') {
+          const { data: other } = await supabase.from('channel_members').select('profiles(username)').eq('channel_id', c.id).neq('user_id', currentUser.id).single();
+          name = (other as any)?.profiles?.username || 'New Operative';
+        }
+
+        const newChannel = {
+          id: c.id,
+          type: c.type,
+          name: name || 'Channel Initialized',
+          created_by: c.created_by,
+          status: 'Encrypted Link Active',
+          lastMsg: 'New Connection',
+          time: 'Just now',
+          messages: []
+        };
+
+        setChatData(current => {
+          if (current.some(ch => ch.id === c.id)) return current;
+          return [newChannel, ...current];
         });
       })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'channels' }, (payload) => {
@@ -56,13 +97,13 @@ export function useChat() {
     if (!currentUser) return;
 
     const channel = supabase.channel('realtime_comms')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'messages' 
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages'
       }, (payload) => {
         const newMsg = payload.new as any;
-        
+
         setChatData(prev => prev.map(chat => {
           if (chat.id === newMsg.channel_id) {
             const formatted = {
@@ -70,10 +111,10 @@ export function useChat() {
               text: newMsg.content,
               time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
-            
+
             // Smarter duplicate check: if the text and sender and time (within the same minute) match, skip
-            const isDuplicate = chat.messages.some((m: any) => 
-              m.text === formatted.text && 
+            const isDuplicate = chat.messages.some((m: any) =>
+              m.text === formatted.text &&
               m.sender === formatted.sender &&
               m.time === formatted.time
             );
@@ -118,8 +159,8 @@ export function useChat() {
             }));
 
             // Filter existing local messages to find ones that aren't in the DB yet
-            const optimisticOnly = (chat.messages || []).filter((local: any) => 
-               !dbMessages.some(db => db.text === local.text && db.sender === local.sender)
+            const optimisticOnly = (chat.messages || []).filter((local: any) =>
+              !dbMessages.some(db => db.text === local.text && db.sender === local.sender)
             );
 
             return {
@@ -136,7 +177,7 @@ export function useChat() {
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || !activeId || !currentUser) return;
-    
+
     // OPTIMISTIC UPDATE: Add message to UI immediately
     const formatted = {
       sender: 'User',
@@ -144,7 +185,7 @@ export function useChat() {
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setChatData(prev => prev.map(chat => 
+    setChatData(prev => prev.map(chat =>
       chat.id === activeId ? {
         ...chat,
         messages: [...chat.messages, formatted],
@@ -153,17 +194,17 @@ export function useChat() {
       } : chat
     ));
 
-    const { data: inserted } = await supabase.from('messages').insert([{ 
-      channel_id: activeId, 
-      user_id: currentUser.id, 
-      content: text.trim() 
+    const { data: inserted } = await supabase.from('messages').insert([{
+      channel_id: activeId,
+      user_id: currentUser.id,
+      content: text.trim()
     }]).select().single();
 
     if (inserted) {
-      setChatData(prev => prev.map(chat => 
+      setChatData(prev => prev.map(chat =>
         chat.id === activeId ? {
           ...chat,
-          messages: chat.messages.map((m: any) => 
+          messages: chat.messages.map((m: any) =>
             (m.text === text.trim() && !m.id) ? { ...m, id: inserted.id } : m
           )
         } : chat
@@ -179,9 +220,9 @@ export function useChat() {
 
   const deleteMessage = async (messageId: string, channelId: string) => {
     if (!currentUser) return;
-    
+
     // OPTIMISTIC UPDATE
-    setChatData(prev => prev.map(chat => 
+    setChatData(prev => prev.map(chat =>
       chat.id === channelId ? {
         ...chat,
         messages: chat.messages.filter((m: any) => m.id !== messageId)
@@ -192,7 +233,7 @@ export function useChat() {
     await supabase.from('messages').delete().eq('id', messageId).eq('user_id', currentUser.id);
   };
 
-  // 5. Fetch Contacts
+  // 5. Fetch Contacts & Subscribe Real-time
   useEffect(() => {
     if (!currentUser) return;
     const fetchContacts = async () => {
@@ -202,7 +243,21 @@ export function useChat() {
         .eq('user_id', currentUser.id);
       if (data) setContacts(data.map(d => d.profiles));
     };
+
     fetchContacts();
+
+    const contactSub = supabase.channel('contacts_realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'contacts',
+        filter: `user_id=eq.${currentUser.id}`
+      }, () => {
+        fetchContacts(); // Refetch to get the profile data joined
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(contactSub); };
   }, [currentUser]);
 
   const addContact = async (profileId: string) => {
@@ -225,12 +280,12 @@ export function useChat() {
     return data || [];
   };
 
-  const startDM = async (otherUserId: string) => {
+  const startDM = async (otherUserId: string, otherUsername?: string) => {
     if (!currentUser) return null;
-    
+
     // Check if DM exists
     const { data: existing } = await supabase.rpc('get_dm_channel', { user_a: currentUser.id, user_b: otherUserId });
-    
+
     if (existing && existing.length > 0) {
       setActiveId(existing[0].id);
       return existing[0].id;
@@ -243,7 +298,19 @@ export function useChat() {
         { channel_id: channel.id, user_id: currentUser.id },
         { channel_id: channel.id, user_id: otherUserId }
       ]);
-      pushChannel(channel);
+
+      const newChat = {
+        id: channel.id,
+        type: 'dm',
+        name: otherUsername || 'Private Comms',
+        created_by: currentUser.id,
+        status: 'Encrypted Link Active',
+        lastMsg: 'Channel Initialized',
+        time: 'Just now',
+        messages: []
+      };
+      setChatData(prev => [newChat, ...prev]);
+      setActiveId(channel.id);
       return channel.id;
     }
     return null;
