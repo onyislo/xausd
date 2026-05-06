@@ -315,7 +315,7 @@ export default function CommsPage() {
                           {activeChat.type === 'dm' ? 'Direct' : 'Group'}
                         </span>
                       </div>
-                      <span className="text-[10px] text-green-400/80 font-mono tracking-widest">{activeChat.status}</span>
+                      <span className={`text-[10px] font-mono tracking-widest ${activeChat.status === 'Online' ? 'text-green-400/80' : 'text-slate-500'}`}>{activeChat.status}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-4 text-slate-400">
@@ -589,7 +589,7 @@ function ChatListItem({ chat, active, onSelect }: any) {
               {chat.name}
             </span>
             {chat.type === 'dm' && (
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0 shadow-[0_0_5px_#22c55e]" />
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${chat.status === 'Online' ? 'bg-green-500 shadow-[0_0_5px_#22c55e]' : 'bg-slate-600'}`} />
             )}
           </div>
           <span className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter shrink-0 ml-2">
