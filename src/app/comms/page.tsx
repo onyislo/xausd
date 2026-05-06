@@ -42,7 +42,7 @@ export default function CommsPage() {
   const handleAddFriend = async (id: string) => {
     await addFriend(id);
     setToastMessage("Friend added successfully");
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 10000);
   };
 
   const handleSend = () => {
@@ -553,9 +553,14 @@ export default function CommsPage() {
         />
       )}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-[2000] bg-green-500/10 border border-green-500/30 text-green-400 px-4 py-3 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.2)] flex items-center gap-3 animate-in slide-in-from-bottom-5 fade-in duration-300">
-          <CheckCircle size={18} />
-          <span className="text-[11px] font-black uppercase tracking-widest">{toastMessage}</span>
+        <div className="fixed top-6 right-6 z-[2000] w-72 bg-slate-900 border border-slate-700 text-slate-200 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden animate-in slide-in-from-top-5 fade-in duration-300">
+          <div className="flex items-center gap-3 p-4">
+            <CheckCircle size={18} className="text-green-500" />
+            <span className="text-[12px] font-bold uppercase tracking-widest">{toastMessage}</span>
+          </div>
+          <div className="h-1 bg-slate-800 w-full">
+            <div className="h-full bg-green-500" style={{ animation: 'toast-progress 10s linear forwards' }} />
+          </div>
         </div>
       )}
     </main>

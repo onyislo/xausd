@@ -2,17 +2,20 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { newsData, NewsItem } from '@/lib/newsData';
+import Sidebar from '@/components/Sidebar';
 
 export default function NewsPage() {
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
 
   return (
-    <main className="min-h-screen bg-[#0a0e17] text-slate-200 font-sans p-6 md:p-12 relative">
-      <div className="max-w-7xl mx-auto">
+    <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans flex h-screen overflow-hidden">
+      <Sidebar />
+      <div className="flex-1 overflow-y-auto p-6 md:p-12 relative">
+        <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="mb-12 flex justify-between items-center border-b border-slate-800 pb-6">
           <div>
-            <Link href="/" className="text-yellow-500 hover:text-yellow-400 text-sm font-bold tracking-widest uppercase flex items-center gap-2 mb-2 transition-colors">
+            <Link href="/dashboard" className="text-yellow-500 hover:text-yellow-400 text-sm font-bold tracking-widest uppercase flex items-center gap-2 mb-2 transition-colors">
               <span>←</span> BACK TO TERMINAL
             </Link>
             <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 uppercase">
@@ -178,6 +181,7 @@ export default function NewsPage() {
           <span>Global Node: HK-4</span>
         </div>
       </footer>
+      </div>
     </main>
   );
 }

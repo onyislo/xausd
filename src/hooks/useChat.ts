@@ -247,7 +247,10 @@ export function useChat() {
         .from('contacts')
         .select('*, profiles:contact_id(*)')
         .eq('user_id', currentUser.id);
-      if (data) setContacts(data.map(d => d.profiles));
+      if (data) {
+        const uniqueContacts = Array.from(new Map(data.map((d: any) => [d.profiles?.id, d.profiles])).values()).filter(Boolean);
+        setContacts(uniqueContacts);
+      }
     };
 
     fetchContacts();
@@ -261,10 +264,25 @@ export function useChat() {
 
   const addContact = async (profileId: string) => {
     if (!currentUser) return;
+    
+    // Check if already a friend
+    const { data: existing } = await supabase
+      .from('contacts')
+      .select('id')
+      .eq('user_id', currentUser.id)
+      .eq('contact_id', profileId);
+
+    if (existing && existing.length > 0) return;
+
     const { error } = await supabase.from('contacts').insert([{ user_id: currentUser.id, contact_id: profileId }]);
     if (!error) {
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', profileId).single();
-      if (profile) setContacts(prev => [...prev, profile]);
+      if (profile) {
+        setContacts(prev => {
+          if (prev.some(p => p.id === profile.id)) return prev;
+          return [...prev, profile];
+        });
+      }
     }
   };
 
