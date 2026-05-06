@@ -11,7 +11,7 @@ import { useSearchParams } from 'next/navigation';
 export default function CommsPage() {
   const { activeId, setActiveId, chatData, contacts: friends, addContact: addFriend, removeContact: removeFriend, searchProfiles, startDM, sendMessage, deleteMessage, currentUser, pushChannel } = useChat();
   const [inputText, setInputText] = useState('');
-  const [tab, setTab] = useState<'channels' | 'dms' | 'friends' | 'ai'>('channels');
+  const [tab, setTab] = useState<'all' | 'channels' | 'dms' | 'friends' | 'ai'>('all');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -23,6 +23,7 @@ export default function CommsPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const chatEndRef = React.useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, msgId: string } | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
   const activeChat = chatData.find(c => c.id === activeId) || null;
@@ -31,11 +32,18 @@ export default function CommsPage() {
   React.useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeChat?.messages]);
-  const filtered = tab === 'channels'
-    ? chatData.filter(c => c.type === 'group')
-    : tab === 'dms'
-      ? chatData.filter(c => c.type === 'dm')
-      : chatData.filter(c => c.type === 'ai');
+  const filtered = tab === 'all'
+    ? chatData.filter(c => c.type === 'group' || c.type === 'dm')
+    : tab === 'channels'
+      ? chatData.filter(c => c.type === 'group')
+      : tab === 'dms'
+        ? chatData.filter(c => c.type === 'dm')
+        : chatData.filter(c => c.type === 'ai');
+  const handleAddFriend = async (id: string) => {
+    await addFriend(id);
+    setToastMessage("Friend added successfully");
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   const handleSend = () => {
     if (!inputText.trim()) return;
@@ -177,7 +185,8 @@ export default function CommsPage() {
             {/* Tabs — premium icons */}
             <div className="flex border-b border-yellow-500/10 shrink-0 p-1 bg-slate-900/50">
               {([
-                { key: 'channels', icon: <Hash size={16} />, title: 'Channels' },
+                { key: 'all', icon: <Hash size={16} />, title: 'All Messages' },
+                { key: 'channels', icon: <Shield size={16} />, title: 'Groups' },
                 { key: 'dms', icon: <MessageSquare size={16} />, title: 'Direct' },
                 { key: 'friends', icon: <Users size={16} />, title: 'Friends' },
                 { key: 'ai', icon: <Bot size={16} />, title: 'AI Chat' },
@@ -209,12 +218,12 @@ export default function CommsPage() {
                 />
                 <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-yellow-500/60 transition-colors" />
               </div>
-              {(tab === 'channels' || tab === 'friends') && (
+              {(tab === 'channels' || tab === 'all' || tab === 'friends') && (
                 <button
-                  onClick={() => tab === 'channels' ? setIsCreating(true) : document.getElementById('comms-search')?.focus()}
+                  onClick={() => (tab === 'channels' || tab === 'all') ? setIsCreating(true) : document.getElementById('comms-search')?.focus()}
                   className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl text-[#1a1200] hover:shadow-[0_0_15px_rgba(245,196,81,0.3)] transition-all active:scale-95 group"
                 >
-                  {tab === 'channels' ? <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" /> : <UserPlus size={18} />}
+                  {(tab === 'channels' || tab === 'all') ? <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" /> : <UserPlus size={18} />}
                 </button>
               )}
             </div>
@@ -236,7 +245,9 @@ export default function CommsPage() {
                         <span className="text-[11px] font-bold text-slate-300 truncate">{u.username}</span>
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        <button onClick={() => addFriend(u.id)} className="p-1.5 text-slate-500 hover:text-yellow-500 transition-colors" title="Add Friend"><UserPlus size={14} /></button>
+                        {!friends.some((f: any) => f.id === u.id) && (
+                          <button onClick={() => handleAddFriend(u.id)} className="p-1.5 text-slate-500 hover:text-yellow-500 transition-colors" title="Add Friend"><UserPlus size={14} /></button>
+                        )}
                         <button onClick={() => onStartDM(u.id, u.username)} className="p-1.5 text-slate-500 hover:text-green-500 transition-colors" title="Message"><MessageSquare size={14} /></button>
                       </div>
                     </div>
@@ -278,7 +289,7 @@ export default function CommsPage() {
                   <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-600">
                     <span className="text-2xl">{tab === 'ai' ? '🤖' : tab === 'dms' ? '💬' : '#'}</span>
                     <span className="text-[10px] uppercase tracking-widest text-center px-4">
-                      {tab === 'channels' ? 'No channels yet. Hit + to create one.' : tab === 'dms' ? 'No direct messages yet.' : 'No AI sessions yet.'}
+                      {tab === 'all' ? 'No messages yet.' : tab === 'channels' ? 'No channels yet. Hit + to create one.' : tab === 'dms' ? 'No direct messages yet.' : 'No AI sessions yet.'}
                     </span>
                   </div>
                 ) : filtered.map(chat => (
@@ -540,6 +551,12 @@ export default function CommsPage() {
           msgId={contextMenu.msgId}
           onDelete={(mid: string) => deleteMessage(mid, activeId as string)}
         />
+      )}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-[2000] bg-green-500/10 border border-green-500/30 text-green-400 px-4 py-3 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.2)] flex items-center gap-3 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <CheckCircle size={18} />
+          <span className="text-[11px] font-black uppercase tracking-widest">{toastMessage}</span>
+        </div>
       )}
     </main>
   );
