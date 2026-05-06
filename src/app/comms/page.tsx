@@ -301,12 +301,21 @@ export default function CommsPage() {
                 {/* Chat Header */}
                 <div className="h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-6 shrink-0 bg-slate-800/40">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full border border-yellow-500/30 flex items-center justify-center bg-yellow-500/10 text-yellow-500">
-                      {activeChat.type === 'dm' ? <User size={18} /> : <Users size={18} />}
+                    <div className="w-9 h-9 rounded-full border border-yellow-500/30 flex items-center justify-center bg-yellow-500/10 text-yellow-500 overflow-hidden">
+                      {activeChat.avatar ? (
+                        <img src={activeChat.avatar} className="w-full h-full object-cover" alt="" />
+                      ) : activeChat.type === 'dm' ? <User size={18} /> : <Users size={18} />}
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-slate-200">{activeChat.name}</h2>
-                      <span className="text-[10px] text-green-400">{activeChat.status}</span>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-sm font-bold text-slate-200">{activeChat.name}</h2>
+                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-black tracking-tighter uppercase ${
+                          activeChat.type === 'dm' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        }`}>
+                          {activeChat.type === 'dm' ? 'Direct' : 'Group'}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-green-400/80 font-mono tracking-widest">{activeChat.status}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-4 text-slate-400">
@@ -322,40 +331,56 @@ export default function CommsPage() {
 
                       {isMenuOpen && (
                         <div className="absolute top-full right-0 mt-2 w-52 bg-[#0f1420] border border-yellow-500/30 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                          <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
-                            <Info size={14} /> Group Info
-                          </button>
 
-                          {(activeChat.created_by === currentUser?.id || !activeChat.created_by) && (
-                            <button onClick={() => { setIsManaging(true); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-xs text-yellow-500/80 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all font-bold">
-                              <Shield size={14} /> Manage Group
-                            </button>
-                          )}
-
-                          <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
-                            <CheckCircle size={14} /> Select Messages
-                          </button>
-
-                          <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
-                            <BellOff size={14} /> Mute Chats
-                          </button>
-
-                          <div className="h-[1px] bg-yellow-500/10 my-1" />
-
-                          <button onClick={() => { copyInviteLink(); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
-                            <LinkIcon size={14} /> Invite Link
-                          </button>
-
-                          <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
-                            <LogOut size={14} /> Exit Group
-                          </button>
-
-                          {(activeChat.created_by === currentUser?.id || !activeChat.created_by) && (
+                          {activeChat.type === 'dm' ? (
+                            /* ── DM MENU ── */
                             <>
+                              <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
+                                <Info size={14} /> View Profile
+                              </button>
+                              <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
+                                <BellOff size={14} /> Mute Chat
+                              </button>
                               <div className="h-[1px] bg-red-500/10 my-1" />
                               <button onClick={() => { handleDeleteChannel(); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-xs text-red-500 hover:bg-red-500/10 transition-all font-bold">
-                                <Trash2 size={14} /> Delete Group
+                                <Trash2 size={14} /> Delete Chat
                               </button>
+                            </>
+                          ) : (
+                            /* ── GROUP MENU ── */
+                            <>
+                              <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
+                                <Info size={14} /> Group Info
+                              </button>
+
+                              {(activeChat.created_by === currentUser?.id || !activeChat.created_by) && (
+                                <button onClick={() => { setIsManaging(true); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-xs text-yellow-500/80 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all font-bold">
+                                  <Shield size={14} /> Manage Group
+                                </button>
+                              )}
+
+                              <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
+                                <BellOff size={14} /> Mute Group
+                              </button>
+
+                              <div className="h-[1px] bg-yellow-500/10 my-1" />
+
+                              <button onClick={() => { copyInviteLink(); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
+                                <LinkIcon size={14} /> Invite Link
+                              </button>
+
+                              <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
+                                <LogOut size={14} /> Leave Group
+                              </button>
+
+                              {(activeChat.created_by === currentUser?.id || !activeChat.created_by) && (
+                                <>
+                                  <div className="h-[1px] bg-red-500/10 my-1" />
+                                  <button onClick={() => { handleDeleteChannel(); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-xs text-red-500 hover:bg-red-500/10 transition-all font-bold">
+                                    <Trash2 size={14} /> Delete Group
+                                  </button>
+                                </>
+                              )}
                             </>
                           )}
                         </div>
@@ -370,8 +395,11 @@ export default function CommsPage() {
                     <MessageItem
                       key={msg.id || i}
                       msg={msg}
+                      currentUserId={currentUser?.id}
+                      contactAvatar={activeChat.avatar}
+                      contactName={activeChat.name}
                       onDelete={(mid: string) => deleteMessage(mid, activeId as string)}
-                      onContextMenu={(e: React.MouseEvent) => msg.id && msg.sender === 'User' && onRightClick(e, msg.id)}
+                      onContextMenu={(e: React.MouseEvent) => msg.id && msg.user_id === currentUser?.id && onRightClick(e, msg.id)}
                     />
                   ))}
                   <div ref={chatEndRef} />
@@ -548,17 +576,22 @@ function ChatListItem({ chat, active, onSelect }: any) {
       {active && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-yellow-500 rounded-r-full shadow-[0_0_10px_#f5c451]" />
       )}
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all duration-300 ${active
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all duration-300 overflow-hidden ${active
           ? 'bg-yellow-500/20 border-yellow-500/40 shadow-[0_0_15px_rgba(245,196,81,0.2)] scale-105'
           : 'bg-slate-800/60 border-slate-700/50 group-hover:border-slate-500'
         }`}>
-        {chat.type === 'dm' ? <User size={18} className={active ? 'text-yellow-500' : 'text-slate-500'} /> : <Users size={18} className={active ? 'text-yellow-500' : 'text-slate-500'} />}
+        {chat.avatar ? <img src={chat.avatar} className="w-full h-full object-cover" alt="" /> : chat.type === 'dm' ? <User size={18} className={active ? 'text-yellow-500' : 'text-slate-500'} /> : <Users size={18} className={active ? 'text-yellow-500' : 'text-slate-500'} />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-center mb-0.5">
-          <span className={`text-[12px] font-bold truncate tracking-tight transition-colors ${active ? 'text-yellow-500' : 'text-slate-300 group-hover:text-white'}`}>
-            {chat.name}
-          </span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className={`text-[12px] font-bold truncate tracking-tight transition-colors ${active ? 'text-yellow-500' : 'text-slate-300 group-hover:text-white'}`}>
+              {chat.name}
+            </span>
+            {chat.type === 'dm' && (
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0 shadow-[0_0_5px_#22c55e]" />
+            )}
+          </div>
           <span className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter shrink-0 ml-2">
             {chat.time}
           </span>
@@ -571,8 +604,24 @@ function ChatListItem({ chat, active, onSelect }: any) {
   );
 }
 
-function MessageItem({ msg, onDelete, onContextMenu }: any) {
-  const isSelf = msg.sender === 'User';
+function MessageItem({ msg, currentUserId, contactAvatar, contactName, onDelete, onContextMenu }: any) {
+  // Use user_id directly — never rely on pre-computed 'sender' field
+  const isSelf = msg.user_id === currentUserId;
+  const isSystem = msg.text?.startsWith('SYSTEM:');
+
+  if (isSystem) {
+    return (
+      <div className="flex justify-center my-4 animate-in fade-in duration-700">
+        <div className="bg-yellow-500/5 border border-yellow-500/20 px-4 py-1.5 rounded-full flex items-center gap-2 shadow-[0_0_15px_rgba(245,196,81,0.05)]">
+          <Shield size={10} className="text-yellow-500/60" />
+          <span className="text-[9px] font-black tracking-[0.2em] text-yellow-500/80 uppercase font-mono">
+            {msg.text.replace('SYSTEM: ', '')}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       onContextMenu={(e) => isSelf && onContextMenu(e)}
@@ -580,8 +629,12 @@ function MessageItem({ msg, onDelete, onContextMenu }: any) {
     >
       <div className={`flex max-w-[80%] ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end gap-2.5`}>
         {!isSelf && (
-          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mb-1 shadow-inner">
-            <User size={14} className="text-slate-500" />
+          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mb-1 shadow-inner overflow-hidden">
+            {contactAvatar ? (
+              <img src={contactAvatar} className="w-full h-full object-cover" alt="" />
+            ) : (
+              <span className="text-[10px] font-bold text-slate-400">{contactName?.[0]?.toUpperCase() || '?'}</span>
+            )}
           </div>
         )}
         <div className="relative group/bubble">
