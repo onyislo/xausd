@@ -10,7 +10,11 @@ import { useSearchParams } from 'next/navigation';
 
 export default function CommsPage() {
   const { activeId, setActiveId, chatData, contacts: friends, addContact: addFriend, removeContact: removeFriend, searchProfiles, startDM, sendMessage, deleteMessage, currentUser, pushChannel } = useChat();
-  const [inputText, setInputText] = useState('');
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const inputText = activeId ? drafts[activeId] || '' : '';
+  const setInputText = (val: string) => {
+    if (activeId) setDrafts(prev => ({ ...prev, [activeId]: val }));
+  };
   const [tab, setTab] = useState<'all' | 'channels' | 'dms' | 'friends' | 'ai'>('all');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -418,13 +422,24 @@ export default function CommsPage() {
 
                 {/* Input */}
                 <div className="p-3 bg-[#0f1420] border-t border-slate-800">
-                  <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex items-center p-2 focus-within:border-yellow-500/50 transition-all">
-                    <input
-                      className="flex-1 bg-transparent text-sm text-slate-200 focus:outline-none px-3"
+                  <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex items-end p-2 focus-within:border-yellow-500/50 transition-all">
+                    <textarea
+                      rows={1}
+                      className="flex-1 bg-transparent text-sm text-slate-200 focus:outline-none px-3 resize-none custom-scrollbar py-2 max-h-32"
                       placeholder="Send encrypted message..."
                       value={inputText}
-                      onChange={e => setInputText(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleSend()}
+                      onChange={e => {
+                        setInputText(e.target.value);
+                        e.target.style.height = 'auto';
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
+                          e.currentTarget.style.height = 'auto';
+                        }
+                      }}
                     />
                     <button
                       className="w-9 h-9 bg-yellow-500 hover:bg-yellow-400 text-[#1a1200] rounded-lg flex items-center justify-center transition-all active:scale-95"
