@@ -214,22 +214,22 @@ export default function CommsPage() {
   return (
     <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans flex min-h-screen">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-hidden max-md:p-2 max-md:gap-2">
 
         {/* HEADER */}
-        <header className="shrink-0 h-[60px] bg-[#0f1420] border border-yellow-500/10 flex justify-between items-center px-6 rounded-xl shadow-lg relative">
+        <header className="shrink-0 h-[60px] bg-[#0f1420] border border-yellow-500/10 flex justify-between items-center px-6 rounded-xl shadow-lg relative max-md:pl-16 max-md:px-3">
           <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-yellow-500/60 to-transparent" />
-          <h1 className="text-[16px] font-black tracking-widest text-yellow-500 uppercase">AuScope | Comms</h1>
+          <h1 className="text-[16px] font-black tracking-widest text-yellow-500 uppercase max-md:text-[13px]">AuScope | Comms</h1>
           <div className="flex items-center gap-6"><HeaderPrice /></div>
         </header>
 
-        <div className="flex-1 flex gap-4 min-h-0">
+        <div className="flex-1 flex gap-4 min-h-0 max-md:gap-0">
 
           {/* LEFT PANEL */}
-          <section className="w-[290px] bg-[#0f1420] border border-yellow-500/20 rounded-xl flex flex-col shrink-0 overflow-hidden">
+          <section className={`w-[290px] bg-[#0f1420] border border-yellow-500/20 rounded-xl flex flex-col shrink-0 overflow-hidden max-md:w-full max-md:rounded-none max-md:border-0 ${activeChat ? 'max-md:hidden' : ''}`}>
 
-            {/* Tabs — premium icons */}
-            <div className="flex border-b border-yellow-500/10 shrink-0 p-1 bg-slate-900/50">
+            {/* Tabs — premium icons (desktop: top; mobile: bottom via order) */}
+            <div className="flex border-b border-yellow-500/10 shrink-0 p-1 bg-slate-900/50 max-md:order-2 max-md:border-b-0 max-md:border-t max-md:border-yellow-500/10 max-md:p-2 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
               {([
                 { key: 'all', icon: <Hash size={16} />, title: 'All Messages' },
                 { key: 'channels', icon: <Shield size={16} />, title: 'Groups' },
@@ -255,7 +255,7 @@ export default function CommsPage() {
             </div>
 
             {/* Search + Create */}
-            <div className="p-3 flex gap-2 border-b border-yellow-500/10 shrink-0 bg-slate-900/20">
+            <div className="p-3 flex gap-2 border-b border-yellow-500/10 shrink-0 bg-slate-900/20 max-md:order-0">
               <div className="relative flex-1 group">
                 <input
                   id="comms-search"
@@ -276,7 +276,7 @@ export default function CommsPage() {
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1 custom-scrollbar max-md:order-1">
               {isSearching && searchResults.length > 0 && (
                 <div className="mb-4">
                   <span className="text-[9px] font-black text-yellow-500/50 px-3 uppercase tracking-widest block mb-2">Network Discovery</span>
@@ -374,7 +374,7 @@ export default function CommsPage() {
           </section>
 
           {/* CHAT PANEL */}
-          <section className="flex-1 bg-[#0f1420] border border-yellow-500/20 rounded-xl flex flex-col overflow-hidden shadow-2xl">
+          <section className={`flex-1 bg-[#0f1420] border border-yellow-500/20 rounded-xl flex flex-col overflow-hidden shadow-2xl max-md:rounded-none max-md:border-0 ${!activeChat ? 'max-md:hidden' : ''}`}>
             {!activeChat ? (
               <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-3">
                 <Users size={56} className="opacity-20 animate-pulse" />
@@ -384,8 +384,15 @@ export default function CommsPage() {
             ) : (
               <>
                 {/* Chat Header */}
-                <div className="h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-6 shrink-0 bg-slate-800/40">
+                <div className="h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-6 shrink-0 bg-slate-800/40 max-md:px-3">
                   <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setActiveId(null as any)}
+                      className="hidden max-md:flex w-9 h-9 rounded-lg hover:bg-slate-700/50 items-center justify-center text-slate-300"
+                      aria-label="Back"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    </button>
                     <div className="w-9 h-9 rounded-full border border-yellow-500/30 flex items-center justify-center bg-yellow-500/10 text-yellow-500 overflow-hidden">
                       {activeChat.avatar ? (
                         <img src={activeChat.avatar} className="w-full h-full object-cover" alt="" />
