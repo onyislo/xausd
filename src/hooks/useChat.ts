@@ -12,6 +12,32 @@ export function useChat() {
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
   }, []);
 
+  // 1.5 Update last_seen instantly on activity
+  useEffect(() => {
+    if (!currentUser?.id) return;
+
+    let lastUpdate = 0;
+    const updateLastSeen = () => {
+      const now = Date.now();
+      if (now - lastUpdate < 1000) return; // Update every 1 second while active
+      lastUpdate = now;
+      
+      supabase
+        .from('profiles')
+        .update({ last_seen: new Date().toISOString() })
+        .eq('id', currentUser.id)
+        .then();
+    };
+
+    // Update instantly on user activity
+    const events = ['mousedown', 'keydown', 'touchstart', 'click'];
+    events.forEach(e => window.addEventListener(e, updateLastSeen));
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, updateLastSeen));
+    };
+  }, [currentUser?.id]);
+
   // 2. Fetch ONLY channels the current user belongs to
   useEffect(() => {
     if (!currentUser) return;
@@ -29,7 +55,7 @@ export function useChat() {
       // Step 2: Fetch those channels with ALL members' profiles
       const { data: channels } = await supabase
         .from('channels')
-        .select('*, channel_members(user_id, profiles(username, avatar_url, full_name, status))')
+        .select('*, channel_members(user_id, profiles(username, avatar_url, full_name, status, last_seen))')
         .in('id', myChannelIds)
         .order('created_at', { ascending: false });
 
@@ -49,7 +75,28 @@ export function useChat() {
             const prof = otherMember?.profiles;
             name = prof?.username || prof?.full_name || 'Unknown';
             avatar = prof?.avatar_url;
-            status = prof?.status === 'online' ? 'Online' : 'Offline';
+            const now = new Date();
+            const lastSeenDate = prof?.last_seen ? new Date(prof.last_seen) : null;
+            const diffTime = lastSeenDate ? Math.abs(now.getTime() - lastSeenDate.getTime()) : Infinity;
+            const isOnline = diffTime < 2 * 1000; // Strictly 2 seconds!
+
+            if (isOnline) {
+              status = 'Online';
+            } else if (lastSeenDate) {
+              const yesterday = new Date(now);
+              yesterday.setDate(yesterday.getDate() - 1);
+              const timeStr = lastSeenDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              
+              if (lastSeenDate.toDateString() === now.toDateString()) {
+                status = `last seen today at ${timeStr}`;
+              } else if (lastSeenDate.toDateString() === yesterday.toDateString()) {
+                status = `last seen yesterday at ${timeStr}`;
+              } else {
+                status = `last seen ${lastSeenDate.toLocaleDateString([], { day: 'numeric', month: 'short' })}`;
+              }
+            } else {
+              status = 'Offline';
+            }
           }
         }
 
