@@ -209,12 +209,12 @@ function CommsContent() {
         ringCh.send({ type: 'broadcast', event: 'ring', payload: { roomId, callerId, callerName } });
       }
     });
-  };
+  }; s
 
   return (
     <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans flex min-h-screen">
-      <Sidebar hideMobileTrigger={!!activeChat} />
-      <div className="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-hidden max-md:p-0 max-md:gap-0">
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0 p-2 gap-2 overflow-hidden md:p-4 md:gap-4">
 
         {/* HEADER */}
         <header className={`
