@@ -66,6 +66,7 @@ export function useChat() {
         let avatar = null;
         let otherMemberId = null;
         let status = c.type === 'dm' ? 'Offline' : 'Active';
+        let last_seen = null;
 
         if (c.type === 'dm') {
           // Find the OTHER member directly from the already-fetched data
@@ -75,6 +76,7 @@ export function useChat() {
             const prof = otherMember?.profiles;
             name = prof?.username || prof?.full_name || 'Unknown';
             avatar = prof?.avatar_url;
+            last_seen = prof?.last_seen || null;
             const now = new Date();
             const lastSeenDate = prof?.last_seen ? new Date(prof.last_seen) : null;
             const diffTime = lastSeenDate ? Math.abs(now.getTime() - lastSeenDate.getTime()) : Infinity;
@@ -108,6 +110,7 @@ export function useChat() {
           otherMemberId,
           created_by: c.created_by,
           status: status,
+          last_seen: last_seen,
           lastMsg: '',
           time: '',
           messages: []
@@ -143,6 +146,37 @@ export function useChat() {
       })
       .subscribe();
 
+    // Subscribe to ALL profile updates to catch last_seen changes in real time
+    const profilesSub = supabase.channel('profiles_realtime_status')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+        const updatedProfile = payload.new as any;
+        
+        setChatData(prev => {
+          let changed = false;
+          const next = prev.map(chat => {
+            if (chat.type === 'dm' && chat.otherMemberId === updatedProfile.id) {
+              changed = true;
+              return { ...chat, last_seen: updatedProfile.last_seen };
+            }
+            return chat;
+          });
+          return changed ? next : prev;
+        });
+
+        setContacts(prev => {
+          let changed = false;
+          const next = prev.map(contact => {
+            if (contact.id === updatedProfile.id) {
+              changed = true;
+              return { ...contact, ...updatedProfile };
+            }
+            return contact;
+          });
+          return changed ? next : prev;
+        });
+      })
+      .subscribe();
+
     // Subscribe to channel deletions
     const channelSub = supabase.channel('channels_realtime')
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'channels' }, (payload) => {
@@ -153,9 +187,51 @@ export function useChat() {
 
     return () => {
       supabase.removeChannel(membershipSub);
+      supabase.removeChannel(profilesSub);
       supabase.removeChannel(channelSub);
     };
   }, [currentUser]);
+
+  // 2.5 Periodic Status Auto-Refresher (every 1 second)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setChatData(prev => {
+        let changed = false;
+        const next = prev.map(chat => {
+          if (chat.type === 'dm' && chat.last_seen) {
+            const now = new Date();
+            const lastSeenDate = new Date(chat.last_seen);
+            const diffTime = Math.abs(now.getTime() - lastSeenDate.getTime());
+            const isOnline = diffTime < 2 * 1000; // Strictly 2 seconds!
+            
+            let newStatus = 'Offline';
+            if (isOnline) {
+              newStatus = 'Online';
+            } else {
+              const yesterday = new Date(now);
+              yesterday.setDate(yesterday.getDate() - 1);
+              const timeStr = lastSeenDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              
+              if (lastSeenDate.toDateString() === now.toDateString()) {
+                newStatus = `last seen today at ${timeStr}`;
+              } else if (lastSeenDate.toDateString() === yesterday.toDateString()) {
+                newStatus = `last seen yesterday at ${timeStr}`;
+              } else {
+                newStatus = `last seen ${lastSeenDate.toLocaleDateString([], { day: 'numeric', month: 'short' })}`;
+              }
+            }
+            if (chat.status !== newStatus) {
+              changed = true;
+              return { ...chat, status: newStatus };
+            }
+          }
+          return chat;
+        });
+        return changed ? next : prev;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // 3. Real-time Messages — only update chats the user can see
   useEffect(() => {
