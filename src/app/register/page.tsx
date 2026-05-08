@@ -8,15 +8,11 @@ export default function RegisterPage() {
   const [successMsg, setSuccessMsg] = useState('');
   const [successTitle, setSuccessTitle] = useState('');
 
-  const isProd = process.env.NODE_ENV === 'production';
-
-  const fields = isProd 
-    ? [{ id: 'email', label: 'Email Address', type: 'email', placeholder: 'VIP Access Email' }]
-    : [
-        { id: 'name', label: 'Full Name', type: 'text', placeholder: 'John Doe' },
-        { id: 'email', label: 'Email Address', type: 'email', placeholder: 'you@domain.com' },
-        { id: 'password', label: 'Password', type: 'password', placeholder: '••••••••' }
-      ];
+  const fields = [
+    { id: 'name', label: 'Full Name', type: 'text', placeholder: 'John Doe' },
+    { id: 'email', label: 'Email Address', type: 'email', placeholder: 'you@domain.com' },
+    { id: 'password', label: 'Password', type: 'password', placeholder: '••••••••' }
+  ];
 
   const handleRegister = async (data: Record<string, string>) => {
     setLoading(true);
