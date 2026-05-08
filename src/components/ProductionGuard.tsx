@@ -3,213 +3,232 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
+// Build-time constant — Next.js inlines this
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+
+// ─── Pages that are FULLY READY for production ───
+const PRODUCTION_READY: string[] = [
+  '/',
+  '/comms',
+  '/profile',
+  '/login',
+  '/register',
+];
+
+// ─── Pages that should show "Coming Soon" overlay ───
+const COMING_SOON: string[] = [
+  '/dashboard',
+  '/news',
+  '/live',
+  '/settings',
+  '/intel',
+  '/chart',
+];
+
+function matchesAny(pathname: string, paths: string[]): boolean {
+  return paths.some(
+    (p) => pathname === p || (p !== '/' && pathname.startsWith(`${p}/`))
+  );
+}
+
 export default function ProductionGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isProd, setIsProd] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    setIsProd(typeof window !== 'undefined' && process.env.NODE_ENV === 'production');
+    setHydrated(true);
   }, []);
 
-  // Always render children during SSR to avoid hydration issues
-  if (!mounted || typeof window === 'undefined') {
+  // ── Development mode → always render everything normally ──
+  if (!IS_PRODUCTION) {
     return <>{children}</>;
   }
 
-  // Show normal pages in development
-  if (!isProd) {
+  // ── SSR / first paint → render children to avoid hydration mismatch ──
+  if (!hydrated) {
     return <>{children}</>;
   }
 
-  // ─── PRODUCTION-READY pages (fully functional) ───
-<<<<<<< HEAD
-  const productionReadyPaths = [
-    '/',
-    '/comms',
-    '/profile',
-    '/login',
-    '/register',
-  ];
-
-  // ─── COMING SOON pages (show overlay with blurred background) ───
-  const comingSoonPaths = [
-    '/dashboard',
-    '/news',
-    '/live',
-    '/settings',
-    '/intel',
-    '/chart',
-  ];
-=======
-  const productionReadyPaths = ['/', '/comms', '/profile', '/login', '/register'];
-
-  // ─── COMING SOON pages (show overlay with blurred background) ───
-  const comingSoonPaths = ['/dashboard', '/news', '/live', '/settings', '/intel', '/chart'];
->>>>>>> 5ac5f59 (fix:added the pructin girad)
-
-  const isProductionReady = productionReadyPaths.some(path =>
-    pathname === path || (pathname?.startsWith(`${path}/`) && path !== '/')
-  );
-
-  const isComingSoon = comingSoonPaths.some(path =>
-    pathname === path || pathname?.startsWith(`${path}/`)
-  );
-
-<<<<<<< HEAD
-  // Production-ready pages render normally
-=======
->>>>>>> 5ac5f59 (fix:added the pructin girad)
-  if (isProductionReady) {
+  // ── Production-ready pages → render normally ──
+  if (matchesAny(pathname, PRODUCTION_READY)) {
     return <>{children}</>;
   }
 
-<<<<<<< HEAD
-  // Coming soon pages — show the page content blurred behind a "Coming Soon" card
-  if (isComingSoon) {
+  // ── Coming Soon pages → blurred background + overlay card ──
+  if (matchesAny(pathname, COMING_SOON)) {
     return (
-      <div className="relative min-h-screen w-full bg-[#0a0e17] overflow-hidden">
-        {/* Blurred background — the actual page content is visible but blurred */}
-        <div className="absolute inset-0 pointer-events-none select-none" style={{ filter: 'blur(8px)', opacity: 0.35 }}>
+      <div
+        style={{
+          position: 'relative',
+          minHeight: '100vh',
+          width: '100%',
+          background: '#0a0e17',
+          overflow: 'hidden',
+        }}
+      >
+        {/* ── Blurred page content visible behind the overlay ── */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            userSelect: 'none',
+            filter: 'blur(8px)',
+            opacity: 0.35,
+            overflow: 'hidden',
+          }}
+        >
           {children}
         </div>
 
-        {/* Dark overlay for contrast */}
-        <div className="absolute inset-0 bg-[#0a0e17]/50 pointer-events-none" />
+        {/* ── Dark scrim for contrast ── */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(10,14,23,0.50)',
+            pointerEvents: 'none',
+          }}
+        />
 
-        {/* Coming Soon Card */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-50">
+        {/* ── Coming Soon Card ── */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 50,
+          }}
+        >
           <div
-            className="relative overflow-hidden"
-=======
-  // Coming soon pages — blurred background + card
-  if (isComingSoon) {
-    return (
-      <div className="relative min-h-screen w-full bg-[#0a0e17] overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none select-none" style={{ filter: 'blur(8px)', opacity: 0.35 }}>
-          {children}
-        </div>
-        <div className="absolute inset-0 bg-[#0a0e17]/50 pointer-events-none" />
-
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-50">
-          <div
->>>>>>> 5ac5f59 (fix:added the pructin girad)
             style={{
-              background: 'linear-gradient(135deg, rgba(15,20,35,0.92), rgba(20,25,40,0.95))',
+              position: 'relative',
+              overflow: 'hidden',
+              background:
+                'linear-gradient(135deg, rgba(15,20,35,0.92), rgba(20,25,40,0.95))',
               padding: '3rem 3.5rem',
               borderRadius: '1.25rem',
               border: '1px solid rgba(245, 196, 81, 0.25)',
               backdropFilter: 'blur(24px)',
-              boxShadow: '0 25px 60px rgba(0,0,0,0.6), 0 0 80px rgba(245,196,81,0.05), inset 0 1px 0 rgba(255,255,255,0.05)',
+              boxShadow:
+                '0 25px 60px rgba(0,0,0,0.6), 0 0 80px rgba(245,196,81,0.05), inset 0 1px 0 rgba(255,255,255,0.05)',
               display: 'flex',
               flexDirection: 'column' as const,
               alignItems: 'center',
               textAlign: 'center' as const,
               maxWidth: '480px',
               width: '90%',
-<<<<<<< HEAD
             }}
           >
-            {/* Decorative top accent line */}
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: '10%',
-              right: '10%',
-              height: '2px',
-              background: 'linear-gradient(90deg, transparent, rgba(245,196,81,0.6), transparent)',
-              borderRadius: '2px',
-            }} />
-
-            {/* Animated icon */}
-            <div style={{
-              width: '72px',
-              height: '72px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, rgba(245,196,81,0.08), rgba(245,196,81,0.15))',
-              border: '2px solid rgba(245,196,81,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '1.75rem',
-              boxShadow: '0 0 30px rgba(245,196,81,0.1)',
-            }}>
-=======
-              position: 'relative' as const,
-              overflow: 'hidden',
-            }}
-          >
-            {/* Top accent */}
-            <div style={{ position: 'absolute', top: 0, left: '10%', right: '10%', height: '2px', background: 'linear-gradient(90deg, transparent, rgba(245,196,81,0.6), transparent)', borderRadius: '2px' }} />
+            {/* Top accent line */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: '10%',
+                right: '10%',
+                height: '2px',
+                background:
+                  'linear-gradient(90deg, transparent, rgba(245,196,81,0.6), transparent)',
+                borderRadius: '2px',
+              }}
+            />
 
             {/* Clock icon */}
-            <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'linear-gradient(135deg, rgba(245,196,81,0.08), rgba(245,196,81,0.15))', border: '2px solid rgba(245,196,81,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.75rem', boxShadow: '0 0 30px rgba(245,196,81,0.1)' }}>
->>>>>>> 5ac5f59 (fix:added the pructin girad)
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f5c451" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <div
+              style={{
+                width: '72px',
+                height: '72px',
+                borderRadius: '50%',
+                background:
+                  'linear-gradient(135deg, rgba(245,196,81,0.08), rgba(245,196,81,0.15))',
+                border: '2px solid rgba(245,196,81,0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '1.75rem',
+                boxShadow: '0 0 30px rgba(245,196,81,0.1)',
+              }}
+            >
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#f5c451"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
             </div>
 
-<<<<<<< HEAD
             {/* Title */}
-            <h1 style={{
-              fontSize: '1.75rem',
-              fontWeight: 900,
-              color: '#f5c451',
-              letterSpacing: '0.15em',
-              textTransform: 'uppercase' as const,
-              marginBottom: '0.75rem',
-              textShadow: '0 2px 20px rgba(245,196,81,0.3)',
-              fontFamily: "'Chakra Petch', sans-serif",
-              lineHeight: 1.2,
-            }}>
+            <h1
+              style={{
+                fontSize: '1.75rem',
+                fontWeight: 900,
+                color: '#f5c451',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase' as const,
+                marginBottom: '0.75rem',
+                textShadow: '0 2px 20px rgba(245,196,81,0.3)',
+                fontFamily: "'Chakra Petch', sans-serif",
+                lineHeight: 1.2,
+              }}
+            >
               Coming Soon
             </h1>
 
             {/* Subtitle */}
-            <p style={{
-              color: 'rgba(148,163,184,0.9)',
-              fontSize: '0.8rem',
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase' as const,
-              fontWeight: 600,
-              marginBottom: '0.5rem',
-              fontFamily: 'monospace',
-            }}>
+            <p
+              style={{
+                color: 'rgba(148,163,184,0.9)',
+                fontSize: '0.8rem',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase' as const,
+                fontWeight: 600,
+                marginBottom: '0.5rem',
+                fontFamily: 'monospace',
+              }}
+            >
               Feature Still in Development
             </p>
 
             {/* Description */}
-            <p style={{
-              color: 'rgba(100,116,139,0.8)',
-              fontSize: '0.75rem',
-              letterSpacing: '0.1em',
-              maxWidth: '320px',
-              lineHeight: 1.6,
-              marginBottom: '2rem',
-            }}>
-              This module is being built to institutional-grade standards. We&apos;re refining every detail for maximum performance.
+            <p
+              style={{
+                color: 'rgba(100,116,139,0.8)',
+                fontSize: '0.75rem',
+                letterSpacing: '0.1em',
+                maxWidth: '320px',
+                lineHeight: 1.6,
+                marginBottom: '2rem',
+              }}
+            >
+              This module is being built to institutional-grade standards.
+              We&apos;re refining every detail for maximum performance.
             </p>
 
             {/* Animated progress dots */}
-            <div style={{
-              display: 'flex',
-              gap: '8px',
-              marginBottom: '2rem',
-            }}>
-              {[0, 1, 2].map(i => (
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '2rem' }}>
+              {[0, 1, 2].map((i) => (
                 <div
                   key={i}
+                  className="coming-soon-dot"
                   style={{
                     width: '6px',
                     height: '6px',
                     borderRadius: '50%',
                     backgroundColor: '#f5c451',
                     opacity: 0.5,
-                    animation: `comingSoonPulse 1.5s ease-in-out ${i * 0.3}s infinite`,
+                    animationDelay: `${i * 0.3}s`,
                   }}
                 />
               ))}
@@ -217,34 +236,11 @@ export default function ProductionGuard({ children }: { children: React.ReactNod
 
             {/* Back button */}
             <button
-              onClick={() => router.push('/')}
-=======
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#f5c451', letterSpacing: '0.15em', textTransform: 'uppercase' as const, marginBottom: '0.75rem', textShadow: '0 2px 20px rgba(245,196,81,0.3)', fontFamily: "'Chakra Petch', sans-serif", lineHeight: 1.2 }}>
-              Coming Soon
-            </h1>
-
-            <p style={{ color: 'rgba(148,163,184,0.9)', fontSize: '0.8rem', letterSpacing: '0.2em', textTransform: 'uppercase' as const, fontWeight: 600, marginBottom: '0.5rem', fontFamily: 'monospace' }}>
-              Feature Still in Development
-            </p>
-
-            <p style={{ color: 'rgba(100,116,139,0.8)', fontSize: '0.75rem', letterSpacing: '0.1em', maxWidth: '320px', lineHeight: 1.6, marginBottom: '2rem' }}>
-              This module is being built to institutional-grade standards. We&apos;re refining every detail for maximum performance.
-            </p>
-
-            {/* Animated dots */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '2rem' }}>
-              {[0, 1, 2].map(i => (
-                <div key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f5c451', opacity: 0.5, animation: `comingSoonPulse 1.5s ease-in-out ${i * 0.3}s infinite` }} />
-              ))}
-            </div>
-
-            {/* Back button — goes BACK in history, not to landing page */}
-            <button
-              onClick={() => window.history.back()}
->>>>>>> 5ac5f59 (fix:added the pructin girad)
+              onClick={() => router.push('/comms')}
               style={{
                 padding: '0.65rem 2rem',
-                background: 'linear-gradient(135deg, rgba(245,196,81,0.1), rgba(245,196,81,0.05))',
+                background:
+                  'linear-gradient(135deg, rgba(245,196,81,0.1), rgba(245,196,81,0.05))',
                 color: '#f5c451',
                 border: '1px solid rgba(245,196,81,0.35)',
                 borderRadius: '0.5rem',
@@ -256,95 +252,175 @@ export default function ProductionGuard({ children }: { children: React.ReactNod
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(245,196,81,0.2), rgba(245,196,81,0.1))';
+                e.currentTarget.style.background =
+                  'linear-gradient(135deg, rgba(245,196,81,0.2), rgba(245,196,81,0.1))';
                 e.currentTarget.style.borderColor = 'rgba(245,196,81,0.6)';
-                e.currentTarget.style.boxShadow = '0 0 20px rgba(245,196,81,0.15)';
+                e.currentTarget.style.boxShadow =
+                  '0 0 20px rgba(245,196,81,0.15)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(245,196,81,0.1), rgba(245,196,81,0.05))';
+                e.currentTarget.style.background =
+                  'linear-gradient(135deg, rgba(245,196,81,0.1), rgba(245,196,81,0.05))';
                 e.currentTarget.style.borderColor = 'rgba(245,196,81,0.35)';
                 e.currentTarget.style.boxShadow = 'none';
               }}
             >
-<<<<<<< HEAD
               Return to Terminal
             </button>
 
-            {/* Decorative bottom accent */}
-            <div style={{
-              position: 'absolute',
-              bottom: 0,
-              left: '20%',
-              right: '20%',
-              height: '1px',
-              background: 'linear-gradient(90deg, transparent, rgba(245,196,81,0.3), transparent)',
-            }} />
+            {/* Bottom accent */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: '20%',
+                right: '20%',
+                height: '1px',
+                background:
+                  'linear-gradient(90deg, transparent, rgba(245,196,81,0.3), transparent)',
+              }}
+            />
           </div>
         </div>
 
-        {/* CSS animation for the pulsing dots */}
-=======
-              Go Back
-            </button>
-
-            <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: '1px', background: 'linear-gradient(90deg, transparent, rgba(245,196,81,0.3), transparent)' }} />
-          </div>
-        </div>
-
->>>>>>> 5ac5f59 (fix:added the pructin girad)
-        <style jsx>{`
+        {/* CSS animation for pulsing dots */}
+        <style>{`
           @keyframes comingSoonPulse {
             0%, 100% { opacity: 0.3; transform: scale(0.8); }
             50% { opacity: 1; transform: scale(1.2); }
+          }
+          .coming-soon-dot {
+            animation: comingSoonPulse 1.5s ease-in-out infinite;
           }
         `}</style>
       </div>
     );
   }
 
-<<<<<<< HEAD
-  // Unknown/unregistered pages — show locked message
-=======
-  // Unknown pages — locked
->>>>>>> 5ac5f59 (fix:added the pructin girad)
+  // ── Unknown / unregistered page → locked screen ──
   return (
-    <div className="relative min-h-screen w-full bg-[#0a0e17] overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none select-none" style={{ filter: 'blur(10px)', opacity: 0.25 }}>
+    <div
+      style={{
+        position: 'relative',
+        minHeight: '100vh',
+        width: '100%',
+        background: '#0a0e17',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          userSelect: 'none',
+          filter: 'blur(10px)',
+          opacity: 0.25,
+        }}
+      >
         {children}
       </div>
-      <div className="absolute inset-0 bg-[#0a0e17]/60 pointer-events-none" />
-<<<<<<< HEAD
-
-=======
->>>>>>> 5ac5f59 (fix:added the pructin girad)
-      <div className="absolute inset-0 flex flex-col items-center justify-center z-50">
-        <div className="bg-[#0f1420]/80 p-12 rounded-2xl border border-yellow-500/30 backdrop-blur-xl shadow-2xl flex flex-col items-center text-center">
-          <div className="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center border border-yellow-500/40 mb-6">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f5c451" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(10,14,23,0.60)',
+          pointerEvents: 'none',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 50,
+        }}
+      >
+        <div
+          style={{
+            background: 'rgba(15,20,32,0.80)',
+            padding: '3rem',
+            borderRadius: '1rem',
+            border: '1px solid rgba(245,196,81,0.3)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+          }}
+        >
+          <div
+            style={{
+              width: '64px',
+              height: '64px',
+              background: 'rgba(245,196,81,0.1)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid rgba(245,196,81,0.4)',
+              marginBottom: '1.5rem',
+            }}
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#f5c451"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           </div>
-          <h1 className="text-3xl md:text-4xl font-black text-yellow-500 tracking-[0.2em] uppercase mb-4 drop-shadow-lg">
+          <h1
+            style={{
+              fontSize: '1.75rem',
+              fontWeight: 900,
+              color: '#f5c451',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              marginBottom: '1rem',
+            }}
+          >
             Module Locked
           </h1>
-          <p className="text-slate-400 font-mono tracking-widest text-sm max-w-md">
+          <p
+            style={{
+              color: 'rgb(148,163,184)',
+              fontFamily: 'monospace',
+              letterSpacing: '0.15em',
+              fontSize: '0.8rem',
+              maxWidth: '28rem',
+            }}
+          >
             THIS SECTOR IS CURRENTLY IN DEVELOPMENT. NEW INTEL COMING SOON...
           </p>
-<<<<<<< HEAD
-
           <button
-            onClick={() => router.push('/')}
-            className="mt-8 px-6 py-2.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/40 rounded-lg text-xs font-bold tracking-widest uppercase transition-all"
+            onClick={() => router.push('/comms')}
+            style={{
+              marginTop: '2rem',
+              padding: '0.625rem 1.5rem',
+              background: 'rgba(245,196,81,0.1)',
+              color: '#f5c451',
+              border: '1px solid rgba(245,196,81,0.4)',
+              borderRadius: '0.5rem',
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+            }}
           >
             Return to Terminal
-=======
-          <button
-            onClick={() => window.history.back()}
-            className="mt-8 px-6 py-2.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/40 rounded-lg text-xs font-bold tracking-widest uppercase transition-all"
-          >
-            Go Back
->>>>>>> 5ac5f59 (fix:added the pructin girad)
           </button>
         </div>
       </div>

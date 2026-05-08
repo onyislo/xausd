@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import dynamic from "next/dynamic";
 import "./globals.css";
-
-const ProductionGuard = dynamic(() => import('@/components/ProductionGuard'), {
-  ssr: false,
-  loading: ({ children }: { children: React.ReactNode }) => <>{children}</>
-});
+import ProductionGuard from '@/components/ProductionGuard';
 
 
 const geistSans = localFont({

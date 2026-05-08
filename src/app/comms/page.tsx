@@ -1,4 +1,4 @@
-h'use client';
+'use client';
 
 import React, { useState, Suspense } from 'react';
 import Sidebar from '@/components/Sidebar';
@@ -209,11 +209,11 @@ function CommsContent() {
         ringCh.send({ type: 'broadcast', event: 'ring', payload: { roomId, callerId, callerName } });
       }
     });
-  }; s
+  };
 
   return (
     <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans flex min-h-screen">
-      <Sidebar />
+      <Sidebar hideMobileTrigger={!!activeChat} />
       <div className="flex-1 flex flex-col min-w-0 p-2 gap-2 overflow-hidden md:p-4 md:gap-4">
 
         {/* HEADER */}
@@ -397,14 +397,14 @@ function CommsContent() {
             ) : (
               <>
                 {/* Chat Header */}
-                <div className="h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-3 md:px-6 shrink-0 bg-slate-800/40">
+                <div className="h-[56px] md:h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-2 md:px-6 shrink-0 bg-slate-800/40">
                   <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                     <button
                       onClick={() => setActiveId(null as any)}
-                      className="flex md:hidden w-9 h-9 rounded-lg hover:bg-slate-700/50 items-center justify-center text-slate-300 shrink-0"
+                      className="flex md:hidden w-9 h-9 rounded-lg hover:bg-slate-700/50 items-center justify-center text-yellow-500 shrink-0"
                       aria-label="Back"
                     >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
                     </button>
                     <div className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-yellow-500/30 flex items-center justify-center bg-yellow-500/10 text-yellow-500 overflow-hidden shrink-0">
                       {activeChat.avatar ? (
@@ -418,6 +418,16 @@ function CommsContent() {
                   </div>
                   <div className="flex items-center gap-2 text-slate-400 shrink-0">
                     <HeaderPrice />
+
+                    {activeChat.type === 'dm' && (
+                      <button
+                        onClick={startCall}
+                        className="p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300 transition-all active:scale-95 border border-green-500/20"
+                        title="Call"
+                      >
+                        <Phone size={16} />
+                      </button>
+                    )}
 
                     <div className="relative">
                       <button
