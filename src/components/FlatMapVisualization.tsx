@@ -57,7 +57,7 @@ export default function FlatMapVisualization() {
         >
           <Geographies geography={geoUrl}>
             {({ geographies }: { geographies: any[] }) =>
-              geographies.map((geo: any) => (
+              (geographies || []).map((geo: any) => (
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}

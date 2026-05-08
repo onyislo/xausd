@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Sidebar from '@/components/Sidebar';
 import HeaderPrice from '@/components/HeaderPrice';
 import { useChat } from '@/hooks/useChat';
@@ -9,7 +9,7 @@ import { Search, Send, Users, User, Phone, MoreVertical, Plus, Shield, Trash2, U
 import { useSearchParams } from 'next/navigation';
 import PhoneCall from '@/components/PhoneCall';
 
-export default function CommsPage() {
+function CommsContent() {
   const { activeId, setActiveId, chatData, contacts: friends, addContact: addFriend, removeContact: removeFriend, searchProfiles, startDM, sendMessage, deleteMessage, currentUser, pushChannel } = useChat();
   const [activeCall, setActiveCall] = useState<{ roomId: string, isIncoming: boolean, targetId: string, targetName: string } | null>(null);
   const [incomingRing, setIncomingRing] = useState<{ roomId: string, callerId: string, callerName: string } | null>(null);
@@ -24,6 +24,7 @@ export default function CommsPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isManaging, setIsManaging] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [members, setMembers] = useState<any[]>([]);
@@ -711,6 +712,15 @@ export default function CommsPage() {
     </main>
   );
 }
+
+export default function CommsPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#0a0e17] text-yellow-500 font-mono">LOADING ENCRYPTED CHANNEL...</div>}>
+      <CommsContent />
+    </Suspense>
+  );
+}
+
 
 function ContextMenu({ x, y, msgId, onDelete }: any) {
   return (
