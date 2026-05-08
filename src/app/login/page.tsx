@@ -15,15 +15,7 @@ function LoginContent() {
   const isProd = process.env.NODE_ENV === 'production';
 
   const handleLogin = (form: Record<string, string>) => {
-    if (isProd) {
-      setLocalLoading(true);
-      setTimeout(() => {
-        setLocalLoading(false);
-        setProdMsg("Terminal access is currently restricted. The system has not yet been rolled out to the public. Please join the waitlist to be notified of our launch.");
-      }, 800);
-    } else {
-      signIn(form.email, form.password);
-    }
+    signIn(form.email, form.password);
   };
 
   return (
@@ -45,13 +37,12 @@ function LoginContent() {
       <AuthCard
         mode="login"
         fields={[
-          { id: 'email', label: 'Email Address', type: 'email', placeholder: 'trader@example.com' },
-          { id: 'password', label: 'Password', type: 'password', placeholder: '••••••••••••' },
+          { id: 'email',    label: 'Email Address', type: 'email',    placeholder: 'trader@example.com' },
+          { id: 'password', label: 'Password',       type: 'password', placeholder: '••••••••••••' },
         ]}
-        onSubmit={handleLogin}
-        loading={isProd ? localLoading : loading}
+        loading={loading}
         error={error}
-        successMessage={prodMsg}
+        onSubmit={handleLogin}
       />
     </div>
   );

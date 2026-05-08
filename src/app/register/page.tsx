@@ -17,26 +17,8 @@ export default function RegisterPage() {
   const handleRegister = async (data: Record<string, string>) => {
     setLoading(true);
     try {
-      if (isProd) {
-        const res = await fetch('/api/waitlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: data.email }),
-        });
-        if (!res.ok) throw new Error('Failed');
-        
-        const result = await res.json();
-        if (result.alreadyRegistered) {
-          setSuccessTitle("Already Registered");
-          setSuccessMsg("You're already on our waitlist! We'll notify you as soon as access opens up.");
-        } else {
-          setSuccessTitle("Access Requested");
-          setSuccessMsg("You're on the list! Check your email — we've sent you a confirmation from AuScope.");
-        }
-      } else {
-        setSuccessTitle("Welcome");
-        setTimeout(() => setSuccessMsg("Registration successful! Welcome to AuScope."), 500);
-      }
+      setSuccessTitle("Welcome");
+      setTimeout(() => setSuccessMsg("Registration successful! Welcome to AuScope."), 500);
     } catch {
       alert("Something went wrong. Please try again.");
     } finally {
