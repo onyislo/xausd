@@ -15,7 +15,7 @@ import {
   X
 } from 'lucide-react';
 
-export default function Sidebar() {
+export default function Sidebar({ hideMobileTrigger = false }: { hideMobileTrigger?: boolean }) {
   const pathname = usePathname();
   const [profile, setProfile] = useState<any>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -131,14 +131,16 @@ export default function Sidebar() {
         </nav>
       </aside>
 
-      {/* MOBILE HAMBURGER TRIGGER (visible < md) */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-3 left-3 z-40 w-10 h-10 rounded-lg bg-slate-900/90 border border-slate-700 flex items-center justify-center text-slate-200 backdrop-blur-sm shadow-lg"
-        aria-label="Open menu"
-      >
-        <Menu size={20} />
-      </button>
+      {/* MOBILE HAMBURGER TRIGGER (visible < md, hidden when hideMobileTrigger is true) */}
+      {!hideMobileTrigger && (
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="md:hidden fixed top-3 left-3 z-40 w-10 h-10 rounded-lg bg-slate-900/90 border border-slate-700 flex items-center justify-center text-slate-200 backdrop-blur-sm shadow-lg"
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
+        </button>
+      )}
 
       {/* MOBILE DRAWER */}
       {mobileOpen && (
