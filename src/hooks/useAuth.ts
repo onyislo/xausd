@@ -11,18 +11,18 @@ export function useAuth() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: authError } = await supabase.auth.signUp({ 
-        email, 
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
         password: pass,
-        options: { data: metadata } 
+        options: { data: metadata }
       });
-      
+
       if (authError) throw authError;
 
       if (data.user) {
         // Try creating the profile record
-        const { error: profileError } = await supabase.from('profiles').insert([{ 
-          id: data.user.id, 
+        const { error: profileError } = await supabase.from('profiles').insert([{
+          id: data.user.id,
           username: email.split('@')[0],
           full_name: metadata.full_name || ''
         }]);
@@ -31,11 +31,12 @@ export function useAuth() {
           console.warn("Profile creation log:", profileError);
           // Don't stop the whole process if only profile creation fails
         }
-        
-        router.push('/login?msg=Account Created! Check email.');
+
+        router.push('/login?msg=Account Created! Check email for confirmation.');
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication issue');
+      console.error('Signup error:', err);
+      setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -47,6 +48,7 @@ export function useAuth() {
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password: pass });
       if (authError) throw authError;
+
       // Mark user as online
       if (data.user) {
         await supabase.from('profiles').update({ status: 'online' }).eq('id', data.user.id);
@@ -56,7 +58,8 @@ export function useAuth() {
       }
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      console.error('Login error:', err);
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
