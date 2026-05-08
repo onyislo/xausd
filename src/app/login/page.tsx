@@ -9,10 +9,6 @@ function LoginContent() {
   const { signIn, loading, error } = useAuth();
   const searchParams = useSearchParams();
   const urlMsg = searchParams.get('msg');
-  const [prodMsg, setProdMsg] = useState('');
-  const [localLoading, setLocalLoading] = useState(false);
-
-  const isProd = process.env.NODE_ENV === 'production';
 
   const handleLogin = (form: Record<string, string>) => {
     signIn(form.email, form.password);
@@ -20,7 +16,7 @@ function LoginContent() {
 
   return (
     <div className="relative">
-      {urlMsg && !prodMsg && (
+      {urlMsg && (
         <div style={{
           position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
           zIndex: 100, padding: '12px 24px', borderRadius: '12px',

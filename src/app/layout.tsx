@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import ProductionGuard from "@/components/ProductionGuard";
+
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,9 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <ProductionGuard>
-          {children}
-        </ProductionGuard>
+        {children}
       </body>
     </html>
   );
