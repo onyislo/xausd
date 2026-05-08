@@ -44,13 +44,13 @@ export default function HeaderPrice() {
   const fmtPrice = livePrice ? livePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '2,341.50';
 
   return (
-    <div className="hidden sm:flex flex-col items-end">
+    <div className="flex flex-col items-end">
       <div className="flex items-baseline gap-1.5">
         <span className="text-[10px] text-slate-500 tracking-widest uppercase">XAU/USD</span>
-        <span className="text-yellow-400 font-mono font-bold text-[18px] tracking-wider">{fmtPrice}</span>
-        <span className="text-green-400 text-[10px] font-bold">+0.42%</span>
+        <span className="text-yellow-400 font-mono font-bold text-[18px] tracking-wider max-md:text-[14px]">{fmtPrice}</span>
+        <span className="text-green-400 text-[10px] font-bold max-md:text-[8px]">+0.42%</span>
       </div>
-      <div className="text-[9px] text-slate-600 tracking-wider">Spot Price • Real-time</div>
+      <div className="text-[9px] text-slate-600 tracking-wider max-md:hidden">Spot Price • Real-time</div>
     </div>
   );
 }
