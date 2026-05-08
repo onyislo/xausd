@@ -417,7 +417,10 @@ function CommsContent() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-slate-400 shrink-0">
-                    <HeaderPrice />
+                    {/* Only show on mobile — desktop already has it in the main header */}
+                    <div className="md:hidden">
+                      <HeaderPrice />
+                    </div>
 
                     {activeChat.type === 'dm' && (
                       <button
