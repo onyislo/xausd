@@ -217,7 +217,7 @@ function CommsContent() {
       <div className="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-hidden max-md:p-2 max-md:gap-2">
 
         {/* HEADER */}
-        <header className="shrink-0 h-[60px] bg-[#0f1420] border border-yellow-500/10 flex justify-between items-center px-6 rounded-xl shadow-lg relative max-md:pl-16 max-md:px-3">
+        <header className={`shrink-0 h-[60px] bg-[#0f1420] border border-yellow-500/10 flex justify-between items-center px-6 rounded-xl shadow-lg relative max-md:pl-16 max-md:px-3 ${activeChat ? 'max-md:hidden' : ''}`}>
           <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-yellow-500/60 to-transparent" />
           <h1 className="text-[16px] font-black tracking-widest text-yellow-500 uppercase max-md:text-[13px]">AuScope | Comms</h1>
           <div className="flex items-center gap-3 max-md:gap-1"><HeaderPrice /></div>
@@ -385,32 +385,28 @@ function CommsContent() {
               <>
                 {/* Chat Header */}
                 <div className="h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-6 shrink-0 bg-slate-800/40 max-md:px-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
                     <button
                       onClick={() => setActiveId(null as any)}
-                      className="hidden max-md:flex w-9 h-9 rounded-lg hover:bg-slate-700/50 items-center justify-center text-slate-300"
+                      className="hidden max-md:flex w-9 h-9 rounded-lg hover:bg-slate-700/50 items-center justify-center text-slate-300 shrink-0"
                       aria-label="Back"
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                     </button>
-                    <div className="w-9 h-9 rounded-full border border-yellow-500/30 flex items-center justify-center bg-yellow-500/10 text-yellow-500 overflow-hidden">
+                    <div className="w-9 h-9 rounded-full border border-yellow-500/30 flex items-center justify-center bg-yellow-500/10 text-yellow-500 overflow-hidden shrink-0">
                       {activeChat.avatar ? (
                         <img src={activeChat.avatar} className="w-full h-full object-cover" alt="" />
                       ) : activeChat.type === 'dm' ? <User size={18} /> : <Users size={18} />}
                     </div>
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <h2 className="text-sm font-bold text-slate-200">{activeChat.name}</h2>
-                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-black tracking-tighter uppercase ${
-                          activeChat.type === 'dm' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                        }`}>
-                          {activeChat.type === 'dm' ? 'Direct' : 'Group'}
-                        </span>
+                        <h2 className="text-sm font-bold text-slate-200 truncate">{activeChat.name}</h2>
                       </div>
                       <span className={`text-[10px] font-mono tracking-widest ${activeChat.status === 'Online' ? 'text-green-400/80' : 'text-slate-500'}`}>{activeChat.status}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 text-slate-400">
+                  <div className="flex items-center gap-2 text-slate-400 shrink-0">
+                    <div className="hidden max-md:block"><HeaderPrice /></div>
                     <Phone size={17} className={`transition-colors ${activeChat.type === 'dm' ? 'cursor-pointer hover:text-yellow-500' : 'opacity-20 cursor-not-allowed'}`} onClick={() => activeChat.type === 'dm' && startCall()} />
 
                     <div className="relative">
@@ -803,7 +799,7 @@ function MessageItem({ msg, currentUserId, contactAvatar, contactName, onDelete,
       onContextMenu={(e) => isSelf && onContextMenu(e)}
       className={`flex flex-col ${isSelf ? 'items-end' : 'items-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300`}
     >
-      <div className={`flex max-w-[80%] ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end gap-2.5`}>
+      <div className={`flex max-w-[85%] md:max-w-[80%] ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end gap-2.5`}>
         {!isSelf && (
           <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mb-1 shadow-inner overflow-hidden">
             {contactAvatar ? (
@@ -814,9 +810,9 @@ function MessageItem({ msg, currentUserId, contactAvatar, contactName, onDelete,
           </div>
         )}
         <div className="relative group/bubble">
-          <div className={`px-4 py-2.5 rounded-[20px] text-[12px] leading-relaxed font-medium transition-all ${isSelf
-              ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-[#1a1200] rounded-br-none shadow-[0_4px_15px_rgba(245,196,81,0.15)] hover:shadow-[0_4px_20px_rgba(245,196,81,0.25)]'
-              : 'bg-[#1a2333] text-slate-200 rounded-bl-none border border-slate-700/30 shadow-lg hover:border-slate-600/50'
+          <div className={`px-3 py-2 max-md:px-4 max-md:py-2.5 rounded-[18px] max-md:rounded-[20px] text-[13px] max-md:text-[12px] leading-relaxed font-medium transition-all ${isSelf
+              ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-[#1a1200] rounded-br-[4px] max-md:rounded-br-none shadow-[0_2px_8px_rgba(245,196,81,0.15)] max-md:shadow-[0_4px_15px_rgba(245,196,81,0.15)] hover:shadow-[0_2px_12px_rgba(245,196,81,0.25)] max-md:hover:shadow-[0_4px_20px_rgba(245,196,81,0.25)]'
+              : 'bg-[#1a2333] text-slate-200 rounded-bl-[4px] max-md:rounded-bl-none border border-slate-700/30 max-md:shadow-lg shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:border-slate-600/50'
             }`}>
             {msg.text}
           </div>
@@ -832,11 +828,11 @@ function MessageItem({ msg, currentUserId, contactAvatar, contactName, onDelete,
           )}
         </div>
       </div>
-      <div className={`flex items-center gap-1.5 mt-1.5 px-1 ${isSelf ? 'mr-1' : 'ml-11'}`}>
-        <span className="text-[9px] text-slate-600 font-bold uppercase tracking-widest opacity-60">
+      <div className={`flex items-center gap-1.5 mt-1 max-md:mt-1.5 px-1 max-md:px-2 ${isSelf ? 'justify-end mr-1 max-md:mr-2' : 'justify-start ml-11 max-md:ml-12'}`}>
+        <span className="text-[8px] max-md:text-[9px] text-slate-500 max-md:text-slate-600 font-medium max-md:font-bold uppercase tracking-wider max-md:tracking-widest opacity-70 max-md:opacity-60">
           {msg.time}
         </span>
-        {isSelf && <div className="w-1 h-1 bg-yellow-500/40 rounded-full" />}
+        {isSelf && <div className="w-1 h-1 bg-yellow-500/40 rounded-full ml-0.5" />}
       </div>
     </div>
   );

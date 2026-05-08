@@ -6,10 +6,18 @@ import { usePathname } from 'next/navigation';
 export default function ProductionGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isProd, setIsProd] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setIsProd(process.env.NODE_ENV === 'production');
+    setMounted(true);
+    // Check if we're in production and on client side
+    setIsProd(typeof window !== 'undefined' && process.env.NODE_ENV === 'production');
   }, []);
+
+  // Always render children during SSR to avoid hydration issues
+  if (!mounted || typeof window === 'undefined') {
+    return <>{children}</>;
+  }
 
   // Show normal pages in development
   if (!isProd) {
@@ -17,7 +25,7 @@ export default function ProductionGuard({ children }: { children: React.ReactNod
   }
 
   // Allowed pages in production
-  const allowedPaths = ['/comms', '/profile', '/login', '/register', '/'];
+  const allowedPaths = ['/', '/dashboard', '/news', '/chart', '/intel', '/live', '/comms', '/profile', '/settings', '/login', '/register'];
   
   const isAllowed = allowedPaths.some(path => 
     pathname === path || pathname?.startsWith(`${path}/`) && path !== '/'

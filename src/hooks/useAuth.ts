@@ -11,18 +11,18 @@ export function useAuth() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: authError } = await supabase.auth.signUp({ 
-        email, 
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
         password: pass,
-        options: { data: metadata } 
+        options: { data: metadata }
       });
-      
+
       if (authError) throw authError;
 
       if (data.user) {
         // Try creating the profile record
-        const { error: profileError } = await supabase.from('profiles').insert([{ 
-          id: data.user.id, 
+        const { error: profileError } = await supabase.from('profiles').insert([{
+          id: data.user.id,
           username: email.split('@')[0],
           full_name: metadata.full_name || ''
         }]);
@@ -31,11 +31,12 @@ export function useAuth() {
           console.warn("Profile creation log:", profileError);
           // Don't stop the whole process if only profile creation fails
         }
-        
-        router.push('/login?msg=Account Created! Check email.');
+
+        router.push('/login?msg=Account Created! Check email for confirmation.');
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication issue');
+      console.error('Signup error:', err);
+      setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -45,18 +46,36 @@ export function useAuth() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password: pass });
-      if (authError) throw authError;
-      // Mark user as online
-      if (data.user) {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: pass
+      });
+
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw authError;
+      }
+
+      if (!data.user) {
+        throw new Error('No user data returned');
+      }
+
+      // Mark user as online (don't fail the whole login if this fails)
+      try {
         await supabase.from('profiles').update({ status: 'online' }).eq('id', data.user.id);
         if (data.user.email) {
           await supabase.from('profiles').update({ status: 'online' }).eq('email', data.user.email);
         }
+      } catch (profileError) {
+        console.warn('Profile update failed:', profileError);
       }
+
+      // Force a router refresh to ensure auth state is updated
+      router.refresh();
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      console.error('Login error:', err);
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }

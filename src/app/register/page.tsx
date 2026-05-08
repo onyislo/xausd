@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import AuthCard from '@/components/AuthCard';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function RegisterPage() {
-  const [loading, setLoading] = useState(false);
+  const { signUp, loading, error } = useAuth();
   const [successMsg, setSuccessMsg] = useState('');
   const [successTitle, setSuccessTitle] = useState('');
 
@@ -15,15 +16,9 @@ export default function RegisterPage() {
   ];
 
   const handleRegister = async (data: Record<string, string>) => {
-    setLoading(true);
-    try {
-      setSuccessTitle("Welcome");
-      setTimeout(() => setSuccessMsg("Registration successful! Welcome to AuScope."), 500);
-    } catch {
-      alert("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    await signUp(data.email, data.password, { full_name: data.name });
+    setSuccessTitle("Welcome");
+    setSuccessMsg("Registration successful! Welcome to AuScope.");
   };
 
   return (
@@ -31,6 +26,7 @@ export default function RegisterPage() {
       mode="register"
       fields={fields}
       loading={loading}
+      error={error}
       successMessage={successMsg}
       successTitle={successTitle}
       onSubmit={handleRegister}
