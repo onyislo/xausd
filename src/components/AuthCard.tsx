@@ -24,7 +24,6 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
   const [show, setShow] = useState<Record<string, boolean>>({});
 
   const isLogin = mode === 'login';
-  const isProd = process.env.NODE_ENV === 'production';
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +100,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
             {isLogin ? 'Sign In' : 'Register'}
           </h2>
           <p style={{ fontSize: '11px', color: '#4a5568', marginBottom: '10px' }}>
-            {isLogin ? 'Access your dashboard' : (successMessage ? 'Registration Status' : (isProd ? 'Request Early Access' : 'Create your account'))}
+            {isLogin ? 'Access your dashboard' : (successMessage ? 'Registration Status' : 'Create your account')}
           </p>
 
           {successMessage ? (
@@ -207,7 +206,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
               transition: 'all 0.2s',
               marginBottom: '16px',
             }}>
-              {loading ? (isLogin ? 'Authenticating...' : 'Processing...') : (isLogin ? 'Access Terminal' : (isProd ? 'Join Waitlist' : 'Create Account'))}
+              {loading ? (isLogin ? 'Authenticating...' : 'Processing...') : (isLogin ? 'Access Terminal' : 'Create Account')}
             </button>
 
             {/* Divider */}
