@@ -29,7 +29,6 @@ function CommsContent() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [members, setMembers] = useState<any[]>([]);
   const [copied, setCopied] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const chatEndRef = React.useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, msgId: string } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -221,7 +220,7 @@ function CommsContent() {
         <header className="shrink-0 h-[60px] bg-[#0f1420] border border-yellow-500/10 flex justify-between items-center px-6 rounded-xl shadow-lg relative max-md:pl-16 max-md:px-3">
           <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-yellow-500/60 to-transparent" />
           <h1 className="text-[16px] font-black tracking-widest text-yellow-500 uppercase max-md:text-[13px]">AuScope | Comms</h1>
-          <div className="flex items-center gap-6"><HeaderPrice /></div>
+          <div className="flex items-center gap-3 max-md:gap-1"><HeaderPrice /></div>
         </header>
 
         <div className="flex-1 flex gap-4 min-h-0 max-md:gap-0">

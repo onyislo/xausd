@@ -207,7 +207,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
                   transition: 'all 0.2s',
                   marginBottom: '16px',
                 }}>
-                  {loading ? (isLogin ? 'Authenticating...' : 'Processing...') : (isLogin ? 'Access Terminal' : (isProd ? 'Join Waitlist' : 'Create Account'))}
+                  {loading ? (isLogin ? 'Authenticating...' : 'Processing...') : (isLogin ? 'Access Terminal' : 'Create Account')}
                 </button>
 
                 {/* Divider */}
