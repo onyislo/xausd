@@ -1,0 +1,104 @@
+
+> test-app@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/15) ...
+Error: Unsupported Server Component type: {...}
+    at e (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138117)
+    at e_ (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138168)
+    at Array.toJSON (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135777)
+    at stringify (<anonymous>)
+    at eE (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142242)
+    at eT (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142721)
+    at AsyncLocalStorage.run (node:async_hooks:338:14)
+    at Timeout._onTimeout (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:150805)
+    at listOnTimeout (node:internal/timers:569:17)
+    at process.processTimers (node:internal/timers:512:7) {
+  digest: '1004617210'
+}
+Error: Unsupported Server Component type: {...}
+    at e (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138117)
+    at e_ (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138168)
+    at Array.toJSON (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135777)
+    at stringify (<anonymous>)
+    at eE (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142242)
+    at eT (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142721)
+    at Timeout._onTimeout (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135497)
+    at listOnTimeout (node:internal/timers:569:17)
+    at process.processTimers (node:internal/timers:512:7) {
+  digest: '2960939707'
+}
+Error: Unsupported Server Component type: {...}
+    at e (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138117)
+    at e_ (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138168)
+    at Array.toJSON (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135777)
+    at stringify (<anonymous>)
+    at eE (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142242)
+    at eT (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142721)
+    at Timeout._onTimeout (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135497)
+    at listOnTimeout (node:internal/timers:569:17)
+    at process.processTimers (node:internal/timers:512:7) {
+  digest: '2960939707'
+}
+
+Error occurred prerendering page "/chart". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: Unsupported Server Component type: {...}
+    at e (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138117)
+    at e_ (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:138168)
+    at Array.toJSON (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:135777)
+    at stringify (<anonymous>)
+    at eE (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142242)
+    at eT (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:142721)
+    at AsyncLocalStorage.run (node:async_hooks:338:14)
+    at Timeout._onTimeout (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:150805)
+    at listOnTimeout (node:internal/timers:569:17)
+    at process.processTimers (node:internal/timers:512:7)
+⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/comms". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at o (/home/onyiso/Desktop/xausd/.next/server/chunks/201.js:1:10847)
+    at s (/home/onyiso/Desktop/xausd/.next/server/chunks/201.js:1:21783)
+    at S (/home/onyiso/Desktop/xausd/.next/server/app/comms/page.js:1:8935)
+    at nj (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46252)
+    at nM (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47572)
+    at nL (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64547)
+    at nI (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47011)
+    at nM (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47718)
+    at nM (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61547)
+    at nL (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64547)
+
+Error occurred prerendering page "/comms". Read more: https://nextjs.org/docs/messages/prerender-error
+
+⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+   Generating static pages (3/15) 
+⚠️  Node.js 18 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 20 or later. For more information, visit: https://github.com/orgs/supabase/discussions/37217
+ ⨯ useSearchParams() should be wrapped in a suspense boundary at page "/login". Read more: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    at o (/home/onyiso/Desktop/xausd/.next/server/chunks/201.js:1:10847)
+    at s (/home/onyiso/Desktop/xausd/.next/server/chunks/201.js:1:21783)
+    at n (/home/onyiso/Desktop/xausd/.next/server/app/login/page.js:1:2349)
+    at nj (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46252)
+    at nM (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47572)
+    at nL (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64547)
+    at nI (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47011)
+    at nM (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47718)
+    at nM (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:61547)
+    at nL (/home/onyiso/Desktop/xausd/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64547)
+
+Error occurred prerendering page "/login". Read more: https://nextjs.org/docs/messages/prerender-error
+
+   Generating static pages (7/15) 
+   Generating static pages (11/15) 
+ ✓ Generating static pages (15/15)
+
+> Export encountered errors on following paths:
+	/chart/page: /chart
+	/comms/page: /comms
+	/login/page: /login
