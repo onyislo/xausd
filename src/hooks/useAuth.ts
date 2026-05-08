@@ -46,16 +46,32 @@ export function useAuth() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password: pass });
-      if (authError) throw authError;
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: pass
+      });
 
-      // Mark user as online
-      if (data.user) {
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw authError;
+      }
+
+      if (!data.user) {
+        throw new Error('No user data returned');
+      }
+
+      // Mark user as online (don't fail the whole login if this fails)
+      try {
         await supabase.from('profiles').update({ status: 'online' }).eq('id', data.user.id);
         if (data.user.email) {
           await supabase.from('profiles').update({ status: 'online' }).eq('email', data.user.email);
         }
+      } catch (profileError) {
+        console.warn('Profile update failed:', profileError);
       }
+
+      // Force a router refresh to ensure auth state is updated
+      router.refresh();
       router.push('/dashboard');
     } catch (err: any) {
       console.error('Login error:', err);

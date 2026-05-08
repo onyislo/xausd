@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import dynamic from "next/dynamic";
 import "./globals.css";
+
+const ProductionGuard = dynamic(() => import('@/components/ProductionGuard'), {
+  ssr: false,
+  loading: ({ children }: { children: React.ReactNode }) => <>{children}</>
+});
 
 
 const geistSans = localFont({
@@ -30,7 +36,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+        <ProductionGuard>
+          {children}
+        </ProductionGuard>
       </body>
     </html>
   );
