@@ -11,7 +11,6 @@ import {
   Lock, 
   LogOut, 
   ShieldCheck, 
-  Globe,
   Clock,
   ChevronRight
 } from 'lucide-react';
@@ -19,23 +18,89 @@ import {
 export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
+  const [lastSync, setLastSync] = useState<string>('Just now');
+  const [editing, setEditing] = useState(false);
+  const [formData, setFormData] = useState({ username: '', full_name: '' });
+
+  // Track real online/offline status
+  useEffect(() => {
+    // Set initial state from browser
+    setIsOnline(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      setLastSync(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
+        // Force update status to online in DB when viewing profile
+        supabase.from('profiles').update({ status: 'online' }).eq('id', user.id).then();
+        if (user.email) {
+          supabase.from('profiles').update({ status: 'online' }).eq('email', user.email).then();
+        }
+
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
           .then(({ data }) => {
-            setProfile({ 
+            if (data) setIsOnline(true);
+            const p = { 
               ...data, 
               email: user.email,
               full_name: data?.full_name || user.user_metadata?.full_name,
               avatar_url: data?.avatar_url || user.user_metadata?.avatar_url
+            };
+            setProfile(p);
+            setFormData({ 
+              username: p.username || '', 
+              full_name: p.full_name || '' 
             });
+            setLastSync(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
             setLoading(false);
           });
       }
     });
   }, []);
+
+  const handleUpdate = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    setLoading(true);
+    const { error } = await supabase.from('profiles').upsert({
+      id: user.id,
+      email: user.email,
+      username: formData.username,
+      full_name: formData.full_name
+    });
+
+    if (!error) {
+      setProfile({ ...profile, ...formData });
+      setEditing(false);
+      alert("Intelligence profile updated.");
+    } else {
+      alert("Error: " + error.message);
+    }
+    setLoading(false);
+  };
+
+  const handleLogout = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('profiles').update({ status: 'offline' }).eq('id', user.id);
+    }
+    await supabase.auth.signOut();
+  };
 
   const uploadAvatar = async (e: any) => {
     const file = e.target.files?.[0];
@@ -107,11 +172,16 @@ export default function ProfilePage() {
                   <p className="text-slate-500 text-sm font-medium">Global Markets Intelligence Operator</p>
                   
                   <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4 pt-4 border-t border-slate-800/50">
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold tracking-wider uppercase">
-                      <Globe size={12} /> Live Connection
+                    <div className={`flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase ${
+                      isOnline ? 'text-emerald-400' : 'text-red-400'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'
+                      }`} />
+                      {isOnline ? 'Online' : 'Offline'}
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold tracking-wider uppercase">
-                      <Clock size={12} /> Last Sync: Just now
+                      <Clock size={12} /> Last Sync: {isOnline ? lastSync : 'Disconnected'}
                     </div>
                   </div>
                 </div>
@@ -123,25 +193,44 @@ export default function ProfilePage() {
               <section className="bg-slate-900/40 border border-slate-800/50 rounded-xl p-5 space-y-4">
                 <h3 className="text-[11px] font-bold text-slate-500 tracking-widest uppercase">General Access</h3>
                 
-                <div className="space-y-3">
-                  <div className="group cursor-pointer">
-                    <label className="text-[10px] text-slate-600 font-bold uppercase tracking-wider block mb-1.5 ml-1">Profile Name</label>
-                    <div className="bg-slate-800/40 border border-slate-700/50 rounded-lg px-4 py-2.5 flex items-center justify-between group-hover:border-slate-600 transition-colors">
-                      <span className="text-sm text-slate-300">{profile.full_name || profile.username}</span>
-                      <ChevronRight size={14} className="text-slate-600" />
-                    </div>
+                <div className="space-y-4">
+                  <div className="group">
+                    <label className="text-[10px] text-slate-600 font-bold uppercase tracking-wider block mb-1.5 ml-1">Full Identity Name</label>
+                    <input 
+                      className="w-full bg-slate-800/40 border border-slate-700/50 rounded-lg px-4 py-2.5 text-sm text-slate-300 focus:border-blue-500/50 outline-none transition-all"
+                      value={formData.full_name}
+                      onChange={(e) => { setFormData({ ...formData, full_name: e.target.value }); setEditing(true); }}
+                      placeholder="Enter full name..."
+                    />
+                  </div>
+
+                  <div className="group">
+                    <label className="text-[10px] text-slate-600 font-bold uppercase tracking-wider block mb-1.5 ml-1">Comms Username</label>
+                    <input 
+                      className="w-full bg-slate-800/40 border border-slate-700/50 rounded-lg px-4 py-2.5 text-sm text-slate-300 focus:border-yellow-500/50 outline-none transition-all"
+                      value={formData.username}
+                      onChange={(e) => { setFormData({ ...formData, username: e.target.value }); setEditing(true); }}
+                      placeholder="Set username..."
+                    />
                   </div>
                   
-                  <div className="group cursor-pointer">
-                    <label className="text-[10px] text-slate-600 font-bold uppercase tracking-wider block mb-1.5 ml-1">Primary Email</label>
-                    <div className="bg-slate-800/40 border border-slate-700/50 rounded-lg px-4 py-2.5 flex items-center justify-between group-hover:border-slate-600 transition-colors">
-                      <div className="flex items-center gap-2">
-                        <Mail size={14} className="text-blue-400" />
-                        <span className="text-sm text-slate-300">{profile.email}</span>
-                      </div>
-                      <ChevronRight size={14} className="text-slate-600" />
+                  <div className="group opacity-70">
+                    <label className="text-[10px] text-slate-600 font-bold uppercase tracking-wider block mb-1.5 ml-1">Primary Email (Locked)</label>
+                    <div className="bg-slate-900/40 border border-slate-800/50 rounded-lg px-4 py-2.5 flex items-center gap-2">
+                      <Mail size={14} className="text-slate-500" />
+                      <span className="text-sm text-slate-500 italic">{profile.email}</span>
                     </div>
                   </div>
+
+                  {editing && (
+                    <button 
+                      onClick={handleUpdate}
+                      disabled={loading}
+                      className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98]"
+                    >
+                      {loading ? 'Processing...' : 'Save Profile Changes'}
+                    </button>
+                  )}
                 </div>
               </section>
 
@@ -174,7 +263,7 @@ export default function ProfilePage() {
 
             <section className="pt-4">
               <Link href="/login" 
-                onClick={() => supabase.auth.signOut()}
+                onClick={handleLogout}
                 className="flex items-center justify-center gap-3 w-full p-4 bg-red-500/5 border border-red-500/20 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold text-sm tracking-widest uppercase group">
                 <LogOut size={18} className="group-hover:translate-x-1 transition-transform" />
                 Terminate Session (Logout)

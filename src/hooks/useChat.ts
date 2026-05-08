@@ -12,82 +12,273 @@ export function useChat() {
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
   }, []);
 
-  // 2. Fetch Channels & Subscribe to new ones
+  // 1.5 Update last_seen instantly on activity
+  useEffect(() => {
+    if (!currentUser?.id) return;
+
+    let lastUpdate = 0;
+    const updateLastSeen = () => {
+      const now = Date.now();
+      if (now - lastUpdate < 1000) return; // Update every 1 second while active
+      lastUpdate = now;
+      
+      supabase
+        .from('profiles')
+        .update({ last_seen: new Date().toISOString() })
+        .eq('id', currentUser.id)
+        .then();
+    };
+
+    // Update instantly on user activity
+    const events = ['mousedown', 'keydown', 'touchstart', 'click'];
+    events.forEach(e => window.addEventListener(e, updateLastSeen));
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, updateLastSeen));
+    };
+  }, [currentUser?.id]);
+
+  // 2. Fetch ONLY channels the current user belongs to
   useEffect(() => {
     if (!currentUser) return;
+
     const fetchChannels = async () => {
-      const { data: channels } = await supabase.from('channels').select('*').order('created_at', { ascending: false });
-      if (channels) {
-        setChatData(channels.map(c => ({
+      // Step 1: Get channel IDs where I am a member
+      const { data: myMemberships } = await supabase
+        .from('channel_members')
+        .select('channel_id')
+        .eq('user_id', currentUser.id);
+
+      if (!myMemberships || myMemberships.length === 0) return;
+      const myChannelIds = myMemberships.map(m => m.channel_id);
+
+      // Step 2: Fetch those channels with ALL members' profiles
+      const { data: channels } = await supabase
+        .from('channels')
+        .select('*, channel_members(user_id, profiles(username, avatar_url, full_name, status, last_seen))')
+        .in('id', myChannelIds)
+        .order('created_at', { ascending: false });
+
+      if (!channels) return;
+
+      const formatted = channels.map((c: any) => {
+        let name = c.name;
+        let avatar = null;
+        let otherMemberId = null;
+        let status = c.type === 'dm' ? 'Offline' : 'Active';
+        let last_seen = null;
+
+        if (c.type === 'dm') {
+          // Find the OTHER member directly from the already-fetched data
+          const otherMember = c.channel_members?.find((m: any) => m.user_id !== currentUser.id);
+          if (otherMember) {
+            otherMemberId = otherMember.user_id;
+            const prof = otherMember?.profiles;
+            name = prof?.username || prof?.full_name || 'Unknown';
+            avatar = prof?.avatar_url;
+            last_seen = prof?.last_seen || null;
+            const now = new Date();
+            const lastSeenDate = prof?.last_seen ? new Date(prof.last_seen) : null;
+            const diffTime = lastSeenDate ? Math.abs(now.getTime() - lastSeenDate.getTime()) : Infinity;
+            const isOnline = diffTime < 2 * 1000; // Strictly 2 seconds!
+
+            if (isOnline) {
+              status = 'Online';
+            } else if (lastSeenDate) {
+              const yesterday = new Date(now);
+              yesterday.setDate(yesterday.getDate() - 1);
+              const timeStr = lastSeenDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              
+              if (lastSeenDate.toDateString() === now.toDateString()) {
+                status = `last seen today at ${timeStr}`;
+              } else if (lastSeenDate.toDateString() === yesterday.toDateString()) {
+                status = `last seen yesterday at ${timeStr}`;
+              } else {
+                status = `last seen ${lastSeenDate.toLocaleDateString([], { day: 'numeric', month: 'short' })}`;
+              }
+            } else {
+              status = 'Offline';
+            }
+          }
+        }
+
+        return {
           id: c.id,
           type: c.type,
-          name: c.name || (c.type === 'dm' ? 'Direct Message' : 'Secure Channel'),
+          name: name || (c.type === 'dm' ? 'Direct Message' : 'Group'),
+          avatar,
+          otherMemberId,
           created_by: c.created_by,
-          status: 'Encrypted Link Active',
-          lastMsg: 'Connect to begin sync',
-          time: 'Active',
+          status: status,
+          last_seen: last_seen,
+          lastMsg: '',
+          time: '',
           messages: []
-        })));
-        if (channels.length > 0 && !activeId) setActiveId(channels[0].id);
+        };
+      });
+
+      // Deduplicate DMs with the same person
+      const deduplicated: any[] = [];
+      const seenDmPartners = new Set();
+      for (const chat of formatted) {
+        if (chat.type === 'dm') {
+          if (seenDmPartners.has(chat.otherMemberId)) continue;
+          seenDmPartners.add(chat.otherMemberId);
+        }
+        deduplicated.push(chat);
       }
+
+      setChatData(deduplicated);
+      if (deduplicated.length > 0 && !activeId) setActiveId(deduplicated[0].id);
     };
 
     fetchChannels();
 
-    const channelSub = supabase.channel('channels_realtime')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'channels' }, (payload) => {
-        const c = payload.new as any;
+    // Subscribe to new channel memberships for THIS user only
+    const membershipSub = supabase.channel('membership_realtime')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'channel_members',
+        filter: `user_id=eq.${currentUser.id}`
+      }, () => {
+        fetchChannels();
+      })
+      .subscribe();
+
+    // Subscribe to ALL profile updates to catch last_seen changes in real time
+    const profilesSub = supabase.channel('profiles_realtime_status')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, (payload) => {
+        const updatedProfile = payload.new as any;
+        
         setChatData(prev => {
-          if (prev.some(ch => ch.id === c.id)) return prev; // skip duplicate
-          return [{ id: c.id, type: c.type, name: c.name || 'Secure Channel', created_by: c.created_by, status: 'Encrypted Link Active', lastMsg: 'Channel Initialized', time: 'Just now', messages: [] }, ...prev];
+          let changed = false;
+          const next = prev.map(chat => {
+            if (chat.type === 'dm' && chat.otherMemberId === updatedProfile.id) {
+              changed = true;
+              return { ...chat, last_seen: updatedProfile.last_seen };
+            }
+            return chat;
+          });
+          return changed ? next : prev;
+        });
+
+        setContacts(prev => {
+          let changed = false;
+          const next = prev.map(contact => {
+            if (contact.id === updatedProfile.id) {
+              changed = true;
+              return { ...contact, ...updatedProfile };
+            }
+            return contact;
+          });
+          return changed ? next : prev;
         });
       })
+      .subscribe();
+
+    // Subscribe to channel deletions
+    const channelSub = supabase.channel('channels_realtime')
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'channels' }, (payload) => {
         setChatData(prev => prev.filter(ch => ch.id !== payload.old.id));
         if (activeId === payload.old.id) setActiveId(null);
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channelSub); };
-  }, [currentUser]); // Removed activeId to prevent reset
+    return () => {
+      supabase.removeChannel(membershipSub);
+      supabase.removeChannel(profilesSub);
+      supabase.removeChannel(channelSub);
+    };
+  }, [currentUser]);
 
-  // 3. Real-time Subscription for Messages
+  // 2.5 Periodic Status Auto-Refresher (every 1 second)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setChatData(prev => {
+        let changed = false;
+        const next = prev.map(chat => {
+          if (chat.type === 'dm' && chat.last_seen) {
+            const now = new Date();
+            const lastSeenDate = new Date(chat.last_seen);
+            const diffTime = Math.abs(now.getTime() - lastSeenDate.getTime());
+            const isOnline = diffTime < 2 * 1000; // Strictly 2 seconds!
+            
+            let newStatus = 'Offline';
+            if (isOnline) {
+              newStatus = 'Online';
+            } else {
+              const yesterday = new Date(now);
+              yesterday.setDate(yesterday.getDate() - 1);
+              const timeStr = lastSeenDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              
+              if (lastSeenDate.toDateString() === now.toDateString()) {
+                newStatus = `last seen today at ${timeStr}`;
+              } else if (lastSeenDate.toDateString() === yesterday.toDateString()) {
+                newStatus = `last seen yesterday at ${timeStr}`;
+              } else {
+                newStatus = `last seen ${lastSeenDate.toLocaleDateString([], { day: 'numeric', month: 'short' })}`;
+              }
+            }
+            if (chat.status !== newStatus) {
+              changed = true;
+              return { ...chat, status: newStatus };
+            }
+          }
+          return chat;
+        });
+        return changed ? next : prev;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // 3. Real-time Messages — only update chats the user can see
   useEffect(() => {
     if (!currentUser) return;
 
     const channel = supabase.channel('realtime_comms')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'messages' 
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages'
       }, (payload) => {
         const newMsg = payload.new as any;
-        
+
         setChatData(prev => prev.map(chat => {
-          if (chat.id === newMsg.channel_id) {
-            const formatted = {
-              sender: newMsg.user_id === currentUser.id ? 'User' : 'Contact',
-              text: newMsg.content,
-              time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-            
-            // Smarter duplicate check: if the text and sender and time (within the same minute) match, skip
-            const isDuplicate = chat.messages.some((m: any) => 
-              m.text === formatted.text && 
-              m.sender === formatted.sender &&
-              m.time === formatted.time
-            );
+          // Only add message if it belongs to a channel in OUR list
+          if (chat.id !== newMsg.channel_id) return chat;
 
-            if (isDuplicate) return chat;
+          const formatted = {
+            id: newMsg.id,
+            user_id: newMsg.user_id,
+            sender: newMsg.user_id === currentUser.id ? 'User' : 'Contact',
+            text: newMsg.content,
+            time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          };
 
+          // Duplicate check by ID
+          if (chat.messages.some((m: any) => m.id === newMsg.id)) return chat;
+          // Duplicate check by content (for optimistic updates without ID)
+          if (chat.messages.some((m: any) => !m.id && m.text === formatted.text && m.sender === formatted.sender)) {
             return {
               ...chat,
-              messages: [...(chat.messages || []), formatted],
+              messages: chat.messages.map((m: any) =>
+                (!m.id && m.text === formatted.text && m.sender === formatted.sender)
+                  ? { ...m, id: newMsg.id }
+                  : m
+              ),
               lastMsg: formatted.text.length > 30 ? formatted.text.substring(0, 30) + '...' : formatted.text,
               time: 'Just now'
             };
           }
-          return chat;
+
+          return {
+            ...chat,
+            messages: [...chat.messages, formatted],
+            lastMsg: formatted.text.length > 30 ? formatted.text.substring(0, 30) + '...' : formatted.text,
+            time: 'Just now'
+          };
         }));
       })
       .subscribe();
@@ -108,91 +299,70 @@ export function useChat() {
 
       if (messages && !error) {
         setChatData(prev => prev.map(chat => {
-          if (chat.id === activeId) {
-            // Merge messages: Keep all database messages, and add optimistic ones that aren't in the DB yet
-            const dbMessages = messages.map(m => ({
-              id: m.id, // Keep the real ID
+          if (chat.id !== activeId) return chat;
+          return {
+            ...chat,
+            messages: messages.map(m => ({
+              id: m.id,
+              user_id: m.user_id,
               sender: m.user_id === currentUser.id ? 'User' : 'Contact',
               text: m.content,
               time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            }));
-
-            // Filter existing local messages to find ones that aren't in the DB yet
-            const optimisticOnly = (chat.messages || []).filter((local: any) => 
-               !dbMessages.some(db => db.text === local.text && db.sender === local.sender)
-            );
-
-            return {
-              ...chat,
-              messages: [...dbMessages, ...optimisticOnly]
-            };
-          }
-          return chat;
+            }))
+          };
         }));
       }
     };
     fetchMsgs();
   }, [activeId, currentUser]);
 
+  // 5. Send Message
   const sendMessage = async (text: string) => {
     if (!text.trim() || !activeId || !currentUser) return;
-    
-    // OPTIMISTIC UPDATE: Add message to UI immediately
-    const formatted = {
+
+    // Optimistic update
+    const optimistic = {
+      user_id: currentUser.id,
       sender: 'User',
       text: text.trim(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setChatData(prev => prev.map(chat => 
+    setChatData(prev => prev.map(chat =>
       chat.id === activeId ? {
         ...chat,
-        messages: [...chat.messages, formatted],
-        lastMsg: formatted.text,
+        messages: [...chat.messages, optimistic],
+        lastMsg: text.trim(),
         time: 'Just now'
       } : chat
     ));
 
-    const { data: inserted } = await supabase.from('messages').insert([{ 
-      channel_id: activeId, 
-      user_id: currentUser.id, 
-      content: text.trim() 
-    }]).select().single();
-
-    if (inserted) {
-      setChatData(prev => prev.map(chat => 
-        chat.id === activeId ? {
-          ...chat,
-          messages: chat.messages.map((m: any) => 
-            (m.text === text.trim() && !m.id) ? { ...m, id: inserted.id } : m
-          )
-        } : chat
-      ));
-    }
+    await supabase.from('messages').insert([{
+      channel_id: activeId,
+      user_id: currentUser.id,
+      content: text.trim()
+    }]);
   };
 
+  // 6. Push Channel (for group creation)
   const pushChannel = (c: any) => {
-    const newChat = { id: c.id, type: c.type, name: c.name || 'Secure Channel', created_by: c.created_by, status: 'Encrypted Link Active', lastMsg: 'Channel Initialized', time: 'Just now', messages: [] };
-    setChatData(prev => [newChat, ...prev]);
+    setChatData(prev => {
+      if (prev.some(ch => ch.id === c.id)) return prev;
+      return [{ id: c.id, type: c.type, name: c.name || 'Group', created_by: c.created_by, status: 'Active', lastMsg: '', time: 'Just now', messages: [] }, ...prev];
+    });
     setActiveId(c.id);
   };
 
+  // 7. Delete Message
   const deleteMessage = async (messageId: string, channelId: string) => {
     if (!currentUser) return;
-    
-    // OPTIMISTIC UPDATE
-    setChatData(prev => prev.map(chat => 
-      chat.id === channelId ? {
-        ...chat,
-        messages: chat.messages.filter((m: any) => m.id !== messageId)
-      } : chat
+    setChatData(prev => prev.map(chat =>
+      chat.id === channelId ? { ...chat, messages: chat.messages.filter((m: any) => m.id !== messageId) } : chat
     ));
-
-    // DB DELETION
     await supabase.from('messages').delete().eq('id', messageId).eq('user_id', currentUser.id);
   };
 
-  // 5. Fetch Contacts
+  // 8. Contacts
   useEffect(() => {
     if (!currentUser) return;
     const fetchContacts = async () => {
@@ -200,17 +370,42 @@ export function useChat() {
         .from('contacts')
         .select('*, profiles:contact_id(*)')
         .eq('user_id', currentUser.id);
-      if (data) setContacts(data.map(d => d.profiles));
+      if (data) {
+        const uniqueContacts = Array.from(new Map(data.map((d: any) => [d.profiles?.id, d.profiles])).values()).filter(Boolean);
+        setContacts(uniqueContacts);
+      }
     };
+
     fetchContacts();
+
+    const contactSub = supabase.channel('contacts_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contacts', filter: `user_id=eq.${currentUser.id}` }, () => fetchContacts())
+      .subscribe();
+
+    return () => { supabase.removeChannel(contactSub); };
   }, [currentUser]);
 
   const addContact = async (profileId: string) => {
     if (!currentUser) return;
+    
+    // Check if already a friend
+    const { data: existing } = await supabase
+      .from('contacts')
+      .select('id')
+      .eq('user_id', currentUser.id)
+      .eq('contact_id', profileId);
+
+    if (existing && existing.length > 0) return;
+
     const { error } = await supabase.from('contacts').insert([{ user_id: currentUser.id, contact_id: profileId }]);
     if (!error) {
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', profileId).single();
-      if (profile) setContacts(prev => [...prev, profile]);
+      if (profile) {
+        setContacts(prev => {
+          if (prev.some(p => p.id === profile.id)) return prev;
+          return [...prev, profile];
+        });
+      }
     }
   };
 
@@ -225,28 +420,52 @@ export function useChat() {
     return data || [];
   };
 
-  const startDM = async (otherUserId: string) => {
+  // 9. Start DM — check locally first, then DB
+  const startDM = async (otherUserId: string, otherUsername?: string) => {
     if (!currentUser) return null;
-    
-    // Check if DM exists
-    const { data: existing } = await supabase.rpc('get_dm_channel', { user_a: currentUser.id, user_b: otherUserId });
-    
-    if (existing && existing.length > 0) {
-      setActiveId(existing[0].id);
-      return existing[0].id;
+
+    // Check local state first
+    const existing = chatData.find(c => c.type === 'dm' && c.otherMemberId === otherUserId);
+    if (existing) {
+      setActiveId(existing.id);
+      return existing.id;
+    }
+
+    // Also check the DB via RPC as a fallback
+    const { data: dbExisting } = await supabase.rpc('get_dm_channel', { user_a: currentUser.id, user_b: otherUserId });
+    if (dbExisting && dbExisting.length > 0) {
+      setActiveId(dbExisting[0].id);
+      return dbExisting[0].id;
     }
 
     // Create new DM
     const { data: channel } = await supabase.from('channels').insert([{ type: 'dm' }]).select().single();
-    if (channel) {
-      await supabase.from('channel_members').insert([
-        { channel_id: channel.id, user_id: currentUser.id },
-        { channel_id: channel.id, user_id: otherUserId }
-      ]);
-      pushChannel(channel);
-      return channel.id;
-    }
-    return null;
+    if (!channel) return null;
+
+    await supabase.from('channel_members').insert([
+      { channel_id: channel.id, user_id: currentUser.id },
+      { channel_id: channel.id, user_id: otherUserId }
+    ]);
+
+    const newChat = {
+      id: channel.id,
+      type: 'dm',
+      name: otherUsername || 'Direct Message',
+      avatar: null,
+      otherMemberId: otherUserId,
+      created_by: currentUser.id,
+      status: 'Offline', // Will update on next sync
+      lastMsg: '',
+      time: 'Just now',
+      messages: []
+    };
+
+    setChatData(prev => {
+      if (prev.some(c => c.id === channel.id)) return prev;
+      return [newChat, ...prev];
+    });
+    setActiveId(channel.id);
+    return channel.id;
   };
 
   return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, deleteMessage, currentUser, pushChannel };

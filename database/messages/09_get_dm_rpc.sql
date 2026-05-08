@@ -6,6 +6,11 @@
 CREATE OR REPLACE FUNCTION get_dm_channel(user_a UUID, user_b UUID)
 RETURNS TABLE (id UUID, type TEXT) AS $$
 BEGIN
+  -- Security check: The caller must be either user_a or user_b
+  IF auth.uid() <> user_a AND auth.uid() <> user_b THEN
+    RETURN;
+  END IF;
+
   RETURN QUERY
   SELECT c.id, c.type
   FROM channels c
