@@ -543,7 +543,7 @@ function CommsContent() {
 
                 {/* Input */}
                 <div className="p-3 bg-[#0f1420] border-t border-slate-800 shrink-0 max-md:p-2 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-                  <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex items-end p-2 focus-within:border-yellow-500/50 transition-all max-md:p-1.5">
+                  <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex items-center p-2 focus-within:border-yellow-500/50 transition-all max-md:p-1.5">
                     <textarea
                       ref={inputRef}
                       rows={1}
@@ -568,7 +568,7 @@ function CommsContent() {
                       onMouseDown={e => { e.preventDefault(); handleSend(); }}
                       onClick={e => e.preventDefault()}
                     >
-                      <Send size={15} />
+                      <Send size={18} className="rotate-45 -translate-y-0.5" />
                     </button>
                   </div>
                 </div>
