@@ -895,9 +895,9 @@ function MessageItem({ msg, currentUserId, contactAvatar, contactName, onDelete,
           </div>
         )}
         <div className="relative group/bubble">
-          <div className={`px-3 py-2 max-md:px-4 max-md:py-2.5 rounded-[18px] max-md:rounded-[20px] text-[13px] max-md:text-[12px] leading-relaxed font-medium transition-all ${isSelf
-            ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-[#1a1200] rounded-br-[4px] max-md:rounded-br-none shadow-[0_2px_8px_rgba(245,196,81,0.15)] max-md:shadow-[0_4px_15px_rgba(245,196,81,0.15)] hover:shadow-[0_2px_12px_rgba(245,196,81,0.25)] max-md:hover:shadow-[0_4px_20px_rgba(245,196,81,0.25)]'
-            : 'bg-[#1a2333] text-slate-200 rounded-bl-[4px] max-md:rounded-bl-none border border-slate-700/30 max-md:shadow-lg shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:border-slate-600/50'
+          <div className={`px-4 py-2.5 rounded-[18px] max-md:rounded-[20px] text-[13px] max-md:text-[12px] leading-relaxed font-medium transition-all ${isSelf
+            ? 'bg-[#241d0b] text-yellow-50/90 rounded-br-[4px] max-md:rounded-br-none border border-yellow-500/20 shadow-lg'
+            : 'bg-[#161b22] text-slate-200 rounded-bl-[4px] max-md:rounded-bl-none border border-slate-700/30'
             }`}>
             {msg.text}
           </div>
