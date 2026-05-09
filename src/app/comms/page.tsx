@@ -212,20 +212,21 @@ function CommsContent() {
   };
 
   return (
-    <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans flex min-h-screen">
+    <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans flex min-h-screen max-md:h-[100dvh] max-md:overflow-hidden">
       <Sidebar hideMobileTrigger={!!activeChat} />
-      <div className="flex-1 flex flex-col min-w-0 p-2 gap-2 overflow-hidden md:p-4 md:gap-4">
+      <div className="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-hidden max-md:p-0 max-md:gap-0">
 
         {/* HEADER */}
         <header className={`
           shrink-0 h-[60px] bg-[#0f1420] border border-yellow-500/10 
-          flex justify-between items-center pl-16 pr-3 md:pl-6 md:pr-6 
+          flex justify-between items-center pl-6 pr-6 
           rounded-xl shadow-lg relative
+          max-md:h-[56px] max-md:border-0 max-md:border-b max-md:rounded-none max-md:pl-14 max-md:pr-3
           ${activeChat ? 'hidden md:flex' : 'flex'}
         `}>
           <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-yellow-500/60 to-transparent" />
-          <h1 className="text-[13px] md:text-[16px] font-black tracking-widest text-yellow-500 uppercase">AuScope | Comms</h1>
-          <div className="flex items-center gap-2 md:gap-3"><HeaderPrice /></div>
+          <h1 className="text-[16px] font-black tracking-widest text-yellow-500 uppercase max-md:text-[13px]">AuScope | Comms</h1>
+          <div className="flex items-center gap-3"><HeaderPrice /></div>
         </header>
 
         <div className="flex-1 flex gap-0 md:gap-4 min-h-0">
@@ -234,7 +235,7 @@ function CommsContent() {
           <section className={`
             flex flex-col shrink-0 overflow-hidden bg-[#0f1420] border-0 
             md:border-yellow-500/20 w-full md:w-[290px] rounded-none md:rounded-xl
-            ${activeChat ? 'hidden md:flex' : 'flex'}
+            ${activeChat ? 'hidden md:flex' : 'flex max-md:flex-1'}
           `}>
 
             {/* Tabs — premium icons (desktop: top; mobile: bottom via order) */}
@@ -385,7 +386,7 @@ function CommsContent() {
           {/* CHAT PANEL */}
           <section className={`
             flex-1 bg-[#0f1420] border-0 md:border-yellow-500/20 
-            rounded-none md:rounded-xl flex flex-col overflow-hidden shadow-2xl
+            rounded-none md:rounded-xl flex flex-col overflow-hidden shadow-2xl max-md:min-h-0
             ${!activeChat ? 'hidden md:flex' : ''}
           `}>
             {!activeChat ? (
@@ -397,35 +398,35 @@ function CommsContent() {
             ) : (
               <>
                 {/* Chat Header */}
-                <div className="h-[56px] md:h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-2 md:px-6 shrink-0 bg-slate-800/40">
-                  <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                <div className="h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-6 shrink-0 bg-slate-800/40 max-md:h-auto max-md:min-h-[52px] max-md:px-2 max-md:py-1.5 max-md:gap-2 max-md:justify-start">
+                  <div className="flex items-center gap-3 flex-1 min-w-0 max-md:gap-2">
                     <button
                       onClick={() => setActiveId(null as any)}
-                      className="flex md:hidden w-9 h-9 rounded-lg hover:bg-slate-700/50 items-center justify-center text-yellow-500 shrink-0"
+                      className="flex md:hidden w-8 h-8 rounded-lg hover:bg-slate-700/50 items-center justify-center text-yellow-500 shrink-0"
                       aria-label="Back"
                     >
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
                     </button>
-                    <div className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-yellow-500/30 flex items-center justify-center bg-yellow-500/10 text-yellow-500 overflow-hidden shrink-0">
+                    <div className="w-9 h-9 rounded-full border border-yellow-500/30 flex items-center justify-center bg-yellow-500/10 text-yellow-500 overflow-hidden shrink-0 max-md:w-8 max-md:h-8">
                       {activeChat.avatar ? (
                         <img src={activeChat.avatar} className="w-full h-full object-cover" alt="" />
                       ) : activeChat.type === 'dm' ? <User size={16} /> : <Users size={16} />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h2 className="text-[13px] md:text-sm font-bold text-slate-200 truncate">{activeChat.name}</h2>
-                      <span className={`text-[9px] md:text-[10px] font-mono tracking-widest ${activeChat.status === 'Online' ? 'text-green-400/80' : 'text-slate-500'}`}>{activeChat.status}</span>
+                      <h2 className="text-sm font-bold text-slate-200 truncate max-md:text-[12px] max-md:leading-tight">{activeChat.name}</h2>
+                      <span className={`text-[10px] font-mono tracking-widest max-md:text-[9px] max-md:tracking-wider ${activeChat.status === 'Online' ? 'text-green-400/80' : 'text-slate-500'}`}>{activeChat.status}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-400 shrink-0">
-                    {/* Only show on mobile — desktop already has it in the main header */}
+                  <div className="flex items-center gap-2 text-slate-400 shrink-0 max-md:gap-1">
+                    {/* Compact price on mobile only — desktop already has it in main header */}
                     <div className="md:hidden">
-                      <HeaderPrice />
+                      <HeaderPrice compact />
                     </div>
 
                     {activeChat.type === 'dm' && (
                       <button
                         onClick={startCall}
-                        className="p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300 transition-all active:scale-95 border border-green-500/20"
+                        className="p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300 transition-all active:scale-95 border border-green-500/20 max-md:w-8 max-md:h-8 max-md:p-0 max-md:flex max-md:items-center max-md:justify-center"
                         title="Call"
                       >
                         <Phone size={16} />
@@ -501,7 +502,7 @@ function CommsContent() {
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 bg-[#0a0e17] custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 bg-[#0a0e17] custom-scrollbar max-md:p-3 max-md:gap-3 max-md:min-h-0">
                   {activeChat.messages?.map((msg: any, i: number) => (
                     <MessageItem
                       key={msg.id || i}
@@ -517,8 +518,8 @@ function CommsContent() {
                 </div>
 
                 {/* Input */}
-                <div className="p-3 bg-[#0f1420] border-t border-slate-800">
-                  <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex items-end p-2 focus-within:border-yellow-500/50 transition-all">
+                <div className="p-3 bg-[#0f1420] border-t border-slate-800 max-md:p-2 max-md:shrink-0 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+                  <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex items-end p-2 focus-within:border-yellow-500/50 transition-all max-md:p-1.5">
                     <textarea
                       rows={1}
                       className="flex-1 bg-transparent text-sm text-slate-200 focus:outline-none px-3 resize-none custom-scrollbar py-2 max-h-32"
@@ -538,7 +539,7 @@ function CommsContent() {
                       }}
                     />
                     <button
-                      className="w-9 h-9 bg-yellow-500 hover:bg-yellow-400 text-[#1a1200] rounded-lg flex items-center justify-center transition-all active:scale-95"
+                      className="w-9 h-9 bg-yellow-500 hover:bg-yellow-400 text-[#1a1200] rounded-lg flex items-center justify-center transition-all active:scale-95 shrink-0"
                       onClick={handleSend}>
                       <Send size={15} />
                     </button>

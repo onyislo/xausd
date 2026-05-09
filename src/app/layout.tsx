@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import ProductionGuard from '@/components/ProductionGuard';
@@ -21,6 +21,14 @@ export const metadata: Metadata = {
   icons: {
     icon: "/logo.svg",
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  interactiveWidget: 'resizes-content',
 };
 
 export default function RootLayout({

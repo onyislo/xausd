@@ -6,7 +6,7 @@ const API_KEY = process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY || '76c9f305de434302
 const SYMBOL  = 'XAU/USD';
 const WS_URL  = `wss://ws.twelvedata.com/v1/quotes/price?apikey=${API_KEY}`;
 
-export default function HeaderPrice() {
+export default function HeaderPrice({ className = '', compact = false }: { className?: string; compact?: boolean }) {
   const [livePrice, setLivePrice] = useState<number | null>(null);
 
   useEffect(() => {
@@ -41,13 +41,23 @@ export default function HeaderPrice() {
     };
   }, []);
 
-  const fmtPrice = livePrice ? livePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '2,341.50';
+  const fmtPrice = livePrice ? livePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+
+  // Compact mode: just the price, tiny, for mobile chat headers
+  if (compact) {
+    return (
+      <div className="flex items-baseline gap-0.5">
+        <span className="text-[7px] text-slate-500 tracking-wider uppercase font-bold">XAU</span>
+        <span className="text-yellow-400 font-mono font-bold text-[11px] tracking-wide">{fmtPrice}</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col items-end">
+    <div className={`flex flex-col items-end ${className}`}>
       <div className="flex items-baseline gap-1.5">
         <span className="text-[8px] md:text-[10px] text-slate-500 tracking-widest uppercase">XAU/USD</span>
-        <span className="text-yellow-400 font-mono font-bold text-[14px] md:text-[18px] tracking-wider">{fmtPrice}</span>
+        <span data-live-price className="text-yellow-400 font-mono font-bold text-[14px] md:text-[18px] tracking-wider">{fmtPrice}</span>
         <span className="text-green-400 text-[8px] md:text-[10px] font-bold">+0.42%</span>
       </div>
       <div className="text-[8px] md:text-[9px] text-slate-600 tracking-wider hidden md:block">Spot Price • Real-time</div>
