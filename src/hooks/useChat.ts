@@ -15,13 +15,12 @@ export function useChat() {
   // 1.5 Update last_seen instantly on activity
   useEffect(() => {
     if (!currentUser?.id) return;
-
     let lastUpdate = 0;
     const updateLastSeen = () => {
       const now = Date.now();
-      if (now - lastUpdate < 1000) return; // Update every 1 second while active
+      if (now - lastUpdate < 1000) return;
       lastUpdate = now;
-      
+
       supabase
         .from('profiles')
         .update({ last_seen: new Date().toISOString() })
@@ -29,12 +28,41 @@ export function useChat() {
         .then();
     };
 
+    // Trigger immediately on load
+    updateLastSeen();
+
     // Update instantly on user activity
     const events = ['mousedown', 'keydown', 'touchstart', 'click'];
     events.forEach(e => window.addEventListener(e, updateLastSeen));
 
+    // INSTANT OFFLINE: When the user closes the tab, set them offline immediately
+    const handleExit = () => {
+      // We use a past date to ensure the 30s window thinks they are offline instantly
+      const offlineDate = new Date(Date.now() - 60000).toISOString();
+      const body = JSON.stringify({ last_seen: offlineDate });
+      
+      // Use fetch with keepalive to ensure it finishes even if tab is closing
+      fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`
+        },
+        body,
+        keepalive: true
+      });
+    };
+
+    window.addEventListener('beforeunload', handleExit);
+
+    // BACKGROUND HEARTBEAT: Update every 10 seconds even if not moving mouse
+    const interval = setInterval(updateLastSeen, 10000);
+
     return () => {
       events.forEach(e => window.removeEventListener(e, updateLastSeen));
+      window.removeEventListener('beforeunload', handleExit);
+      clearInterval(interval);
     };
   }, [currentUser?.id]);
 
@@ -61,8 +89,12 @@ export function useChat() {
 
       if (!channels) return;
 
+      const now = new Date();
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+
       const formatted = channels.map((c: any) => {
-        let name = c.name;
+        let name = 'Unknown';
         let avatar = null;
         let otherMemberId = null;
         let status = c.type === 'dm' ? 'Offline' : 'Active';
@@ -77,16 +109,13 @@ export function useChat() {
             name = prof?.username || prof?.full_name || 'Unknown';
             avatar = prof?.avatar_url;
             last_seen = prof?.last_seen || null;
-            const now = new Date();
             const lastSeenDate = prof?.last_seen ? new Date(prof.last_seen) : null;
             const diffTime = lastSeenDate ? Math.abs(now.getTime() - lastSeenDate.getTime()) : Infinity;
-            const isOnline = diffTime < 10 * 1000; // 10s for stability
+            const isOnline = diffTime < 30 * 1000; // 30s for rock-solid stability
 
             if (isOnline) {
               status = 'Online';
             } else if (lastSeenDate) {
-              const yesterday = new Date(now);
-              yesterday.setDate(yesterday.getDate() - 1);
               const timeStr = lastSeenDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
               
               if (lastSeenDate.toDateString() === now.toDateString()) {
@@ -100,19 +129,22 @@ export function useChat() {
               status = 'Offline';
             }
           }
+        } else {
+          name = c.name;
+          status = `${c.channel_members?.length || 0} members`;
         }
 
         return {
           id: c.id,
           type: c.type,
-          name: name || (c.type === 'dm' ? 'Direct Message' : 'Group'),
+          name: name,
           avatar,
           otherMemberId,
           created_by: c.created_by,
           status: status,
           last_seen: last_seen,
-          lastMsg: '',
-          time: '',
+          lastMsg: 'Encrypted Message Payload',
+          time: 'Now',
           messages: []
         };
       });
@@ -201,7 +233,7 @@ export function useChat() {
             const now = new Date();
             const lastSeenDate = new Date(chat.last_seen);
             const diffTime = Math.abs(now.getTime() - lastSeenDate.getTime());
-            const isOnline = diffTime < 10 * 1000; // Increased to 10s for stability
+            const isOnline = diffTime < 30 * 1000; // Consistent with 30s window
             
             let newStatus = 'Offline';
             if (isOnline) {
