@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   description: "Real-time gold market analytics, AI-powered trade signals, and geopolitical intelligence for professional XAU/USD traders.",
   icons: {
     icon: "/logo.svg",
+    shortcut: "/logo.svg",
+    apple: "/logo.svg",
   },
 };
 
