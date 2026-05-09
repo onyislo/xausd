@@ -80,7 +80,7 @@ export function useChat() {
             const now = new Date();
             const lastSeenDate = prof?.last_seen ? new Date(prof.last_seen) : null;
             const diffTime = lastSeenDate ? Math.abs(now.getTime() - lastSeenDate.getTime()) : Infinity;
-            const isOnline = diffTime < 2 * 1000; // Strictly 2 seconds!
+            const isOnline = diffTime < 10 * 1000; // 10s for stability
 
             if (isOnline) {
               status = 'Online';
@@ -201,7 +201,7 @@ export function useChat() {
             const now = new Date();
             const lastSeenDate = new Date(chat.last_seen);
             const diffTime = Math.abs(now.getTime() - lastSeenDate.getTime());
-            const isOnline = diffTime < 2 * 1000; // Strictly 2 seconds!
+            const isOnline = diffTime < 10 * 1000; // Increased to 10s for stability
             
             let newStatus = 'Offline';
             if (isOnline) {
