@@ -5,9 +5,11 @@ import Sidebar from '@/components/Sidebar';
 import HeaderPrice from '@/components/HeaderPrice';
 import { useChat } from '@/hooks/useChat';
 import { supabase } from '@/lib/supabase';
-import { Search, Send, Users, User, Phone, MoreVertical, Plus, Shield, Trash2, UserPlus, UserMinus, Copy, Check, Link as LinkIcon, X, Info, BellOff, LogOut, CheckCircle, Hash, MessageSquare, Bot, PhoneMissed, PhoneIncoming, PhoneOutgoing } from 'lucide-react';
+import { Search, Send, Users, User, Phone, MoreVertical, Plus, Shield, Trash2, UserPlus, UserMinus, Copy, Check, Link as LinkIcon, X, Info, BellOff, LogOut, CheckCircle, Hash, MessageSquare, Bot, PhoneMissed, PhoneIncoming, PhoneOutgoing, Clock } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import PhoneCall from '@/components/PhoneCall';
+
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 function CommsContent() {
   const { activeId, setActiveId, chatData, contacts: friends, addContact: addFriend, removeContact: removeFriend, searchProfiles, startDM, sendMessage, deleteMessage, currentUser, pushChannel } = useChat();
@@ -32,6 +34,7 @@ function CommsContent() {
   const chatEndRef = React.useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, msgId: string } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [devToast, setDevToast] = useState(false);
   const searchParams = useSearchParams();
 
   const activeChat = chatData.find(c => c.id === activeId) || null;
@@ -191,7 +194,13 @@ function CommsContent() {
     return () => { supabase.removeChannel(ringChannel); };
   }, [currentUser]);
 
+  const showDevToast = () => {
+    setDevToast(true);
+    setTimeout(() => setDevToast(false), 2000);
+  };
+
   const startCall = () => {
+    if (IS_PRODUCTION) { showDevToast(); return; }
     if (!activeChat || activeChat.type !== 'dm') return;
     const roomId = activeChat.id;
     const targetId = activeChat.otherMemberId;
@@ -212,7 +221,7 @@ function CommsContent() {
   };
 
   return (
-    <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans flex min-h-screen max-md:h-[100dvh] max-md:overflow-hidden">
+    <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans flex min-h-screen md:h-screen md:overflow-hidden" style={{ height: '100dvh' }}>
       <Sidebar hideMobileTrigger={!!activeChat} />
       <div className="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-hidden max-md:p-0 max-md:gap-0">
 
@@ -221,7 +230,7 @@ function CommsContent() {
           shrink-0 h-[60px] bg-[#0f1420] border border-yellow-500/10 
           flex justify-between items-center pl-6 pr-6 
           rounded-xl shadow-lg relative
-          max-md:h-[56px] max-md:border-0 max-md:border-b max-md:rounded-none max-md:pl-14 max-md:pr-3
+          max-md:h-[52px] max-md:border-0 max-md:border-b max-md:border-yellow-500/10 max-md:rounded-none max-md:pl-14 max-md:pr-3
           ${activeChat ? 'hidden md:flex' : 'flex'}
         `}>
           <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-yellow-500/60 to-transparent" />
@@ -229,7 +238,7 @@ function CommsContent() {
           <div className="flex items-center gap-3"><HeaderPrice /></div>
         </header>
 
-        <div className="flex-1 flex gap-0 md:gap-4 min-h-0">
+        <div className="flex-1 flex gap-0 md:gap-4 min-h-0 overflow-hidden">
 
           {/* LEFT PANEL */}
           <section className={`
@@ -238,34 +247,38 @@ function CommsContent() {
             ${activeChat ? 'hidden md:flex' : 'flex max-md:flex-1'}
           `}>
 
-            {/* Tabs — premium icons (desktop: top; mobile: bottom via order) */}
-            <div className="flex border-b-0 border-t border-yellow-500/10 shrink-0 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-slate-900/50 order-2 md:order-0 md:border-b md:border-t-0 md:p-1">
+            {/* Tabs — desktop: top bar; mobile: fixed bottom nav */}
+            <div className="flex shrink-0 md:border-b md:border-yellow-500/10 md:p-1 md:bg-transparent
+              max-md:fixed max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:z-30
+              max-md:bg-[#0a0e17] max-md:border-t max-md:border-yellow-500/15
+              max-md:px-2 max-md:pt-2 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]
+              max-md:shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
               {([
-                { key: 'all', icon: <Hash size={16} />, title: 'All Messages' },
-                { key: 'channels', icon: <Shield size={16} />, title: 'Groups' },
-                { key: 'dms', icon: <MessageSquare size={16} />, title: 'Direct' },
-                { key: 'friends', icon: <Users size={16} />, title: 'Friends' },
-                { key: 'calls', icon: <Phone size={16} />, title: 'Calls' },
-                { key: 'ai', icon: <Bot size={16} />, title: 'AI Chat' },
+                { key: 'all', icon: <Hash size={18} />, title: 'All' },
+                { key: 'channels', icon: <Shield size={18} />, title: 'Groups' },
+                { key: 'dms', icon: <MessageSquare size={18} />, title: 'DMs' },
+                { key: 'friends', icon: <Users size={18} />, title: 'Friends' },
+                { key: 'calls', icon: <Phone size={18} />, title: 'Calls' },
+                { key: 'ai', icon: <Bot size={18} />, title: 'AI' },
               ] as const).map(t => (
                 <button
                   key={t.key}
                   onClick={() => setTab(t.key)}
-                  title={t.title}
-                  className={`flex-1 py-2 flex items-center justify-center rounded-lg transition-all duration-300 ${tab === t.key
-                    ? 'text-yellow-500 bg-yellow-500/10 shadow-[inset_0_0_10px_rgba(245,196,81,0.1)]'
-                    : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/30'
+                  className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 md:py-2 md:flex-row md:gap-0 md:rounded-lg transition-all duration-200 ${tab === t.key
+                    ? 'text-yellow-500 md:bg-yellow-500/10'
+                    : 'text-slate-500 hover:text-slate-300 md:hover:bg-slate-800/30'
                     }`}
                 >
-                  <div className={`transition-transform duration-300 ${tab === t.key ? 'scale-110' : 'scale-100'}`}>
+                  <div className={`transition-transform duration-200 ${tab === t.key ? 'scale-110' : 'scale-100'}`}>
                     {t.icon}
                   </div>
+                  <span className="md:hidden text-[9px] font-bold uppercase tracking-wide mt-0.5">{t.title}</span>
                 </button>
               ))}
             </div>
 
             {/* Search + Create */}
-            <div className="p-3 flex gap-2 border-b border-yellow-500/10 shrink-0 bg-slate-900/20 max-md:order-0">
+            <div className="p-3 flex gap-2 border-b border-yellow-500/10 shrink-0 bg-slate-900/20 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
               <div className="relative flex-1 group">
                 <input
                   id="comms-search"
@@ -285,8 +298,8 @@ function CommsContent() {
               )}
             </div>
 
-            {/* List */}
-            <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1 custom-scrollbar order-1 md:order-0">
+            {/* List — on mobile, leave room for the fixed bottom tab bar (~64px) */}
+            <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-1 custom-scrollbar max-md:pb-20">
               {isSearching && searchResults.length > 0 && (
                 <div className="mb-4">
                   <span className="text-[9px] font-black text-yellow-500/50 px-3 uppercase tracking-widest block mb-2">Network Discovery</span>
@@ -377,7 +390,10 @@ function CommsContent() {
                     </span>
                   </div>
                 ) : filtered.map(chat => (
-                  <ChatListItem key={chat.id} chat={chat} active={activeId === chat.id} onSelect={() => setActiveId(chat.id)} />
+                  <ChatListItem key={chat.id} chat={chat} active={activeId === chat.id} onSelect={() => {
+                    if (IS_PRODUCTION && chat.type === 'group') { showDevToast(); return; }
+                    setActiveId(chat.id);
+                  }} />
                 ))
               )}
             </div>
@@ -386,7 +402,8 @@ function CommsContent() {
           {/* CHAT PANEL */}
           <section className={`
             flex-1 bg-[#0f1420] border-0 md:border-yellow-500/20 
-            rounded-none md:rounded-xl flex flex-col overflow-hidden shadow-2xl max-md:min-h-0
+            rounded-none md:rounded-xl flex flex-col overflow-hidden shadow-2xl
+            max-md:h-full max-md:min-h-0
             ${!activeChat ? 'hidden md:flex' : ''}
           `}>
             {!activeChat ? (
@@ -398,7 +415,7 @@ function CommsContent() {
             ) : (
               <>
                 {/* Chat Header */}
-                <div className="h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-6 shrink-0 bg-slate-800/40 max-md:h-auto max-md:min-h-[52px] max-md:px-2 max-md:py-1.5 max-md:gap-2 max-md:justify-start">
+                <div className="h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-6 shrink-0 bg-slate-800/40 max-md:h-auto max-md:min-h-[60px] max-md:px-2 max-md:gap-2 max-md:justify-start max-md:pt-[calc(10px+env(safe-area-inset-top))] max-md:pb-2">
                   <div className="flex items-center gap-3 flex-1 min-w-0 max-md:gap-2">
                     <button
                       onClick={() => setActiveId(null as any)}
@@ -518,7 +535,7 @@ function CommsContent() {
                 </div>
 
                 {/* Input */}
-                <div className="p-3 bg-[#0f1420] border-t border-slate-800 max-md:p-2 max-md:shrink-0 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+                <div className="p-3 bg-[#0f1420] border-t border-slate-800 shrink-0 max-md:p-2 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
                   <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex items-end p-2 focus-within:border-yellow-500/50 transition-all max-md:p-1.5">
                     <textarea
                       rows={1}
@@ -727,6 +744,26 @@ function CommsContent() {
               .then(({ data }) => { if (data) setCallHistory(data); });
           }}
         />
+      )}
+
+      {/* In Development Toast */}
+      {devToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[3000] animate-in slide-in-from-top-3 fade-in duration-200">
+          <div className="bg-[#0f1420] border border-yellow-500/30 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_40px_rgba(245,196,81,0.05)] overflow-hidden backdrop-blur-xl">
+            <div className="flex items-center gap-2.5 px-5 py-3">
+              <div className="w-7 h-7 rounded-lg bg-yellow-500/10 border border-yellow-500/25 flex items-center justify-center shrink-0">
+                <Clock size={13} className="text-yellow-500" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black text-yellow-500 uppercase tracking-[0.15em] leading-tight">In Development</p>
+                <p className="text-[9px] text-slate-500 font-medium tracking-wider">Feature coming soon</p>
+              </div>
+            </div>
+            <div className="h-[2px] bg-slate-800/50">
+              <div className="h-full bg-gradient-to-r from-yellow-500 to-yellow-600" style={{ animation: 'dev-toast-progress 2s linear forwards' }} />
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
