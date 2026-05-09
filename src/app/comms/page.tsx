@@ -32,6 +32,7 @@ function CommsContent() {
   const [members, setMembers] = useState<any[]>([]);
   const [copied, setCopied] = useState(false);
   const chatEndRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLTextAreaElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, msgId: string } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [devToast, setDevToast] = useState(false);
@@ -56,10 +57,16 @@ function CommsContent() {
     setTimeout(() => setToastMessage(null), 10000);
   };
 
+  const focusInput = () => {
+    // Small timeout ensures the re-focus happens after any state updates
+    setTimeout(() => inputRef.current?.focus(), 10);
+  };
+
   const handleSend = () => {
     if (!inputText.trim()) return;
     sendMessage(inputText.trim());
     setInputText('');
+    focusInput();
   };
 
   const handleCreate = async () => {
@@ -538,6 +545,7 @@ function CommsContent() {
                 <div className="p-3 bg-[#0f1420] border-t border-slate-800 shrink-0 max-md:p-2 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
                   <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex items-end p-2 focus-within:border-yellow-500/50 transition-all max-md:p-1.5">
                     <textarea
+                      ref={inputRef}
                       rows={1}
                       className="flex-1 bg-transparent text-sm text-slate-200 focus:outline-none px-3 resize-none custom-scrollbar py-2 max-h-32"
                       placeholder="Send encrypted message..."
@@ -557,7 +565,9 @@ function CommsContent() {
                     />
                     <button
                       className="w-9 h-9 bg-yellow-500 hover:bg-yellow-400 text-[#1a1200] rounded-lg flex items-center justify-center transition-all active:scale-95 shrink-0"
-                      onClick={handleSend}>
+                      onMouseDown={e => { e.preventDefault(); handleSend(); }}
+                      onClick={e => e.preventDefault()}
+                    >
                       <Send size={15} />
                     </button>
                   </div>
