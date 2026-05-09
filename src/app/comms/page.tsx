@@ -436,13 +436,27 @@ function CommsContent() {
                         <img src={activeChat.avatar} className="w-full h-full object-cover" alt="" />
                       ) : activeChat.type === 'dm' ? <User size={16} /> : <Users size={16} />}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-sm font-bold text-slate-200 truncate max-md:text-[12px] max-md:leading-tight">{activeChat.name}</h2>
-                      <span className={`text-[10px] font-mono tracking-widest max-md:text-[9px] max-md:tracking-wider ${activeChat.status === 'Online' ? 'text-green-400/80' : 'text-slate-500'}`}>{activeChat.status}</span>
+                    <div className="min-w-0 flex-1 flex flex-col justify-center overflow-hidden">
+                      <h2 className="text-[15px] font-bold text-slate-100 truncate max-md:text-[14px] leading-tight">{activeChat.name}</h2>
+                      <div key={activeChat.id} className="relative h-[14px] flex items-center overflow-hidden">
+                        {activeChat.status.startsWith('last seen') ? (
+                          <>
+                            <span className="animate-whatsapp-collapse text-[11px] max-md:text-[10px] text-slate-400">last seen &nbsp;</span>
+                            <span className="text-[11px] max-md:text-[10px] text-slate-400 whitespace-nowrap">
+                              {activeChat.status.replace('last seen ', '')}
+                            </span>
+                          </>
+                        ) : (
+                          <span className={`text-[11px] max-md:text-[10px] leading-tight whitespace-nowrap ${activeChat.status === 'Online' ? 'text-green-400' : 'text-slate-400'}`}>
+                            {activeChat.status}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-400 shrink-0 max-md:gap-1">
-                    {/* Compact price on mobile only — desktop already has it in main header */}
+
+                  <div className="flex items-center gap-2 text-slate-400 shrink-0 max-md:gap-2">
+                    {/* Compact price on mobile only */}
                     <div className="md:hidden">
                       <HeaderPrice compact />
                     </div>
@@ -450,7 +464,7 @@ function CommsContent() {
                     {activeChat.type === 'dm' && (
                       <button
                         onClick={startCall}
-                        className="p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300 transition-all active:scale-95 border border-green-500/20 max-md:w-8 max-md:h-8 max-md:p-0 max-md:flex max-md:items-center max-md:justify-center"
+                        className="p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-all active:scale-95 border border-green-500/10 max-md:w-9 max-md:h-9 max-md:p-0 max-md:flex max-md:items-center max-md:justify-center"
                         title="Call"
                       >
                         <Phone size={16} />
