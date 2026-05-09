@@ -129,7 +129,6 @@ export function useChat() {
       }
 
       setChatData(deduplicated);
-      if (deduplicated.length > 0 && !activeId) setActiveId(deduplicated[0].id);
     };
 
     fetchChannels();

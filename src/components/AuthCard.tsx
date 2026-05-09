@@ -187,7 +187,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
 
                 {isLogin && (
                   <div style={{ textAlign: 'right', marginBottom: '16px', marginTop: '-6px' }}>
-                    <Link href="#" style={{ fontSize: '10px', color: '#f5c451', textDecoration: 'none' }}>
+                    <Link href="/forgot-password" style={{ fontSize: '10px', color: '#f5c451', textDecoration: 'none' }}>
                       Forgot password?
                     </Link>
                   </div>
