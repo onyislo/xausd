@@ -17,7 +17,7 @@ const inviteEmailHtml = (email: string, resetLink: string) => `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AuScope — Your Access is Ready</title>
+<title>AuScope  Your Access is Ready</title>
 </head>
 <body style="margin:0;padding:0;background:#0a0e17;font-family:'Helvetica Neue',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0e17;padding:40px 16px;">
@@ -41,26 +41,18 @@ const inviteEmailHtml = (email: string, resetLink: string) => `<!DOCTYPE html>
         
         <!-- Body -->
         <tr><td style="padding:40px;">
-          <h1 style="font-size:24px;font-weight:800;color:#ffffff;margin:0 0 8px;letter-spacing:-0.02em;">Welcome to the Terminal 🗝️</h1>
+          <h1 style="font-size:24px;font-weight:800;color:#ffffff;margin:0 0 8px;letter-spacing:-0.02em;">Quick Confirmation 🛡️</h1>
+          
+          <div style="background:rgba(245,196,81,0.1);border-left:4px solid #f5c451;padding:16px;margin-bottom:24px;">
+            <p style="font-size:13px;color:#f5c451;font-weight:700;margin:0 0 4px;text-transform:uppercase;">Technical Note:</p>
+            <p style="font-size:13px;color:#e0e6ed;margin:0;line-height:1.5;">This is just to confirm that the **3rd email** we sent you contains the correct and final access link. Please use that link to set your password and join the terminal.</p>
+            <p style="font-size:13px;color:#e0e6ed;margin:8px 0 0;line-height:1.5;">We apologize for any inconvenience caused.</p>
+          </div>
+
           <p style="font-size:14px;color:#6b7a8d;line-height:1.8;margin:0 0 32px;">
-            Your wait is over. We've granted you early access to the AuScope Intelligence Terminal. Since you registered on our waitlist, you can now set your password and begin exploring the platform.
+            We appreciate your patience while we resolved the technical issues with the initial links. We look forward to seeing you inside the AuScope terminal.
           </p>
           
-          <div style="text-align:center;margin-bottom:32px;">
-            <a href="${resetLink}" style="display:inline-block;background:linear-gradient(135deg,#f5c451,#b8860b);color:#0a0e17;padding:16px 32px;border-radius:12px;font-weight:700;text-decoration:none;font-size:15px;box-shadow:0 4px 20px rgba(245,196,81,0.2);">Set Your Password</a>
-          </div>
-
-          <!-- Quick Start Tips -->
-          <div style="background:rgba(245,196,81,0.05);border:1px solid rgba(245,196,81,0.1);border-radius:12px;padding:24px;margin-bottom:32px;">
-            <div style="font-size:12px;font-weight:700;color:#f5c451;text-transform:uppercase;margin-bottom:12px;">Next Steps:</div>
-            <ul style="margin:0;padding:0 0 0 16px;font-size:13px;color:#e0e6ed;line-height:1.6;">
-              <li style="margin-bottom:8px;">Set a secure password via the link above</li>
-              <li style="margin-bottom:8px;">Log in to your dashboard at <a href="https://auscope.mic3solutiongroup.com" style="color:#f5c451;text-decoration:none;">auscope.mic3solutiongroup.com</a></li>
-              <li style="margin-bottom:8px;">Complete your profile to unlock all features</li>
-              <li>Explore live gold prices and AI trade signals</li>
-            </ul>
-          </div>
-
           <div style="background:rgba(245,196,81,0.06);border:1px solid rgba(245,196,81,0.15);border-radius:10px;padding:20px;text-align:center;">
             <div style="font-size:11px;letter-spacing:0.14em;color:#f5c451;text-transform:uppercase;font-weight:700;margin-bottom:8px;">Your Registered Email</div>
             <div style="font-size:15px;font-weight:600;color:#e0e6ed;">${email}</div>
@@ -87,7 +79,7 @@ export async function POST(req: NextRequest) {
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY is missing from .env.local. This is required for admin tasks like creating users.' }, { status: 500 });
     }
-    
+
     if (!process.env.BREVO_API_KEY) {
       return NextResponse.json({ error: 'BREVO_API_KEY is missing from .env.local.' }, { status: 500 });
     }
@@ -109,12 +101,12 @@ export async function POST(req: NextRequest) {
 
     for (const entry of waitlistUsers) {
       const email = entry.email;
-      
+
       try {
         // 2. Check if user already exists in Auth
         const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
         if (listError) throw listError;
-        
+
         let user = users.find(u => u.email === email);
 
         if (!user) {
