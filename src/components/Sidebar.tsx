@@ -177,13 +177,12 @@ export default function Sidebar({ hideMobileTrigger = false }: { hideMobileTrigg
           {renderNav(navItems, true)}
           <div className="my-2 border-t border-slate-800/60" />
           {renderNav(bottomItems, true)}
-        </nav>
-
-        <div className="px-3 mt-2">
+          
+          {/* Moved Profile inside the scrollable area for better mobile visibility */}
           <Link
             href="/profile"
             onClick={() => setMobileOpen(false)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            className={`flex items-center gap-3 px-4 py-3 mt-1 rounded-xl transition-all ${
               pathname === '/profile' ? 'bg-yellow-500/10 text-yellow-500' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
             }`}
           >
@@ -198,7 +197,10 @@ export default function Sidebar({ hideMobileTrigger = false }: { hideMobileTrigg
             </div>
             <span className="text-sm font-bold tracking-wider uppercase">Profile</span>
           </Link>
-        </div>
+        </nav>
+
+        {/* Extra padding at the bottom for mobile safe areas */}
+        <div className="h-4 shrink-0" />
       </aside>
     </>
   );
