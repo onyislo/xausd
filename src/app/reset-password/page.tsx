@@ -29,7 +29,7 @@ export default function ResetPasswordPage() {
     } else {
       setSuccess(true);
       setTimeout(() => {
-        router.push('/login');
+        router.push('/comms');
       }, 3000);
     }
     setLoading(false);
