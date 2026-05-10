@@ -22,7 +22,7 @@ function CommsContent() {
     activeId, setActiveId, chatData, contacts: friends, 
     addContact: addFriend, removeContact: removeFriend, 
     searchProfiles, startDM, sendMessage, deleteMessage, 
-    currentUser, pushChannel 
+    currentUser, pushChannel, typingStatus, setTyping
   } = useChat();
 
   const [activeCall, setActiveCall] = useState<{ roomId: string, isIncoming: boolean, targetId: string, targetName: string } | null>(null);
@@ -267,6 +267,8 @@ function CommsContent() {
             inputText={inputText}
             setInputText={setInputText}
             handleSend={handleSend}
+            typingStatus={typingStatus[activeId || ''] || []}
+            setTyping={setTyping}
           />
         </div>
       </div>

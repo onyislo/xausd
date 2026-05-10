@@ -6,6 +6,8 @@ export function useChat() {
   const [chatData, setChatData] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [typingStatus, setTypingStatus] = useState<Record<string, any[]>>({}); // channelId -> list of typing users
+  const [presenceChannel, setPresenceChannel] = useState<any>(null);
 
   // 1. Get Authentication
   useEffect(() => {
@@ -220,6 +222,53 @@ export function useChat() {
       supabase.removeChannel(membershipSub);
       supabase.removeChannel(profilesSub);
       supabase.removeChannel(channelSub);
+    };
+  }, [currentUser]);
+
+  // 2.7 REAL-TIME TYPING (Presence)
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const channel = supabase.channel('chat_presence', {
+      config: { presence: { key: currentUser.id } }
+    });
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const typing: Record<string, any[]> = {};
+
+        Object.values(state).forEach((presences: any) => {
+          presences.forEach((p: any) => {
+            if (p.is_typing && p.channel_id) {
+              if (!typing[p.channel_id]) typing[p.channel_id] = [];
+              // Avoid adding self to typing list
+              if (p.user_id !== currentUser.id) {
+                typing[p.channel_id].push({
+                  id: p.user_id,
+                  username: p.username || 'Someone'
+                });
+              }
+            }
+          });
+        });
+        setTypingStatus(typing);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            user_id: currentUser.id,
+            username: currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
+            is_typing: false,
+            channel_id: null
+          });
+        }
+      });
+
+    setPresenceChannel(channel);
+
+    return () => {
+      supabase.removeChannel(channel);
     };
   }, [currentUser]);
 
@@ -499,5 +548,16 @@ export function useChat() {
     return channel.id;
   };
 
-  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, deleteMessage, currentUser, pushChannel };
+  // 10. Typing Indicator Control
+  const setTyping = async (channelId: string | null, isTyping: boolean) => {
+    if (!presenceChannel || !currentUser) return;
+    await presenceChannel.track({
+      user_id: currentUser.id,
+      username: currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
+      is_typing: isTyping,
+      channel_id: channelId
+    });
+  };
+
+  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, deleteMessage, currentUser, pushChannel, typingStatus, setTyping };
 }
