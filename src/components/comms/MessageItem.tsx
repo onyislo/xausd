@@ -47,10 +47,10 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
             )}
           </div>
         )}
-        <div className="relative group/bubble max-w-[85%] md:max-w-[75%] lg:max-w-[65%]">
-          <div className={`px-4 py-2.5 rounded-[20px] text-[13px] max-md:text-[12px] leading-relaxed font-medium transition-all break-words whitespace-pre-wrap shadow-sm w-fit min-w-[50px] ${isSelf
-            ? 'bg-[#241d0b] text-yellow-50/90 rounded-br-none border border-yellow-500/20 ml-auto'
-            : 'bg-[#161b22] text-slate-200 rounded-bl-none border border-slate-700/30 mr-auto'
+        <div className={`relative group/bubble w-full flex ${isSelf ? 'justify-end' : 'justify-start'}`}>
+          <div className={`px-4 py-2.5 rounded-[20px] text-[13px] max-md:text-[12px] leading-relaxed font-medium transition-all break-words whitespace-pre-wrap shadow-sm w-fit min-w-[50px] max-w-[85%] md:max-w-[75%] lg:max-w-[65%] ${isSelf
+            ? 'bg-[#241d0b] text-yellow-50/90 rounded-br-none border border-yellow-500/20'
+            : 'bg-[#161b22] text-slate-200 rounded-bl-none border border-slate-700/30'
             }`}>
             {msg.text?.startsWith('[VOICE_NOTE]') ? (
               <div className="flex items-center gap-3 min-w-[180px] py-1">
