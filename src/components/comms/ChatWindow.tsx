@@ -280,19 +280,29 @@ export default function ChatWindow({
           {/* Input */}
           <div className="p-3 bg-[#0f1420] border-t border-slate-800 shrink-0 max-md:p-2 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
             <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex flex-col p-2 focus-within:border-yellow-500/50 transition-all max-md:p-1.5 relative">
-              {isRecording && (
-                <div className="absolute inset-0 bg-[#0a0e17] rounded-xl z-10 flex items-center justify-between px-4 animate-in fade-in zoom-in duration-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    <span className="text-[11px] font-bold text-slate-300 uppercase tracking-widest tabular-nums">
-                      {Math.floor(recordTime / 60)}:{(recordTime % 60).toString().padStart(2, '0')}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <button onClick={cancelRecording} className="text-slate-500 hover:text-red-400 transition-colors p-1"><X size={18} /></button>
-                    <span className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter animate-pulse">Recording...</span>
-                    <button onClick={stopRecording} className="w-8 h-8 bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center animate-pulse"><Square size={14} fill="currentColor" /></button>
-                  </div>
+              {/* Voice Review / Recording Bar */}
+              {(isRecording || audioUrl) && (
+                <div className="absolute inset-0 bg-[#0a0e17] rounded-xl z-10 flex items-center justify-between px-3 animate-in fade-in zoom-in duration-200">
+                  {isRecording ? (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                        <span className="text-[12px] font-bold text-slate-300 tabular-nums">
+                          {Math.floor(recordTime / 60)}:{(recordTime % 60).toString().padStart(2, '0')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => { setIsRecording(false); if (mediaRecorderRef.current) mediaRecorderRef.current.onstop = null; mediaRecorderRef.current?.stop(); }} className="p-2 text-slate-500 hover:text-red-400"><Trash2 size={18} /></button>
+                        <button onClick={stopRecording} className="bg-yellow-500 text-[#1a1200] px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest">Stop</button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => { setAudioUrl(null); setAudioBlob(null); }} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"><Trash2 size={18} /></button>
+                      <audio src={audioUrl!} controls className="h-8 invert brightness-125 opacity-80 flex-1 mx-2" />
+                      <button onClick={handleConfirmSend} className="w-9 h-9 bg-yellow-500 text-[#1a1200] rounded-lg flex items-center justify-center shadow-lg"><Send size={18} className="rotate-45 -translate-y-0.5" /></button>
+                    </>
+                  )}
                 </div>
               )}
               
