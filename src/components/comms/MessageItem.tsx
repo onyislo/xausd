@@ -29,50 +29,39 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
     );
   }
 
-  const isLong = msg.text?.length > 700;
+  const isLong = (msg.text || '').length > 700;
   const displayText = isLong && !isExpanded ? msg.text.slice(0, 700) + '...' : msg.text;
 
-    return (
-      <div
-        onContextMenu={(e) => isSelf && onContextMenu(e)}
-        className={`w-full flex flex-col ${isSelf ? 'items-end' : 'items-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300`}
-      >
-        <div className={`flex w-full ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end gap-2.5 px-2`}>
-          {!isSelf && (
-            <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mb-1 shadow-inner overflow-hidden">
-              {contactAvatar ? (
-                <img src={contactAvatar} className="w-full h-full object-cover" alt="" />
-              ) : (
-                <span className="text-[10px] font-bold text-slate-400">{contactName?.[0]?.toUpperCase() || '?'}</span>
-              )}
-            </div>
-          )}
-          
-          <div className={`relative group/bubble flex-1 flex ${isSelf ? 'justify-end' : 'justify-start'} min-w-0`}>
-            <div className={`px-4 py-2.5 rounded-[20px] text-[13px] max-md:text-[12px] leading-relaxed font-medium transition-all break-words whitespace-pre-wrap shadow-sm w-fit max-w-[85%] md:max-w-[75%] lg:max-w-[65%] ${isSelf
-              ? 'bg-[#241d0b] text-yellow-50/90 rounded-br-none border border-yellow-500/20'
-              : 'bg-[#161b22] text-slate-200 rounded-bl-none border border-slate-700/30'
-              }`}>
-              {msg.text?.startsWith('[VOICE_NOTE]') ? (
-                <div className="flex items-center gap-3 min-w-[180px] py-1">
-                  <audio controls className="h-8 max-md:h-10 invert brightness-125 opacity-70 hover:opacity-100 transition-opacity">
-                    <source src={msg.text.replace('[VOICE_NOTE]', '')} type="audio/webm" />
-                  </audio>
-                </div>
-              ) : (
-                <>
-                  {displayText}
-                  {isLong && (
-                    <button 
-                      onClick={() => setIsExpanded(!isExpanded)}
-                      className="block mt-2 text-[10px] font-black uppercase tracking-widest text-yellow-500 hover:text-yellow-400"
-                    >
-                      {isExpanded ? 'Show Less' : 'Read More'}
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
+  return (
+    <div
+      onContextMenu={(e) => isSelf && onContextMenu(e)}
+      className={`w-full flex flex-col ${isSelf ? 'items-end' : 'items-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300`}
+    >
+      <div className={`flex w-full ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end gap-2.5 px-2`}>
+        {!isSelf && (
+          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mb-1 shadow-inner overflow-hidden">
+            {contactAvatar ? (
+              <img src={contactAvatar} className="w-full h-full object-cover" alt="" />
+            ) : (
+              <span className="text-[10px] font-bold text-slate-400">{contactName?.[0]?.toUpperCase() || '?'}</span>
+            )}
+          </div>
+        )}
+        
+        <div className={`relative group/bubble flex-1 flex ${isSelf ? 'justify-end' : 'justify-start'} min-w-0`}>
+          <div className={`px-4 py-2.5 rounded-[20px] text-[13px] max-md:text-[12px] leading-relaxed font-medium transition-all break-words whitespace-pre-wrap shadow-sm w-fit max-w-[85%] md:max-w-[75%] lg:max-w-[65%] ${isSelf
+            ? 'bg-[#241d0b] text-yellow-50/90 rounded-br-none border border-yellow-500/20'
+            : 'bg-[#161b22] text-slate-200 rounded-bl-none border border-slate-700/30'
+            }`}>
+            {msg.text?.startsWith('[VOICE_NOTE]') ? (
+              <div className="flex items-center gap-3 min-w-[180px] py-1">
+                <audio controls className="h-8 max-md:h-10 invert brightness-125 opacity-70 hover:opacity-100 transition-opacity">
+                  <source src={msg.text.replace('[VOICE_NOTE]', '')} type="audio/webm" />
+                </audio>
+              </div>
+            ) : (
+              <>
+                {displayText}
                 {isLong && (
                   <button 
                     onClick={() => setIsExpanded(!isExpanded)}
