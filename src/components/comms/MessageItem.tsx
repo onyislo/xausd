@@ -43,10 +43,10 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
             )}
           </div>
         )}
-        <div className="relative group/bubble max-w-[85%] md:max-w-[70%]">
-          <div className={`px-4 py-2.5 rounded-[18px] max-md:rounded-[20px] text-[13px] max-md:text-[12px] leading-relaxed font-medium transition-all break-words [overflow-wrap:anywhere] ${isSelf
-            ? 'bg-[#241d0b] text-yellow-50/90 rounded-br-[4px] max-md:rounded-br-none border border-yellow-500/20 shadow-lg'
-            : 'bg-[#161b22] text-slate-200 rounded-bl-[4px] max-md:rounded-bl-none border border-slate-700/30'
+        <div className="relative group/bubble max-w-[85%] md:max-w-[70%] lg:max-w-[60%]">
+          <div className={`px-4 py-2.5 rounded-[18px] text-[13px] max-md:text-[12px] leading-relaxed font-medium transition-all break-words [overflow-wrap:anywhere] shadow-sm ${isSelf
+            ? 'bg-[#241d0b] text-yellow-50/90 rounded-br-none border border-yellow-500/20'
+            : 'bg-[#161b22] text-slate-200 rounded-bl-none border border-slate-700/30'
             }`}>
             {msg.text?.startsWith('[VOICE_NOTE]') ? (
               <div className="flex items-center gap-3 min-w-[180px] py-1">
@@ -54,7 +54,19 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
                   <source src={msg.text.replace('[VOICE_NOTE]', '')} type="audio/webm" />
                 </audio>
               </div>
-            ) : msg.text}
+            ) : (
+              <>
+                {displayText}
+                {isLong && (
+                  <button 
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="block mt-2 text-[10px] font-black uppercase tracking-widest text-yellow-500 hover:text-yellow-400"
+                  >
+                    {isExpanded ? 'Show Less' : 'Read More'}
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
           {isSelf && msg.id && (
