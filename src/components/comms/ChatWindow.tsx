@@ -22,6 +22,7 @@ interface ChatWindowProps {
   handleSend: () => void;
   typingStatus: any[];
   setTyping: (channelId: string | null, isTyping: boolean) => void;
+  sendVoiceNote: (blob: Blob) => void;
 }
 
 export default function ChatWindow({
@@ -41,12 +42,60 @@ export default function ChatWindow({
   setInputText,
   handleSend,
   typingStatus,
-  setTyping
+  setTyping,
+  sendVoiceNote
 }: ChatWindowProps) {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef(false);
+
+  // Voice Recording State
+  const [isRecording, setIsRecording] = React.useState(false);
+  const [recordTime, setRecordTime] = React.useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
+      recorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        if (audioBlob.size > 1000) sendVoiceNote(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      recorder.start();
+      setIsRecording(true);
+      setRecordTime(0);
+      recordIntervalRef.current = setInterval(() => setRecordTime(prev => prev + 1), 1000);
+    } catch (err) {
+      console.error("Mic access denied", err);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (recordIntervalRef.current) clearInterval(recordIntervalRef.current);
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.onstop = null; // Don't send
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (recordIntervalRef.current) clearInterval(recordIntervalRef.current);
+    }
+  };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
