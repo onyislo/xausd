@@ -340,23 +340,13 @@ export function useChat() {
         const newMsg = payload.new as any;
 
         setChatData(prev => prev.map(chat => {
-          // Only add message if it belongs to a channel in OUR list
           if (chat.id !== newMsg.channel_id) return chat;
 
-          const formatted = {
+          const msgObj = {
             id: newMsg.id,
             user_id: newMsg.user_id,
             sender: newMsg.user_id === currentUser.id ? 'User' : 'Contact',
             text: newMsg.content,
-            time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          };
-
-          // Duplicate check by ID
-          if (chat.messages.some((m: any) => m.id === newMsg.id)) return chat;
-          // Duplicate check by content (for optimistic updates without ID)
-          if (chat.messages.some((m: any) => !m.id && m.text === formatted.text && m.sender === formatted.sender)) {
-            return {
-              ...chat,
               messages: chat.messages.map((m: any) =>
                 (!m.id && m.text === formatted.text && m.sender === formatted.sender)
                   ? { ...m, id: newMsg.id }
@@ -396,12 +386,14 @@ export function useChat() {
           if (chat.id !== activeId) return chat;
           return {
             ...chat,
+            unreadCount: 0,
             messages: messages.map(m => ({
               id: m.id,
               user_id: m.user_id,
               sender: m.user_id === currentUser.id ? 'User' : 'Contact',
               text: m.content,
-              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              created_at: m.created_at
             }))
           };
         }));

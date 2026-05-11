@@ -39,7 +39,12 @@ export default function ChatListItem({ chat, active, onSelect }: ChatListItemPro
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${chat.status === 'Online' ? 'bg-green-500 shadow-[0_0_5px_#22c55e]' : 'bg-slate-600'}`} />
             )}
           </div>
-          <span className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter shrink-0 ml-2">
+          <span className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter shrink-0 ml-2 flex items-center gap-2">
+            {chat.unreadCount > 0 && (
+              <span className="bg-yellow-500 text-[#1a1200] px-1.5 py-0.5 rounded-md text-[8px] font-black animate-in zoom-in duration-300 shadow-[0_0_10px_rgba(245,196,81,0.4)]">
+                {chat.unreadCount}
+              </span>
+            )}
             {chat.time}
           </span>
         </div>
