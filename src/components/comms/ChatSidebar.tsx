@@ -21,6 +21,7 @@ interface ChatSidebarProps {
   setIsCreating: (val: boolean) => void;
   showDevToast: () => void;
   IS_PRODUCTION: boolean;
+  onlineUsers: Set<string>;
 }
 
 export default function ChatSidebar({
@@ -40,7 +41,8 @@ export default function ChatSidebar({
   currentUser,
   setIsCreating,
   showDevToast,
-  IS_PRODUCTION
+  IS_PRODUCTION,
+  onlineUsers
 }: ChatSidebarProps) {
   
   const filtered = tab === 'all'
@@ -121,7 +123,7 @@ export default function ChatSidebar({
                     <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold border border-slate-700 grow-0 shrink-0 text-slate-400">
                       {u.username?.[0]?.toUpperCase()}
                     </div>
-                    <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 ${u.status === 'online' ? 'bg-green-500' : 'bg-slate-600'} border-2 border-[#0f1420] rounded-full`} />
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 ${onlineUsers.has(u.id) ? 'bg-green-500 shadow-[0_0_5px_#22c55e]' : 'bg-slate-600'} border-2 border-[#0f1420] rounded-full`} />
                   </div>
                   <span className="text-[11px] font-bold text-slate-300 truncate">{u.username}</span>
                 </div>
@@ -171,26 +173,30 @@ export default function ChatSidebar({
               <span className="text-[10px] uppercase font-bold tracking-widest">No Friends Found</span>
             </div>
           ) : (
-            friends.map(f => (
-              <div key={f.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-800/40 border border-transparent hover:border-slate-700/50 group transition-all">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="relative">
-                    <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-bold text-slate-400">{f.username?.[0]?.toUpperCase()}</div>
-                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${f.status === 'online' ? 'bg-green-500' : 'bg-slate-600'} border-2 border-[#0f1420] rounded-full shadow-lg`} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[12px] font-bold text-slate-200 truncate">{f.username}</div>
-                    <div className={`text-[9px] ${f.status === 'online' ? 'text-green-500/70' : 'text-slate-500'} font-bold uppercase tracking-tighter`}>
-                      {f.status === 'online' ? 'Encrypted Connection' : 'Signal Lost'}
+            friends.map(f => {
+              const isOnline = onlineUsers.has(f.id);
+              
+              return (
+                <div key={f.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-800/40 border border-transparent hover:border-slate-700/50 group transition-all">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative">
+                      <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-bold text-slate-400">{f.username?.[0]?.toUpperCase()}</div>
+                      <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${isOnline ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-slate-600'} border-2 border-[#0f1420] rounded-full shadow-lg`} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[12px] font-bold text-slate-200 truncate">{f.username}</div>
+                      <div className={`text-[9px] ${isOnline ? 'text-green-500/70' : 'text-slate-500'} font-bold uppercase tracking-tighter`}>
+                        {isOnline ? 'Encrypted Connection' : 'Signal Lost'}
+                      </div>
                     </div>
                   </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => onStartDM(f.id, f.username)} className="p-2 text-slate-400 hover:text-yellow-500"><MessageIcon size={18} /></button>
+                    <button onClick={() => removeFriend(f.id)} className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={18} /></button>
+                  </div>
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => onStartDM(f.id, f.username)} className="p-2 text-slate-400 hover:text-yellow-500"><MessageIcon size={18} /></button>
-                  <button onClick={() => removeFriend(f.id)} className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={18} /></button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )
         ) : (
           filtered.length === 0 ? (

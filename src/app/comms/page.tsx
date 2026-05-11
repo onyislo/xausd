@@ -22,7 +22,7 @@ function CommsContent() {
     activeId, setActiveId, chatData, contacts: friends, 
     addContact: addFriend, removeContact: removeFriend, 
     searchProfiles, startDM, sendMessage, deleteMessage, 
-    currentUser, pushChannel, typingStatus, setTyping
+    currentUser, pushChannel, typingStatus, setTyping, onlineUsers
   } = useChat();
 
   const [activeCall, setActiveCall] = useState<{ roomId: string, isIncoming: boolean, targetId: string, targetName: string } | null>(null);
@@ -248,6 +248,7 @@ function CommsContent() {
             setIsCreating={setIsCreating}
             showDevToast={showDevToast}
             IS_PRODUCTION={IS_PRODUCTION}
+            onlineUsers={onlineUsers}
           />
 
           {/* CHAT PANEL */}

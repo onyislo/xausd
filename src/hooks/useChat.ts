@@ -225,28 +225,60 @@ export function useChat() {
     };
   }, [currentUser]);
 
-  // 2.7 REAL-TIME TYPING (Broadcast)
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+
+  // 2.7 REAL-TIME TYPING & PRESENCE (Instant Status)
   useEffect(() => {
     if (!currentUser) return;
 
-    const channel = supabase.channel('typing_broadcast');
+    // Use a single channel for both typing and presence
+    const channel = supabase.channel('chat_presence', {
+      config: { presence: { key: currentUser.id } }
+    });
 
     channel
-      .on('broadcast', { event: 'typing' }, ({ payload }) => {
-        const { channelId, username, avatarUrl, userId, isTyping } = payload;
-        if (userId === currentUser.id) return;
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const typing: Record<string, any[]> = {};
+        const online = new Set<string>();
 
-        setTypingStatus(prev => {
-          const currentTyping = prev[channelId] || [];
-          if (isTyping) {
-            if (currentTyping.some(u => u.id === userId)) return prev;
-            return { ...prev, [channelId]: [...currentTyping, { id: userId, username, avatarUrl }] };
-          } else {
-            return { ...prev, [channelId]: currentTyping.filter(u => u.id !== userId) };
-          }
+        Object.keys(state).forEach((key) => online.add(key));
+
+        Object.values(state).forEach((presences: any) => {
+          presences.forEach((p: any) => {
+            if (p.is_typing && p.channel_id) {
+              if (!typing[p.channel_id]) typing[p.channel_id] = [];
+              if (p.user_id !== currentUser.id) {
+                typing[p.channel_id].push({ id: p.user_id, username: p.username || 'Someone', avatarUrl: p.avatarUrl });
+              }
+            }
+          });
         });
+        setTypingStatus(typing);
+        setOnlineUsers(online);
+
+        // Instant update for chatData statuses
+        setChatData(prev => prev.map(chat => {
+          if (chat.type === 'dm' && chat.otherMemberId) {
+            const isOnline = online.has(chat.otherMemberId);
+            if (isOnline && chat.status !== 'Online') {
+              return { ...chat, status: 'Online' };
+            }
+          }
+          return chat;
+        }));
       })
-      .subscribe();
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            user_id: currentUser.id,
+            username: currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
+            avatarUrl: currentUser.user_metadata?.avatar_url,
+            is_typing: false,
+            channel_id: null
+          });
+        }
+      });
 
     setPresenceChannel(channel);
 
@@ -261,16 +293,15 @@ export function useChat() {
       setChatData(prev => {
         let changed = false;
         const next = prev.map(chat => {
-          if (chat.type === 'dm' && chat.last_seen) {
+          if (chat.type === 'dm' && chat.otherMemberId) {
+            const isOnline = onlineUsers.has(chat.otherMemberId);
             const now = new Date();
-            const lastSeenDate = new Date(chat.last_seen);
-            const diffTime = Math.abs(now.getTime() - lastSeenDate.getTime());
-            const isOnline = diffTime < 30 * 1000; // Consistent with 30s window
+            const lastSeenDate = chat.last_seen ? new Date(chat.last_seen) : null;
             
             let newStatus = 'Offline';
             if (isOnline) {
               newStatus = 'Online';
-            } else {
+            } else if (lastSeenDate) {
               const yesterday = new Date(now);
               yesterday.setDate(yesterday.getDate() - 1);
               const timeStr = lastSeenDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -533,19 +564,15 @@ export function useChat() {
 
   // 10. Typing Indicator Control
   const setTyping = async (channelId: string | null, isTyping: boolean) => {
-    if (!presenceChannel || !currentUser || !channelId) return;
-    presenceChannel.send({
-      type: 'broadcast',
-      event: 'typing',
-      payload: { 
-        channelId, 
-        userId: currentUser.id,
-        username: currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
-        avatarUrl: currentUser.user_metadata?.avatar_url,
-        isTyping 
-      }
+    if (!presenceChannel || !currentUser) return;
+    await presenceChannel.track({
+      user_id: currentUser.id,
+      username: currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
+      avatarUrl: currentUser.user_metadata?.avatar_url,
+      is_typing: isTyping,
+      channel_id: channelId
     });
   };
 
-  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, deleteMessage, currentUser, pushChannel, typingStatus, setTyping };
+  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, deleteMessage, currentUser, pushChannel, typingStatus, setTyping, onlineUsers };
 }
