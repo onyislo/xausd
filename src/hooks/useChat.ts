@@ -233,14 +233,14 @@ export function useChat() {
 
     channel
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
-        const { channelId, username, userId, isTyping } = payload;
-        if (userId === currentUser.id) return; // Ignore self
+        const { channelId, username, avatarUrl, userId, isTyping } = payload;
+        if (userId === currentUser.id) return;
 
         setTypingStatus(prev => {
           const currentTyping = prev[channelId] || [];
           if (isTyping) {
             if (currentTyping.some(u => u.id === userId)) return prev;
-            return { ...prev, [channelId]: [...currentTyping, { id: userId, username }] };
+            return { ...prev, [channelId]: [...currentTyping, { id: userId, username, avatarUrl }] };
           } else {
             return { ...prev, [channelId]: currentTyping.filter(u => u.id !== userId) };
           }
@@ -541,6 +541,7 @@ export function useChat() {
         channelId, 
         userId: currentUser.id,
         username: currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
+        avatarUrl: currentUser.user_metadata?.avatar_url,
         isTyping 
       }
     });

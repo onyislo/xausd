@@ -61,7 +61,7 @@ export default function ChatWindow({
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
       setTyping(activeId, false);
-    }, 2000);
+    }, 1500);
   };
 
   return (
@@ -204,9 +204,13 @@ export default function ChatWindow({
             {typingStatus.length > 0 && (
               <div className="flex items-end gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mb-1 overflow-hidden shadow-inner">
-                  <span className="text-[10px] font-bold text-slate-400">
-                    {typingStatus[0].username?.[0]?.toUpperCase()}
-                  </span>
+                  {typingStatus[0].avatarUrl ? (
+                    <img src={typingStatus[0].avatarUrl} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    <span className="text-[10px] font-bold text-slate-400">
+                      {typingStatus[0].username?.[0]?.toUpperCase()}
+                    </span>
+                  )}
                 </div>
                 <div className="bg-[#161b22] px-4 py-3 rounded-[18px] rounded-bl-[4px] border border-slate-700/30 flex items-center gap-1.5 shadow-lg">
                   <span className="w-1.5 h-1.5 bg-yellow-500/60 rounded-full animate-bounce [animation-delay:-0.3s]" />
