@@ -53,6 +53,8 @@ export default function ChatWindow({
   // Voice Recording State
   const [isRecording, setIsRecording] = React.useState(false);
   const [recordTime, setRecordTime] = React.useState(0);
+  const [audioUrl, setAudioUrl] = React.useState<string | null>(null);
+  const [audioBlob, setAudioBlob] = React.useState<Blob | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -66,8 +68,11 @@ export default function ChatWindow({
 
       recorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
       recorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        if (audioBlob.size > 1000) sendVoiceNote(audioBlob);
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        if (blob.size > 1000) {
+          setAudioBlob(blob);
+          setAudioUrl(URL.createObjectURL(blob));
+        }
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -88,13 +93,10 @@ export default function ChatWindow({
     }
   };
 
-  const cancelRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.onstop = null; // Don't send
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      if (recordIntervalRef.current) clearInterval(recordIntervalRef.current);
-    }
+  const handleConfirmSend = () => {
+    if (audioBlob) sendVoiceNote(audioBlob);
+    setAudioUrl(null);
+    setAudioBlob(null);
   };
 
   useEffect(() => {
