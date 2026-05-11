@@ -14,6 +14,7 @@ interface MessageItemProps {
 export default function MessageItem({ msg, currentUserId, contactAvatar, contactName, onDelete, onContextMenu }: MessageItemProps) {
   const isSelf = msg.user_id === currentUserId;
   const isSystem = msg.text?.startsWith('SYSTEM:');
+  const [isExpanded, setIsExpanded] = React.useState(false);
 
   if (isSystem) {
     return (
@@ -27,6 +28,9 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
       </div>
     );
   }
+
+  const isLong = msg.text?.length > 700;
+  const displayText = isLong && !isExpanded ? msg.text.slice(0, 700) + '...' : msg.text;
 
   return (
     <div
