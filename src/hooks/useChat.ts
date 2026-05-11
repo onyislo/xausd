@@ -438,6 +438,22 @@ export function useChat() {
     }]);
   };
 
+  const sendVoiceNote = async (blob: Blob) => {
+    if (!activeId || !currentUser) return;
+    const fileName = `${activeId}/${Date.now()}.webm`;
+    const { data, error } = await supabase.storage.from('comms').upload(fileName, blob);
+    if (error) return;
+
+    const { data: { publicUrl } } = supabase.storage.from('comms').getPublicUrl(fileName);
+    const content = `[VOICE_NOTE]${publicUrl}`;
+
+    await supabase.from('messages').insert([{
+      channel_id: activeId,
+      user_id: currentUser.id,
+      content
+    }]);
+  };
+
   // 6. Push Channel (for group creation)
   const pushChannel = (c: any) => {
     setChatData(prev => {
@@ -574,5 +590,5 @@ export function useChat() {
     });
   };
 
-  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, deleteMessage, currentUser, pushChannel, typingStatus, setTyping, onlineUsers };
+  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, sendVoiceNote, deleteMessage, currentUser, pushChannel, typingStatus, setTyping, onlineUsers };
 }

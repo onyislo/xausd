@@ -48,7 +48,13 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
             ? 'bg-[#241d0b] text-yellow-50/90 rounded-br-[4px] max-md:rounded-br-none border border-yellow-500/20 shadow-lg'
             : 'bg-[#161b22] text-slate-200 rounded-bl-[4px] max-md:rounded-bl-none border border-slate-700/30'
             }`}>
-            {msg.text}
+            {msg.text?.startsWith('[VOICE_NOTE]') ? (
+              <div className="flex items-center gap-3 min-w-[180px] py-1">
+                <audio controls className="h-8 max-md:h-10 invert brightness-125 opacity-70 hover:opacity-100 transition-opacity">
+                  <source src={msg.text.replace('[VOICE_NOTE]', '')} type="audio/webm" />
+                </audio>
+              </div>
+            ) : msg.text}
           </div>
 
           {isSelf && msg.id && (

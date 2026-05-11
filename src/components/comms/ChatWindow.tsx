@@ -230,36 +230,78 @@ export default function ChatWindow({
 
           {/* Input */}
           <div className="p-3 bg-[#0f1420] border-t border-slate-800 shrink-0 max-md:p-2 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-            <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex items-center p-2 focus-within:border-yellow-500/50 transition-all max-md:p-1.5">
-              <textarea
-                ref={inputRef}
-                rows={1}
-                className="flex-1 bg-transparent text-sm text-slate-200 focus:outline-none px-3 resize-none custom-scrollbar py-2 max-h-32"
-                placeholder="Send encrypted message..."
-                value={inputText}
-                onChange={handleInputChange}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                    isTypingRef.current = false;
-                    setTyping(activeId, false);
-                    e.currentTarget.style.height = 'auto';
-                  }
-                }}
-              />
-              <button
-                className="w-9 h-9 bg-yellow-500 hover:bg-yellow-400 text-[#1a1200] rounded-lg flex items-center justify-center transition-all active:scale-95 shrink-0"
-                onMouseDown={e => { 
-                  e.preventDefault(); 
-                  handleSend(); 
-                  isTypingRef.current = false;
-                  setTyping(activeId, false);
-                }}
-                onClick={e => e.preventDefault()}
-              >
-                <Send size={18} className="rotate-45 -translate-y-0.5" />
-              </button>
+            <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex flex-col p-2 focus-within:border-yellow-500/50 transition-all max-md:p-1.5 relative">
+              {isRecording && (
+                <div className="absolute inset-0 bg-[#0a0e17] rounded-xl z-10 flex items-center justify-between px-4 animate-in fade-in zoom-in duration-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    <span className="text-[11px] font-bold text-slate-300 uppercase tracking-widest tabular-nums">
+                      {Math.floor(recordTime / 60)}:{(recordTime % 60).toString().padStart(2, '0')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button onClick={cancelRecording} className="text-slate-500 hover:text-red-400 transition-colors p-1"><X size={18} /></button>
+                    <span className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter animate-pulse">Recording...</span>
+                    <button onClick={stopRecording} className="w-8 h-8 bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center animate-pulse"><Square size={14} fill="currentColor" /></button>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex items-center gap-1">
+                <textarea
+                  ref={inputRef}
+                  rows={1}
+                  className="flex-1 bg-transparent text-sm text-slate-200 focus:outline-none px-3 resize-none custom-scrollbar py-2 max-h-32"
+                  placeholder="Send encrypted message..."
+                  value={inputText}
+                  onChange={handleInputChange}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                      isTypingRef.current = false;
+                      setTyping(activeId, false);
+                      e.currentTarget.style.height = 'auto';
+                    }
+                  }}
+                />
+                <div className="flex items-center gap-1">
+                  {!inputText.trim() ? (
+                    <button
+                      className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all active:scale-90 shrink-0 ${isRecording ? 'bg-red-500 text-white' : 'text-slate-500 hover:bg-slate-800'}`}
+                      onMouseDown={(e) => {
+                        if (window.innerWidth > 768) {
+                          isRecording ? stopRecording() : startRecording();
+                        }
+                      }}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        if (window.innerWidth <= 768) startRecording();
+                      }}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        if (window.innerWidth <= 768) stopRecording();
+                      }}
+                      title="Hold to record (Mobile) / Click to toggle (Desktop)"
+                    >
+                      <Mic size={18} />
+                    </button>
+                  ) : (
+                    <button
+                      className="w-9 h-9 bg-yellow-500 hover:bg-yellow-400 text-[#1a1200] rounded-lg flex items-center justify-center transition-all active:scale-95 shrink-0"
+                      onMouseDown={e => { 
+                        e.preventDefault(); 
+                        handleSend(); 
+                        isTypingRef.current = false;
+                        setTyping(activeId, false);
+                      }}
+                      onClick={e => e.preventDefault()}
+                    >
+                      <Send size={18} className="rotate-45 -translate-y-0.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </>
