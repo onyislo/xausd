@@ -225,45 +225,28 @@ export function useChat() {
     };
   }, [currentUser]);
 
-  // 2.7 REAL-TIME TYPING (Presence)
+  // 2.7 REAL-TIME TYPING (Broadcast)
   useEffect(() => {
     if (!currentUser) return;
 
-    const channel = supabase.channel('chat_presence', {
-      config: { presence: { key: currentUser.id } }
-    });
+    const channel = supabase.channel('typing_broadcast');
 
     channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const typing: Record<string, any[]> = {};
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        const { channelId, username, userId, isTyping } = payload;
+        if (userId === currentUser.id) return; // Ignore self
 
-        Object.values(state).forEach((presences: any) => {
-          presences.forEach((p: any) => {
-            if (p.is_typing && p.channel_id) {
-              if (!typing[p.channel_id]) typing[p.channel_id] = [];
-              // Avoid adding self to typing list
-              if (p.user_id !== currentUser.id) {
-                typing[p.channel_id].push({
-                  id: p.user_id,
-                  username: p.username || 'Someone'
-                });
-              }
-            }
-          });
+        setTypingStatus(prev => {
+          const currentTyping = prev[channelId] || [];
+          if (isTyping) {
+            if (currentTyping.some(u => u.id === userId)) return prev;
+            return { ...prev, [channelId]: [...currentTyping, { id: userId, username }] };
+          } else {
+            return { ...prev, [channelId]: currentTyping.filter(u => u.id !== userId) };
+          }
         });
-        setTypingStatus(typing);
       })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({
-            user_id: currentUser.id,
-            username: currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
-            is_typing: false,
-            channel_id: null
-          });
-        }
-      });
+      .subscribe();
 
     setPresenceChannel(channel);
 
@@ -550,12 +533,16 @@ export function useChat() {
 
   // 10. Typing Indicator Control
   const setTyping = async (channelId: string | null, isTyping: boolean) => {
-    if (!presenceChannel || !currentUser) return;
-    await presenceChannel.track({
-      user_id: currentUser.id,
-      username: currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
-      is_typing: isTyping,
-      channel_id: channelId
+    if (!presenceChannel || !currentUser || !channelId) return;
+    presenceChannel.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { 
+        channelId, 
+        userId: currentUser.id,
+        username: currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
+        isTyping 
+      }
     });
   };
 

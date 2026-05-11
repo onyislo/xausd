@@ -200,45 +200,43 @@ export default function ChatWindow({
                 onContextMenu={(e: React.MouseEvent) => msg.id && msg.user_id === currentUser?.id && onRightClick(e, msg.id)}
               />
             ))}
-                {/* Typing Indicator */}
-                {typingStatus.length > 0 && (
-                  <div className="flex items-center gap-2 animate-in fade-in slide-in-from-bottom-1 duration-300">
-                    <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
-                      <div className="flex gap-1">
-                        <span className="w-1 h-1 bg-yellow-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                        <span className="w-1 h-1 bg-yellow-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                        <span className="w-1 h-1 bg-yellow-500 rounded-full animate-bounce" />
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">
-                      {typingStatus.length === 1 
-                        ? `${typingStatus[0].username} is typing...` 
-                        : `${typingStatus.length} people are typing...`}
-                    </span>
-                  </div>
-                )}
-                <div ref={chatEndRef} />
+            {/* Typing Indicator Bubble */}
+            {typingStatus.length > 0 && (
+              <div className="flex items-end gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mb-1 overflow-hidden shadow-inner">
+                  <span className="text-[10px] font-bold text-slate-400">
+                    {typingStatus[0].username?.[0]?.toUpperCase()}
+                  </span>
+                </div>
+                <div className="bg-[#161b22] px-4 py-3 rounded-[18px] rounded-bl-[4px] border border-slate-700/30 flex items-center gap-1.5 shadow-lg">
+                  <span className="w-1.5 h-1.5 bg-yellow-500/60 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                  <span className="w-1.5 h-1.5 bg-yellow-500/60 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                  <span className="w-1.5 h-1.5 bg-yellow-500/60 rounded-full animate-bounce" />
+                </div>
               </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
 
-              {/* Input */}
-              <div className="p-3 bg-[#0f1420] border-t border-slate-800 shrink-0 max-md:p-2 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-                <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex items-center p-2 focus-within:border-yellow-500/50 transition-all max-md:p-1.5">
-                  <textarea
-                    ref={inputRef}
-                    rows={1}
-                    className="flex-1 bg-transparent text-sm text-slate-200 focus:outline-none px-3 resize-none custom-scrollbar py-2 max-h-32"
-                    placeholder="Send encrypted message..."
-                    value={inputText}
-                    onChange={handleInputChange}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend();
-                        setTyping(activeId, false);
-                        e.currentTarget.style.height = 'auto';
-                      }
-                    }}
-                  />
+          {/* Input */}
+          <div className="p-3 bg-[#0f1420] border-t border-slate-800 shrink-0 max-md:p-2 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+            <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex items-center p-2 focus-within:border-yellow-500/50 transition-all max-md:p-1.5">
+              <textarea
+                ref={inputRef}
+                rows={1}
+                className="flex-1 bg-transparent text-sm text-slate-200 focus:outline-none px-3 resize-none custom-scrollbar py-2 max-h-32"
+                placeholder="Send encrypted message..."
+                value={inputText}
+                onChange={handleInputChange}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                    setTyping(activeId, false);
+                    e.currentTarget.style.height = 'auto';
+                  }
+                }}
+              />
               <button
                 className="w-9 h-9 bg-yellow-500 hover:bg-yellow-400 text-[#1a1200] rounded-lg flex items-center justify-center transition-all active:scale-95 shrink-0"
                 onMouseDown={e => { e.preventDefault(); handleSend(); }}
