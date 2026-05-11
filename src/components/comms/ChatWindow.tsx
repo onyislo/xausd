@@ -46,6 +46,7 @@ export default function ChatWindow({
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -56,12 +57,17 @@ export default function ChatWindow({
     e.target.style.height = 'auto';
     e.target.style.height = `${e.target.scrollHeight}px`;
 
-    // Typing indicator logic
-    setTyping(activeId, true);
+    // Immediate start, only broadcast if state changed
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      setTyping(activeId, true);
+    }
+
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
+      isTypingRef.current = false;
       setTyping(activeId, false);
-    }, 1500);
+    }, 800); // 800ms for ultra-fast stop detection
   };
 
   return (
@@ -236,6 +242,7 @@ export default function ChatWindow({
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     handleSend();
+                    isTypingRef.current = false;
                     setTyping(activeId, false);
                     e.currentTarget.style.height = 'auto';
                   }
@@ -243,7 +250,12 @@ export default function ChatWindow({
               />
               <button
                 className="w-9 h-9 bg-yellow-500 hover:bg-yellow-400 text-[#1a1200] rounded-lg flex items-center justify-center transition-all active:scale-95 shrink-0"
-                onMouseDown={e => { e.preventDefault(); handleSend(); }}
+                onMouseDown={e => { 
+                  e.preventDefault(); 
+                  handleSend(); 
+                  isTypingRef.current = false;
+                  setTyping(activeId, false);
+                }}
                 onClick={e => e.preventDefault()}
               >
                 <Send size={18} className="rotate-45 -translate-y-0.5" />
