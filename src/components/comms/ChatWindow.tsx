@@ -137,7 +137,7 @@ export default function ChatWindow({
       ) : (
         <>
           {/* Chat Header */}
-          <div className="h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-6 shrink-0 bg-slate-800/40 max-md:h-auto max-md:min-h-[60px] max-md:px-2 max-md:gap-2 max-md:justify-start max-md:pt-[calc(10px+env(safe-area-inset-top))] max-md:pb-2">
+          <div className="h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-6 shrink-0 bg-slate-800/40 max-md:h-auto max-md:min-h-[60px] max-md:px-2 max-md:gap-2 max-md:justify-start max-md:pt-[calc(10px+env(safe-area-inset-top))] max-md:pb-2 w-full max-w-full overflow-hidden">
             <div className="flex items-center gap-3 flex-1 min-w-0 max-md:gap-2">
               <button
                 onClick={() => setActiveId(null)}
@@ -251,7 +251,7 @@ export default function ChatWindow({
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 bg-[#0a0e17] custom-scrollbar max-md:p-3 max-md:gap-3 max-md:min-h-0">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 flex flex-col gap-4 bg-[#0a0e17] custom-scrollbar max-md:p-3 max-md:gap-3 max-md:min-h-0 w-full max-w-full">
             {activeChat.messages?.map((msg: any, i: number) => (
               <MessageItem
                 key={msg.id || i}
