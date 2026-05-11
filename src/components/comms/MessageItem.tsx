@@ -43,8 +43,8 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
             )}
           </div>
         )}
-        <div className="relative group/bubble">
-          <div className={`px-4 py-2.5 rounded-[18px] max-md:rounded-[20px] text-[13px] max-md:text-[12px] leading-relaxed font-medium transition-all ${isSelf
+        <div className="relative group/bubble max-w-[85%] md:max-w-[70%]">
+          <div className={`px-4 py-2.5 rounded-[18px] max-md:rounded-[20px] text-[13px] max-md:text-[12px] leading-relaxed font-medium transition-all break-words [overflow-wrap:anywhere] ${isSelf
             ? 'bg-[#241d0b] text-yellow-50/90 rounded-br-[4px] max-md:rounded-br-none border border-yellow-500/20 shadow-lg'
             : 'bg-[#161b22] text-slate-200 rounded-bl-[4px] max-md:rounded-bl-none border border-slate-700/30'
             }`}>

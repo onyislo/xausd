@@ -147,7 +147,8 @@ export function useChat() {
           last_seen: last_seen,
           lastMsg: 'Encrypted Message Payload',
           time: 'Now',
-          messages: []
+          messages: [],
+          unreadCount: 0
         };
       });
 
@@ -338,22 +339,30 @@ export function useChat() {
         table: 'messages'
       }, (payload) => {
         const newMsg = payload.new as any;
+        const isMe = newMsg.user_id === currentUser.id;
+
+        const formatted = {
+          id: newMsg.id,
+          user_id: newMsg.user_id,
+          sender: isMe ? 'User' : 'Contact',
+          text: newMsg.content,
+          time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
 
         setChatData(prev => prev.map(chat => {
           if (chat.id !== newMsg.channel_id) return chat;
 
-          const msgObj = {
-            id: newMsg.id,
-            user_id: newMsg.user_id,
-            sender: newMsg.user_id === currentUser.id ? 'User' : 'Contact',
-            text: newMsg.content,
+          // Check if this message was already added optimistically (no ID yet)
+          const isOptimistic = chat.messages.some((m: any) => !m.id && m.text === formatted.text && m.user_id === formatted.user_id);
+
+          if (isOptimistic && isMe) {
+            return {
+              ...chat,
               messages: chat.messages.map((m: any) =>
-                (!m.id && m.text === formatted.text && m.sender === formatted.sender)
+                (!m.id && m.text === formatted.text && m.user_id === formatted.user_id)
                   ? { ...m, id: newMsg.id }
                   : m
-              ),
-              lastMsg: formatted.text.length > 30 ? formatted.text.substring(0, 30) + '...' : formatted.text,
-              time: 'Just now'
+              )
             };
           }
 
@@ -411,7 +420,8 @@ export function useChat() {
       user_id: currentUser.id,
       sender: 'User',
       text: text.trim(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      created_at: new Date().toISOString()
     };
 
     setChatData(prev => prev.map(chat =>

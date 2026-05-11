@@ -162,9 +162,15 @@ export default function ChatWindow({
                       </span>
                     </>
                   ) : (
-                    <span className={`text-[11px] max-md:text-[10px] leading-tight whitespace-nowrap ${activeChat.status === 'Online' ? 'text-green-400' : 'text-slate-400'}`}>
-                      {activeChat.status}
-                    </span>
+                    <>
+                      <span className={`text-[11px] max-md:text-[10px] leading-tight whitespace-nowrap ${activeChat.status === 'Online' ? 'text-green-400' : 'text-slate-400'}`}>
+                        {activeChat.status}
+                      </span>
+                      <span className="mx-1.5 w-1 h-1 rounded-full bg-slate-700 shrink-0" />
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter shrink-0">
+                        {activeChat.messages?.length || 0} Payloads
+                      </span>
+                    </>
                   )}
                 </div>
               </div>
