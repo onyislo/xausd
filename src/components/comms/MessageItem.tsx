@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Shield, Trash2 } from 'lucide-react';
+import { Shield, Trash2, Mic } from 'lucide-react';
 
 interface MessageItemProps {
   msg: any;
@@ -54,8 +54,12 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
             : 'bg-[#161b22] text-slate-200 rounded-bl-none border border-slate-700/30'
             }`}>
             {msg.text?.startsWith('[VOICE_NOTE]') ? (
-              <div className="flex items-center gap-3 min-w-[180px] py-1">
-                <audio controls className="h-8 max-md:h-10 invert brightness-125 opacity-70 hover:opacity-100 transition-opacity">
+              <div className="flex flex-col gap-1.5 min-w-[200px] py-1">
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-yellow-500/80 mb-1">
+                  <Mic size={10} className="animate-pulse" />
+                  <span>Voice Recording</span>
+                </div>
+                <audio controls className="h-8 max-md:h-10 invert brightness-125 opacity-70 hover:opacity-100 transition-opacity w-full">
                   <source src={msg.text.replace('[VOICE_NOTE]', '')} type="audio/webm" />
                 </audio>
               </div>

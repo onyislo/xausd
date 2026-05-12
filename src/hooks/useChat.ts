@@ -346,8 +346,12 @@ export function useChat() {
           user_id: newMsg.user_id,
           sender: isMe ? 'User' : 'Contact',
           text: newMsg.content,
-          time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          created_at: newMsg.created_at
         };
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         setChatData(prev => prev.map(chat => {
           if (chat.id !== newMsg.channel_id) return chat;
@@ -355,29 +359,26 @@ export function useChat() {
           // Check if this message was already added optimistically (no ID yet)
           const isOptimistic = chat.messages.some((m: any) => !m.id && m.text === formatted.text && m.user_id === formatted.user_id);
 
-          if (isOptimistic && isMe) {
-            return {
-              ...chat,
-              messages: chat.messages.map((m: any) =>
-                (!m.id && m.text === formatted.text && m.user_id === formatted.user_id)
-                  ? { ...m, id: newMsg.id }
-                  : m
-              )
-            };
-          }
+          const updatedMessages = isOptimistic && isMe
+            ? chat.messages.map((m: any) => (!m.id && m.text === formatted.text) ? { ...m, id: newMsg.id } : m)
+            : [...chat.messages, formatted]; // Newest at the bottom
 
           return {
             ...chat,
-            messages: [...chat.messages, formatted],
-            lastMsg: formatted.text.length > 30 ? formatted.text.substring(0, 30) + '...' : formatted.text,
-            time: 'Just now'
+            messages: updatedMessages,
+            lastMsg: formatted.text.startsWith('[VOICE_NOTE]')
+              ? "🎤 Voice Recording"
+              : (formatted.text.length > 30 ? formatted.text.substring(0, 30) + '...' : formatted.text),
+            time: timeStr,
+            unreadCount: (activeId === chat.id || isMe) ? (chat.unreadCount || 0) : (chat.unreadCount || 0) + 1,
+            lastActivity: now.getTime()
           };
-        }));
+        }).sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0)));
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [currentUser]);
+  }, [currentUser, activeId]);
 
   // 4. Fetch Messages for Active Channel
   useEffect(() => {
@@ -388,7 +389,7 @@ export function useChat() {
         .from('messages')
         .select('*')
         .eq('channel_id', activeId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true }); // Standard order
 
       if (messages && !error) {
         setChatData(prev => prev.map(chat => {
@@ -415,23 +416,27 @@ export function useChat() {
   const sendMessage = async (text: string) => {
     if (!text.trim() || !activeId || !currentUser) return;
 
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
     // Optimistic update
     const optimistic = {
       user_id: currentUser.id,
       sender: 'User',
       text: text.trim(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      created_at: new Date().toISOString()
+      time: timeStr,
+      created_at: now.toISOString()
     };
 
     setChatData(prev => prev.map(chat =>
       chat.id === activeId ? {
         ...chat,
-        messages: [...chat.messages, optimistic],
-        lastMsg: text.trim(),
-        time: 'Just now'
+        messages: [...chat.messages, optimistic], // Newest at the bottom
+        lastMsg: text.trim().startsWith('[VOICE_NOTE]') ? "🎤 Voice Recording" : text.trim(),
+        time: timeStr,
+        lastActivity: now.getTime()
       } : chat
-    ));
+    ).sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0)));
 
     await supabase.from('messages').insert([{
       channel_id: activeId,
@@ -442,12 +447,41 @@ export function useChat() {
 
   const sendVoiceNote = async (blob: Blob) => {
     if (!activeId || !currentUser) return;
+    
+    // Optimistic update for voice note
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const optimistic = {
+      user_id: currentUser.id,
+      sender: 'User',
+      text: '[VOICE_NOTE]loading...',
+      time: timeStr,
+      created_at: now.toISOString()
+    };
+
+    setChatData(prev => prev.map(chat =>
+      chat.id === activeId ? {
+        ...chat,
+        messages: [...chat.messages, optimistic],
+        lastMsg: "🎤 Voice Recording",
+        time: timeStr,
+        lastActivity: now.getTime()
+      } : chat
+    ).sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0)));
+
     const fileName = `${activeId}/${Date.now()}.webm`;
     const { data, error } = await supabase.storage.from('comms').upload(fileName, blob);
     if (error) return;
 
     const { data: { publicUrl } } = supabase.storage.from('comms').getPublicUrl(fileName);
     const content = `[VOICE_NOTE]${publicUrl}`;
+
+    setChatData(prev => prev.map(chat => 
+      chat.id === activeId ? {
+        ...chat,
+        messages: chat.messages.map((m: any) => m.text === '[VOICE_NOTE]loading...' ? { ...m, text: content } : m)
+      } : chat
+    ));
 
     await supabase.from('messages').insert([{
       channel_id: activeId,

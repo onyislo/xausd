@@ -101,7 +101,7 @@ export default function ChatWindow({
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeChat?.messages, typingStatus]);
+  }, [activeChat?.messages?.length]); // Only scroll when message count changes
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputText(e.target.value);
