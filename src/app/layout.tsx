@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import ProductionGuard from '@/components/ProductionGuard';
+import InstallPWA from "@/components/InstallPWA";
 
 
 const geistSans = localFont({
@@ -18,6 +19,12 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "AuScope — Advanced XAU/USD Intelligence Terminal",
   description: "Real-time gold market analytics, AI-powered trade signals, and geopolitical intelligence for professional XAU/USD traders.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "AuScope",
+  },
   icons: {
     icon: "/logo.svg",
     shortcut: "/logo.svg",
@@ -26,6 +33,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  themeColor: "#000000",
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -45,6 +53,7 @@ export default function RootLayout({
         <ProductionGuard>
           {children}
         </ProductionGuard>
+        <InstallPWA />
       </body>
     </html>
   );
