@@ -23,6 +23,8 @@ interface ChatWindowProps {
   typingStatus: any[];
   setTyping: (channelId: string | null, isTyping: boolean) => void;
   sendVoiceNote: (blob: Blob) => void;
+  replyingTo: any;
+  setReplyingTo: (msg: any) => void;
 }
 
 export default function ChatWindow({
@@ -43,7 +45,9 @@ export default function ChatWindow({
   handleSend,
   typingStatus,
   setTyping,
-  sendVoiceNote
+  sendVoiceNote,
+  replyingTo,
+  setReplyingTo
 }: ChatWindowProps) {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -119,6 +123,11 @@ export default function ChatWindow({
       isTypingRef.current = false;
       setTyping(activeId, false);
     }, 800); // 800ms for ultra-fast stop detection
+  };
+
+  const handleReply = (msg: any) => {
+    setReplyingTo(msg);
+    inputRef.current?.focus();
   };
 
   return (
@@ -260,6 +269,7 @@ export default function ChatWindow({
                 contactAvatar={activeChat.avatar}
                 contactName={activeChat.name}
                 onDelete={(mid: string) => deleteMessage(mid, activeId as string)}
+                onReply={handleReply}
                 onContextMenu={(e: React.MouseEvent) => msg.id && msg.user_id === currentUser?.id && onRightClick(e, msg.id)}
               />
             ))}
@@ -288,6 +298,21 @@ export default function ChatWindow({
           {/* Input */}
           <div className="p-3 bg-[#0f1420] border-t border-slate-800 shrink-0 max-md:p-2 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]">
             <div className="bg-[#0a0e17] border border-slate-700 rounded-xl flex flex-col p-2 focus-within:border-yellow-500/50 transition-all max-md:p-1.5 relative">
+              {/* Reply Preview */}
+              {replyingTo && (
+                <div className="mb-2 p-3 bg-yellow-500/5 border-l-4 border-yellow-500 rounded-lg flex items-center justify-between animate-in slide-in-from-bottom-2 duration-200">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-black text-yellow-500 uppercase tracking-widest mb-0.5">
+                      Replying to {replyingTo.user_id === currentUser?.id ? 'You' : activeChat.name}
+                    </p>
+                    <p className="text-[12px] text-slate-400 truncate">{replyingTo.text}</p>
+                  </div>
+                  <button onClick={() => setReplyingTo(null)} className="p-1.5 text-slate-500 hover:text-white transition-colors">
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+
               {/* Voice Review / Recording Bar */}
               {(isRecording || audioUrl) && (
                 <div className="absolute inset-0 bg-[#0a0e17] rounded-xl z-10 flex items-center justify-between px-3 animate-in fade-in zoom-in duration-200">

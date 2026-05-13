@@ -17,6 +17,7 @@ export function useChat() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [typingStatus, setTypingStatus] = useState<Record<string, any[]>>({}); // channelId -> list of typing users
   const [presenceChannel, setPresenceChannel] = useState<any>(null);
+  const [replyingTo, setReplyingTo] = useState<any>(null);
 
   // 1. Get Authentication
   useEffect(() => {
@@ -416,7 +417,7 @@ export function useChat() {
     const fetchMsgs = async () => {
       const { data: messages, error } = await supabase
         .from('messages')
-        .select('*')
+        .select('*, replied_message:reply_to_id(content, user_id)')
         .eq('channel_id', activeId)
         .order('created_at', { ascending: true }); // Standard order
 
@@ -435,7 +436,8 @@ export function useChat() {
               sender: m.user_id === currentUser.id ? 'User' : 'Contact',
               text: m.content,
               time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              created_at: m.created_at
+              created_at: m.created_at,
+              reply_to: m.replied_message
             })),
             lastMsg: last ? fmtPreview(last.content) : chat.lastMsg,
             time: last ? formatMsgTime(new Date(last.created_at)) : chat.time
@@ -447,7 +449,7 @@ export function useChat() {
   }, [activeId, currentUser]);
 
   // 5. Send Message
-  const sendMessage = async (text: string) => {
+  const sendMessage = async (text: string, replyToId?: string | null) => {
     if (!text.trim() || !activeId || !currentUser) return;
 
     const now = new Date();
@@ -459,7 +461,8 @@ export function useChat() {
       sender: 'User',
       text: text.trim(),
       time: timeStr,
-      created_at: now.toISOString()
+      created_at: now.toISOString(),
+      reply_to: replyingTo ? { content: replyingTo.text, user_id: replyingTo.user_id } : null
     };
 
     setChatData(prev => prev.map(chat =>
@@ -472,10 +475,13 @@ export function useChat() {
       } : chat
     ).sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0)));
 
+    setReplyingTo(null);
+
     await supabase.from('messages').insert([{
       channel_id: activeId,
       user_id: currentUser.id,
-      content: text.trim()
+      content: text.trim(),
+      reply_to_id: replyToId
     }]);
   };
 
@@ -660,5 +666,5 @@ export function useChat() {
     });
   };
 
-  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, sendVoiceNote, deleteMessage, currentUser, pushChannel, typingStatus, setTyping, onlineUsers };
+  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, sendVoiceNote, deleteMessage, currentUser, pushChannel, typingStatus, setTyping, onlineUsers, replyingTo, setReplyingTo };
 }

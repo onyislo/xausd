@@ -22,7 +22,8 @@ function CommsContent() {
     activeId, setActiveId, chatData, contacts: friends, 
     addContact: addFriend, removeContact: removeFriend, 
     searchProfiles, startDM, sendMessage, deleteMessage, 
-    currentUser, pushChannel, typingStatus, setTyping, onlineUsers, sendVoiceNote
+    currentUser, pushChannel, typingStatus, setTyping, onlineUsers, sendVoiceNote,
+    replyingTo, setReplyingTo
   } = useChat();
 
   const [activeCall, setActiveCall] = useState<{ roomId: string, isIncoming: boolean, targetId: string, targetName: string } | null>(null);
@@ -53,7 +54,7 @@ function CommsContent() {
 
   const handleSend = () => {
     if (!inputText.trim()) return;
-    sendMessage(inputText.trim());
+    sendMessage(inputText.trim(), replyingTo?.id);
     setInputText('');
   };
 
@@ -271,6 +272,8 @@ function CommsContent() {
             typingStatus={typingStatus[activeId || ''] || []}
             setTyping={setTyping}
             sendVoiceNote={sendVoiceNote}
+            replyingTo={replyingTo}
+            setReplyingTo={setReplyingTo}
           />
         </div>
       </div>
