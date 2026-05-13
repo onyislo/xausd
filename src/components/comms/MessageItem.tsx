@@ -9,6 +9,54 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
   const [menuUp, setMenuUp] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
+  
+  // Swipe to reply logic
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const isSwiping = useRef(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    isSwiping.current = true;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSwiping.current) return;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const diffX = currentX - touchStartX.current;
+    const diffY = Math.abs(currentY - touchStartY.current);
+
+    // If movement is more vertical than horizontal, or swiping left, don't swipe
+    if ((diffY > Math.abs(diffX) && swipeOffset === 0) || diffX < 0) {
+      if (swipeOffset === 0) isSwiping.current = false;
+      return;
+    }
+
+    if (diffX > 0) {
+      // Resistance/Limit at 80px
+      const limitedDiff = Math.min(diffX, 80);
+      setSwipeOffset(limitedDiff);
+      
+      // Prevent scrolling once we start swiping significantly
+      if (limitedDiff > 10 && e.cancelable) {
+        // e.preventDefault(); // Note: might need passive: false on listener if using native events, but React handlers usually okay
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (swipeOffset > 50 && onReply) {
+      onReply(msg);
+      if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(10);
+      }
+    }
+    setSwipeOffset(0);
+    isSwiping.current = false;
+  };
 
   const toggleMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -34,10 +82,31 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
 
   return (
     <div className={`w-full flex flex-col ${isSelf ? 'items-end' : 'items-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300 relative`}>
-      <div className={`flex w-full ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end gap-2.5 px-2`}>
+      <div className={`flex w-full ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end gap-2.5 px-2 relative`}>
+        {/* Swipe to reply indicator (mobile only) */}
+        <div 
+          className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none md:hidden flex items-center justify-center w-8 h-8 rounded-full bg-yellow-500/10 border border-yellow-500/20"
+          style={{ 
+            opacity: Math.min(swipeOffset / 50, 1),
+            transform: `translateX(${Math.min(swipeOffset - 60, 0)}px) scale(${Math.min(swipeOffset / 50, 1)})`,
+          }}
+        >
+          <Reply size={14} className="text-yellow-500" />
+        </div>
+
         {!isSelf && <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mb-1 overflow-hidden">{contactAvatar ? <img src={contactAvatar} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] font-bold text-slate-400">{contactName?.[0]?.toUpperCase()}</span>}</div>}
         
-        <div ref={bubbleRef} className="relative group/bubble flex max-w-[85%] md:max-w-[70%]">
+        <div 
+          ref={bubbleRef} 
+          className="relative group/bubble flex max-w-[85%] md:max-w-[70%] transition-transform"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ 
+            transform: `translateX(${swipeOffset}px)`,
+            transition: swipeOffset === 0 ? 'transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)' : 'none' 
+          }}
+        >
           <div className={`px-4 py-2.5 rounded-[18px] text-[13px] leading-relaxed shadow-sm relative overflow-hidden ${isSelf ? 'bg-[#241d0b] text-yellow-50/90 rounded-br-none border border-yellow-500/20' : 'bg-[#161b22] text-slate-200 rounded-bl-none border border-slate-700/30'}`}>
             <div className="absolute top-0 right-0 h-8 w-8 bg-gradient-to-bl from-black/40 to-transparent opacity-0 group-hover/bubble:opacity-100 transition-opacity pointer-events-none z-10 max-md:hidden" />
             <button onClick={toggleMenu} className="absolute top-0.5 right-0.5 p-1 text-white/40 hover:text-white transition-all opacity-0 group-hover/bubble:opacity-100 max-md:hidden z-20"><ChevronDown size={16} /></button>
