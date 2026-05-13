@@ -249,6 +249,26 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
                     {isLogin ? 'Create Account' : 'Sign In'}
                   </Link>
                 </p>
+
+                {/* System Status Notice */}
+                <div style={{ 
+                  marginTop: '20px', 
+                  padding: '12px', 
+                  background: 'rgba(245,196,81,0.03)', 
+                  border: '1px solid rgba(245,196,81,0.1)', 
+                  borderRadius: '8px' 
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f5c451', boxShadow: '0 0 10px #f5c451' }} />
+                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#f5c451', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      System Status
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '10px', color: '#8a9bb2', lineHeight: '1.4' }}>
+                    <span style={{ color: '#f5c451' }}>●</span> Accessible: <Link href="/comms" style={{ color: '#e0e6ed', textDecoration: 'underline' }}>Comms</Link>, <Link href="/profile" style={{ color: '#e0e6ed', textDecoration: 'underline' }}>Profile</Link> <br />
+                    <span style={{ opacity: 0.5 }}>●</span> In-Dev: Dashboard, Intel, News, Charts
+                  </p>
+                </div>
               </form>
             </React.Fragment>
           )}

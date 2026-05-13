@@ -41,7 +41,24 @@ export default function ProductionGuard({ children }: { children: React.ReactNod
   useEffect(() => {
     setHydrated(true);
 
-    // Register Service Worker for PWA
+    // ─── 1. Inactivity Logout Logic (12 Days) ───
+    const checkInactivity = async () => {
+      const lastSeen = localStorage.getItem('last_activity');
+      const now = Date.now();
+      const twelveDays = 12 * 24 * 60 * 60 * 1000;
+
+      if (lastSeen && now - parseInt(lastSeen) > twelveDays) {
+        const { supabase } = await import('@/lib/supabase');
+        await supabase.auth.signOut();
+        localStorage.removeItem('last_activity');
+        router.push('/login?msg=Session expired due to 12 days of inactivity.');
+      } else {
+        localStorage.setItem('last_activity', now.toString());
+      }
+    };
+    checkInactivity();
+
+    // ─── 2. Service Worker Registration ───
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then(
@@ -54,7 +71,7 @@ export default function ProductionGuard({ children }: { children: React.ReactNod
         );
       });
     }
-  }, []);
+  }, [router]);
 
   // ── Development mode → always render everything normally ──
   if (!IS_PRODUCTION) {
@@ -224,12 +241,14 @@ export default function ProductionGuard({ children }: { children: React.ReactNod
                 fontSize: '0.75rem',
                 letterSpacing: '0.1em',
                 maxWidth: '320px',
-                lineHeight: 1.6,
+                lineHeight: '1.6',
                 marginBottom: '2rem',
               }}
             >
-              This module is being built to institutional-grade standards.
-              We&apos;re refining every detail for maximum performance.
+              This module is currently in development. <br />
+              <span style={{ color: '#f5c451', fontWeight: 700 }}>ACCESSIBLE NOW:</span> <br />
+              • <a href="/comms" style={{ textDecoration: 'underline' }}>Comms Hub</a> (Secure Messaging) <br />
+              • <a href="/profile" style={{ textDecoration: 'underline' }}>Profile Hub</a> (Identity Management)
             </p>
 
             {/* Animated progress dots */}
