@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
+const formatMsgTime = (d: Date) => {
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const y = new Date(now); y.setDate(y.getDate() - 1);
+  if (d.toDateString() === y.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString([], { day: 'numeric', month: 'short' });
+};
+const fmtPreview = (c: string) => c.startsWith('[VOICE_NOTE]') ? '🎤 Voice Recording' : c.length > 30 ? c.substring(0, 30) + '...' : c;
+
 export function useChat() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [chatData, setChatData] = useState<any[]>([]);
@@ -91,6 +100,14 @@ export function useChat() {
 
       if (!channels) return;
 
+      const { data: latestMsgs } = await supabase
+        .from('messages')
+        .select('channel_id, content, created_at')
+        .in('channel_id', myChannelIds)
+        .order('created_at', { ascending: false });
+      const latestByChannel: Record<string, any> = {};
+      if (latestMsgs) for (const m of latestMsgs) if (!latestByChannel[m.channel_id]) latestByChannel[m.channel_id] = m;
+
       const now = new Date();
       const yesterday = new Date(now);
       yesterday.setDate(yesterday.getDate() - 1);
@@ -145,8 +162,9 @@ export function useChat() {
           created_by: c.created_by,
           status: status,
           last_seen: last_seen,
-          lastMsg: 'Encrypted Message Payload',
-          time: 'Now',
+          lastMsg: latestByChannel[c.id] ? fmtPreview(latestByChannel[c.id].content) : '',
+          time: latestByChannel[c.id] ? formatMsgTime(new Date(latestByChannel[c.id].created_at)) : '',
+          lastActivity: latestByChannel[c.id] ? new Date(latestByChannel[c.id].created_at).getTime() : 0,
           messages: [],
           unreadCount: 0
         };
@@ -162,6 +180,7 @@ export function useChat() {
         }
         deduplicated.push(chat);
       }
+      deduplicated.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
 
       setChatData(deduplicated);
     };
@@ -392,6 +411,7 @@ export function useChat() {
         .order('created_at', { ascending: true }); // Standard order
 
       if (messages && !error) {
+        const last = messages[messages.length - 1];
         setChatData(prev => prev.map(chat => {
           if (chat.id !== activeId) return chat;
           return {
@@ -404,7 +424,9 @@ export function useChat() {
               text: m.content,
               time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               created_at: m.created_at
-            }))
+            })),
+            lastMsg: last ? fmtPreview(last.content) : chat.lastMsg,
+            time: last ? formatMsgTime(new Date(last.created_at)) : chat.time
           };
         }));
       }
