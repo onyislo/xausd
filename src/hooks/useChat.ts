@@ -85,11 +85,13 @@ export function useChat() {
       // Step 1: Get channel IDs where I am a member
       const { data: myMemberships } = await supabase
         .from('channel_members')
-        .select('channel_id')
+        .select('channel_id, last_read_at')
         .eq('user_id', currentUser.id);
 
       if (!myMemberships || myMemberships.length === 0) return;
       const myChannelIds = myMemberships.map(m => m.channel_id);
+      const readAtMap: Record<string, string> = {};
+      for (const m of myMemberships) readAtMap[m.channel_id] = m.last_read_at;
 
       // Step 2: Fetch those channels with ALL members' profiles
       const { data: channels } = await supabase
@@ -102,11 +104,19 @@ export function useChat() {
 
       const { data: latestMsgs } = await supabase
         .from('messages')
-        .select('channel_id, content, created_at')
+        .select('channel_id, content, created_at, user_id')
         .in('channel_id', myChannelIds)
         .order('created_at', { ascending: false });
       const latestByChannel: Record<string, any> = {};
       if (latestMsgs) for (const m of latestMsgs) if (!latestByChannel[m.channel_id]) latestByChannel[m.channel_id] = m;
+
+      // Count unread messages per channel (messages from others after my last_read_at)
+      const unreadCounts: Record<string, number> = {};
+      if (latestMsgs) for (const m of latestMsgs) {
+        if (m.user_id === currentUser.id) continue;
+        const readAt = readAtMap[m.channel_id];
+        if (!readAt || m.created_at > readAt) unreadCounts[m.channel_id] = (unreadCounts[m.channel_id] || 0) + 1;
+      }
 
       const now = new Date();
       const yesterday = new Date(now);
@@ -166,7 +176,7 @@ export function useChat() {
           time: latestByChannel[c.id] ? formatMsgTime(new Date(latestByChannel[c.id].created_at)) : '',
           lastActivity: latestByChannel[c.id] ? new Date(latestByChannel[c.id].created_at).getTime() : 0,
           messages: [],
-          unreadCount: 0
+          unreadCount: unreadCounts[c.id] || 0
         };
       });
 
@@ -412,6 +422,8 @@ export function useChat() {
 
       if (messages && !error) {
         const last = messages[messages.length - 1];
+        // Mark channel as read
+        supabase.from('channel_members').update({ last_read_at: new Date().toISOString() }).eq('channel_id', activeId).eq('user_id', currentUser.id).then();
         setChatData(prev => prev.map(chat => {
           if (chat.id !== activeId) return chat;
           return {
