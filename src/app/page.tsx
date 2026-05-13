@@ -1,10 +1,40 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import LiveTicker from '@/components/LiveTicker';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
   const [nav, setNav] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    // ─── PWA Strict Redirect ───
+    const isStandalone = typeof window !== 'undefined' && 
+      (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone);
+    
+    const checkRedirect = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const lastPath = localStorage.getItem('last_path');
+      
+      // IF IN APP (PWA): Skip homepage entirely
+      if (isStandalone) {
+        if (session) {
+          router.push(lastPath && lastPath !== '/' ? lastPath : '/comms');
+        } else {
+          router.push('/login');
+        }
+        return;
+      }
+
+      // IF IN BROWSER: Only redirect if logged in
+      if (session && lastPath && lastPath !== '/') {
+        router.push(lastPath);
+      }
+    };
+    checkRedirect();
+  }, [router]);
 
   return (
     <div style={{ background: '#0a0e17', color: '#e0e6ed', fontFamily: "'Inter',sans-serif", minHeight: '100vh' }}>

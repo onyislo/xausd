@@ -41,14 +41,26 @@ export default function ProductionGuard({ children }: { children: React.ReactNod
   useEffect(() => {
     setHydrated(true);
 
-    // ─── 1. Inactivity Logout Logic (12 Days) ───
+    // 1.5 Remember the current path
+    if (!['/login', '/register', '/forgot-password', '/reset-password'].includes(pathname)) {
+      localStorage.setItem('last_path', pathname);
+    }
+
     const checkInactivity = async () => {
       const lastSeen = localStorage.getItem('last_activity');
       const now = Date.now();
       const twelveDays = 12 * 24 * 60 * 60 * 1000;
 
+      const { supabase } = await import('@/lib/supabase');
+
+      // Global Auth Listener
+      supabase.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_OUT') {
+          localStorage.removeItem('last_path');
+        }
+      });
+
       if (lastSeen && now - parseInt(lastSeen) > twelveDays) {
-        const { supabase } = await import('@/lib/supabase');
         await supabase.auth.signOut();
         localStorage.removeItem('last_activity');
         router.push('/login?msg=Session expired due to 12 days of inactivity.');
