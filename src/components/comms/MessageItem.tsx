@@ -27,13 +27,14 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
         {!isSelf && <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mb-1 overflow-hidden">{contactAvatar ? <img src={contactAvatar} className="w-full h-full object-cover" alt="" /> : <span className="text-[10px] font-bold text-slate-400">{contactName?.[0]?.toUpperCase()}</span>}</div>}
         
         <div className="relative group/bubble flex max-w-[85%] md:max-w-[70%]">
-          <div className={`px-4 py-2.5 rounded-[18px] text-[13px] leading-relaxed shadow-sm relative ${isSelf ? 'bg-[#241d0b] text-yellow-50/90 rounded-br-none border border-yellow-500/20' : 'bg-[#161b22] text-slate-200 rounded-bl-none border border-slate-700/30'}`}>
+          <div className={`px-4 py-2.5 rounded-[18px] text-[13px] leading-relaxed shadow-sm relative overflow-hidden ${isSelf ? 'bg-[#241d0b] text-yellow-50/90 rounded-br-none border border-yellow-500/20' : 'bg-[#161b22] text-slate-200 rounded-bl-none border border-slate-700/30'}`}>
             
+            <div className="absolute top-0 right-0 h-8 w-8 bg-gradient-to-bl from-black/40 to-transparent opacity-0 group-hover/bubble:opacity-100 transition-opacity pointer-events-none z-10 max-md:hidden" />
             <button 
               onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-              className="absolute top-1 right-1 p-1 text-white/30 hover:text-white hover:bg-white/10 rounded-full transition-all opacity-0 group-hover/bubble:opacity-100 max-md:hidden z-30"
+              className="absolute top-0.5 right-0.5 p-1 text-white/40 hover:text-white transition-all opacity-0 group-hover/bubble:opacity-100 max-md:hidden z-20"
             >
-              <ChevronDown size={15} />
+              <ChevronDown size={16} />
             </button>
 
             {msg.reply_to && (
@@ -45,19 +46,18 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
             
             {msg.text?.startsWith('[VOICE_NOTE]') ? (
               <div className="flex flex-col gap-1.5 min-w-[200px] py-1"><div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-yellow-500/80"><Mic size={10} className="animate-pulse" /><span>Voice Note</span></div><audio controls className="h-8 invert brightness-125 opacity-70 w-full"><source src={msg.text.replace('[VOICE_NOTE]', '')} /></audio></div>
-            ) : <>{displayText}{isLong && <button onClick={() => setIsExpanded(!isExpanded)} className="block mt-2 text-[10px] font-black text-yellow-500">{isExpanded ? 'LESS' : 'MORE'}</button>}</>}
+            ) : <span className="pr-2">{displayText}{isLong && <button onClick={() => setIsExpanded(!isExpanded)} className="block mt-2 text-[10px] font-black text-yellow-500">{isExpanded ? 'LESS' : 'MORE'}</button>}</span>}
           </div>
 
-          {/* THE SIDEWAYS POP-OUT MENU */}
           {showMenu && (
             <div 
               ref={menuRef} 
-              className={`absolute z-[1000] w-40 bg-[#1c212d] border border-white/10 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] py-1.5 animate-in fade-in zoom-in-95 duration-150 
-                ${isSelf ? 'right-full mr-2 top-0' : 'left-full ml-2 top-0'}`}
+              className={`absolute z-[1000] w-40 bg-[#1c212d] border border-white/10 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] py-2 animate-in fade-in zoom-in-95 duration-150 
+                ${isSelf ? 'right-full mr-3 top-0' : 'left-full ml-3 top-0'}`}
             >
-              <button onClick={() => { onReply(msg); setShowMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-slate-200 hover:bg-white/5 transition-colors uppercase tracking-widest"><Reply size={14} className="text-yellow-500/60" /> Reply</button>
-              <button onClick={() => { navigator.clipboard.writeText(msg.text || ''); setShowMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-slate-200 hover:bg-white/5 transition-colors uppercase tracking-widest"><Copy size={14} className="text-yellow-500/60" /> Copy</button>
-              {isSelf && <button onClick={() => { onDelete(msg.id); setShowMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-black text-red-500 hover:bg-red-500/10 border-t border-white/5 mt-1 pt-2 uppercase tracking-widest"><Trash2 size={14} /> Delete</button>}
+              <button onClick={() => { onReply(msg); setShowMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-[11px] font-black text-slate-200 hover:bg-white/5 uppercase tracking-widest"><Reply size={14} className="text-yellow-500/60" /> Reply</button>
+              <button onClick={() => { navigator.clipboard.writeText(msg.text || ''); setShowMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-[11px] font-black text-slate-200 hover:bg-white/5 uppercase tracking-widest"><Copy size={14} className="text-yellow-500/60" /> Copy</button>
+              {isSelf && <button onClick={() => { onDelete(msg.id); setShowMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-[11px] font-black text-red-500 hover:bg-red-500/10 border-t border-white/5 mt-1 pt-2 uppercase tracking-widest"><Trash2 size={14} /> Delete</button>}
             </div>
           )}
         </div>
