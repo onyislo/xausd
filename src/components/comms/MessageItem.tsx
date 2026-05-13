@@ -30,12 +30,7 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
           <div className={`px-4 py-2.5 rounded-[18px] text-[13px] leading-relaxed shadow-sm relative overflow-hidden ${isSelf ? 'bg-[#241d0b] text-yellow-50/90 rounded-br-none border border-yellow-500/20' : 'bg-[#161b22] text-slate-200 rounded-bl-none border border-slate-700/30'}`}>
             
             <div className="absolute top-0 right-0 h-8 w-8 bg-gradient-to-bl from-black/40 to-transparent opacity-0 group-hover/bubble:opacity-100 transition-opacity pointer-events-none z-10 max-md:hidden" />
-            <button 
-              onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-              className="absolute top-0.5 right-0.5 p-1 text-white/40 hover:text-white transition-all opacity-0 group-hover/bubble:opacity-100 max-md:hidden z-20"
-            >
-              <ChevronDown size={16} />
-            </button>
+            <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="absolute top-0.5 right-0.5 p-1 text-white/40 hover:text-white transition-all opacity-0 group-hover/bubble:opacity-100 max-md:hidden z-20"><ChevronDown size={16} /></button>
 
             {msg.reply_to && (
               <div className="mb-2 p-2 bg-black/30 rounded-lg border-l-4 border-yellow-500/50 text-[11px] opacity-80 truncate">
@@ -50,14 +45,10 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
           </div>
 
           {showMenu && (
-            <div 
-              ref={menuRef} 
-              className={`absolute z-[1000] w-40 bg-[#1c212d] border border-white/10 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] py-2 animate-in fade-in zoom-in-95 duration-150 
-                ${isSelf ? 'right-full mr-3 top-0' : 'left-full ml-3 top-0'}`}
-            >
-              <button onClick={() => { onReply(msg); setShowMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-[11px] font-black text-slate-200 hover:bg-white/5 uppercase tracking-widest"><Reply size={14} className="text-yellow-500/60" /> Reply</button>
-              <button onClick={() => { navigator.clipboard.writeText(msg.text || ''); setShowMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-[11px] font-black text-slate-200 hover:bg-white/5 uppercase tracking-widest"><Copy size={14} className="text-yellow-500/60" /> Copy</button>
-              {isSelf && <button onClick={() => { onDelete(msg.id); setShowMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-[11px] font-black text-red-500 hover:bg-red-500/10 border-t border-white/5 mt-1 pt-2 uppercase tracking-widest"><Trash2 size={14} /> Delete</button>}
+            <div ref={menuRef} className={`absolute z-[1000] w-36 bg-[#1c212d] border border-white/10 rounded-xl shadow-[0_15px_40px_rgba(0,0,0,0.8)] py-1 animate-in fade-in zoom-in-95 duration-100 ${isSelf ? 'right-full mr-2 top-0' : 'left-full ml-2 top-0'}`}>
+              <button onClick={() => { onReply(msg); setShowMenu(false); }} className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-[10px] font-bold text-slate-200 hover:bg-white/5 uppercase tracking-wider"><Reply size={13} className="text-yellow-500/50" /> Reply</button>
+              <button onClick={() => { navigator.clipboard.writeText(msg.text || ''); setShowMenu(false); }} className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-[10px] font-bold text-slate-200 hover:bg-white/5 uppercase tracking-wider"><Copy size={13} className="text-yellow-500/50" /> Copy</button>
+              {isSelf && <button onClick={() => { onDelete(msg.id); setShowMenu(false); }} className="w-full flex items-center gap-2.5 px-3.5 py-1.5 text-[10px] font-bold text-red-500/80 hover:bg-red-500/10 border-t border-white/5 mt-0.5 pt-1.5 uppercase tracking-wider"><Trash2 size={13} /> Delete</button>}
             </div>
           )}
         </div>
