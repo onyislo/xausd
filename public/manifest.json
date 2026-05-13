@@ -1,23 +1,23 @@
 {
-  "name": "AuScope XAU/USD Messenger",
+  "name": "AuScope Intelligence Terminal",
   "short_name": "AuScope",
-  "description": "Secure Real-time Messaging for Traders",
+  "description": "Advanced XAU/USD Trading Intelligence",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#0a0e17",
+  "theme_color": "#0a0e17",
   "icons": [
-    {
-      "src": "/logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
     {
       "src": "/logo.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",
-      "purpose": "maskable"
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }

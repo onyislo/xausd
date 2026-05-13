@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import ProductionGuard from '@/components/ProductionGuard';
 import InstallPWA from "@/components/InstallPWA";
+import NotificationManager from "@/components/NotificationManager";
 
 
 const geistSans = localFont({
@@ -54,6 +55,7 @@ export default function RootLayout({
           {children}
         </ProductionGuard>
         <InstallPWA />
+        <NotificationManager />
       </body>
     </html>
   );
