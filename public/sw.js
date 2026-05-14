@@ -136,48 +136,28 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  // Handle action buttons
-  if (event.action === 'dismiss') {
-    return;
-  }
+  if (event.action === 'dismiss') return;
 
   const targetPath = event.notification.data?.url || '/comms';
+  // Build the full URL from the service worker's origin
+  const origin = new URL(self.registration.scope).origin;
+  const fullUrl = origin + targetPath;
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // Look for any existing app window
+      // 1. Try to find and focus an existing PWA window
       for (const client of windowClients) {
-        try {
-          const clientUrl = new URL(client.url);
-          if (clientUrl.pathname === targetPath || clientUrl.pathname.startsWith(targetPath)) {
-            client.focus();
-            client.navigate(clientUrl.origin + targetPath);
-            return;
-          }
-        } catch (e) {
-          if (client.url.includes(targetPath)) {
-            return client.focus();
-          }
+        if ('focus' in client) {
+          return client.focus().then((focused) => {
+            if (focused && 'navigate' in focused) {
+              return focused.navigate(fullUrl);
+            }
+          });
         }
       }
 
-      // If any window is open at all, focus it and navigate
-      if (windowClients.length > 0) {
-        const client = windowClients[0];
-        client.focus();
-        try {
-          const clientUrl = new URL(client.url);
-          client.navigate(clientUrl.origin + targetPath);
-        } catch (e) {
-          // fallback
-        }
-        return;
-      }
-
-      // No window open — open a new one
-      if (clients.openWindow) {
-        return clients.openWindow(targetPath);
-      }
+      // 2. No existing window — open new one (Android will open in PWA if installed)
+      return clients.openWindow(fullUrl);
     })
   );
 });
