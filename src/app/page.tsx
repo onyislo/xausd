@@ -33,7 +33,44 @@ export default function HomePage() {
 
   // ONLY hide content if we are 100% sure we are in the PWA app
   if (isPWA) {
-    return <div style={{ background: '#0a0e17', height: '100vh', width: '100vw' }} />;
+    return (
+      <div style={{ 
+        background: '#0a0e17', 
+        height: '100vh', 
+        width: '100vw', 
+        display: 'flex', 
+        flexDirection: 'column',
+        alignItems: 'center', 
+        justifyContent: 'center',
+        gap: '20px'
+      }}>
+        <div style={{
+          width: '64px', height: '64px', borderRadius: '16px',
+          background: 'linear-gradient(135deg, #f5c451, #b8860b)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 0 30px rgba(245,196,81,0.2)',
+          animation: 'pulse 1.5s ease-in-out infinite'
+        }}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200" />
+            <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200" />
+            <rect x="6" y="4" width="12" height="5" rx="1" fill="#1a1200" />
+          </svg>
+        </div>
+        <h1 style={{
+          fontFamily: "'Chakra Petch', sans-serif",
+          fontSize: '14px', fontWeight: 700, letterSpacing: '0.2em',
+          textTransform: 'uppercase', color: '#f5c451'
+        }}>AuScope</h1>
+        <style>{`
+          @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+          }
+        `}</style>
+      </div>
+    );
   }
 
   return (
