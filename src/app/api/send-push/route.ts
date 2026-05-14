@@ -2,12 +2,20 @@ import { NextResponse } from 'next/server';
 import webPush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
 
-// Configure Web Push
-webPush.setVapidDetails(
-  'mailto:your-email@example.com', // Replace with your email if desired
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+// Configure Web Push safely (prevents Vercel build crash if env vars are missing)
+if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  try {
+    webPush.setVapidDetails(
+      'mailto:admin@auscope.com', 
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    );
+  } catch (err) {
+    console.error("VAPID setup failed:", err);
+  }
+} else {
+  console.warn('VAPID keys are missing. Push notifications will not work.');
+}
 
 // Initialize Supabase Admin client to fetch subscriptions and profiles
 const supabaseAdmin = createClient(
