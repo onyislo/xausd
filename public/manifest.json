@@ -2,7 +2,7 @@
   "name": "AuScope Intelligence Terminal",
   "short_name": "AuScope",
   "description": "Advanced XAU/USD Trading Intelligence",
-  "start_url": "/comms",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

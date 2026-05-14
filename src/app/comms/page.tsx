@@ -6,7 +6,7 @@ import HeaderPrice from '@/components/HeaderPrice';
 import { useChat } from '@/hooks/useChat';
 import { supabase } from '@/lib/supabase';
 import { Phone, CheckCircle, Clock, Link as LinkIcon } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import PhoneCall from '@/components/PhoneCall';
 
 // Extracted Components
@@ -147,6 +147,16 @@ function CommsContent() {
       window.location.reload();
     }
   };
+
+  // Ensure unauthenticated users are redirected to login
+  const router = useRouter();
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace('/login');
+      }
+    });
+  }, [router]);
 
   const handleAddMember = async () => {
     if (!inviteEmail.trim() || !activeId) return;
