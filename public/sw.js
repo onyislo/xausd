@@ -106,8 +106,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'AuScope';
   const options = {
     body: data.body || 'You have a new message',
-    // Use PNG icons — SVG is NOT supported for push notifications on mobile
-    icon: '/icon-192.png',
+    // Use the dynamic sender icon (profile pic or initials) if provided, otherwise fallback to app icon
+    icon: data.icon || '/icon-192.png',
     badge: '/badge-96.png',
     vibrate: [200, 100, 200, 100, 200],
     // Tag ensures notifications from the same conversation stack/replace instead of flooding

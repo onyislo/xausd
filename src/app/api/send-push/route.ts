@@ -32,14 +32,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 1. Get the sender's profile for the notification title
+    // 1. Get the sender's profile for the notification title and avatar
     const { data: sender } = await supabaseAdmin
       .from('profiles')
-      .select('username, full_name')
+      .select('username, full_name, avatar_url')
       .eq('id', sender_id)
       .single();
 
     const senderName = sender?.username || sender?.full_name || 'Someone';
+    
+    // Create a dynamic icon: use their avatar if they have one, otherwise generate initials
+    let senderIcon = sender?.avatar_url;
+    if (!senderIcon) {
+      senderIcon = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=0f1420&color=f5c451&rounded=true&size=192&bold=true`;
+    }
 
     // 2. Get the other members of the channel
     const { data: members } = await supabaseAdmin
@@ -70,6 +76,7 @@ export async function POST(req: Request) {
       body: content.startsWith('[VOICE_NOTE]') ? '🎤 Voice Recording' : content,
       url: `/comms`,
       tag: `auscope-chat-${channel_id}`,
+      icon: senderIcon,
     });
 
     const sendPromises = subscriptions.map(async (subRecord) => {

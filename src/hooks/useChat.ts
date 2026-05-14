@@ -414,7 +414,7 @@ export function useChat() {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [onlineUsers]);
 
   // 3. Real-time Messages — only update chats the user can see
   useEffect(() => {
