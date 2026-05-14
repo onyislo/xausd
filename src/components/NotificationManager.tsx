@@ -29,7 +29,7 @@ export default function NotificationManager() {
         const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: 'BEl62iC7S9yH_5B6-p145tq8E6H5-H4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E4E' 
+          applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
         });
 
         const { data: { user } } = await supabase.auth.getUser();

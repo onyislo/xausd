@@ -492,6 +492,17 @@ export function useChat() {
       content: text.trim(),
       reply_to_id: replyToId
     }]);
+
+    // Send push notification
+    fetch('/api/send-push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        channel_id: activeId,
+        content: text.trim(),
+        sender_id: currentUser.id
+      })
+    }).catch(err => console.error('Push Error:', err));
   };
 
   const sendVoiceNote = async (blob: Blob) => {
@@ -537,6 +548,17 @@ export function useChat() {
       user_id: currentUser.id,
       content
     }]);
+
+    // Send push notification
+    fetch('/api/send-push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        channel_id: activeId,
+        content,
+        sender_id: currentUser.id
+      })
+    }).catch(err => console.error('Push Error:', err));
   };
 
   // 6. Push Channel (for group creation)

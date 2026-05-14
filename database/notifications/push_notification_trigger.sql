@@ -4,13 +4,12 @@ CREATE OR REPLACE FUNCTION public.notify_new_message()
 RETURNS TRIGGER AS $$
 BEGIN
   -- This sends a signal to your "send-push" function
-  -- You will need to replace 'your-project-id' with your actual project ID
   PERFORM
     net.http_post(
-      url := 'https://' || current_setting('request.headers')::json->>'host' || '/functions/v1/send-push',
+      url := 'https://' || coalesce(current_setting('request.headers', true)::json->>'host', '') || '/functions/v1/send-push',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
-        'Authorization', 'Bearer ' || current_setting('request.headers')::json->>'authorization'
+        'Authorization', 'Bearer ' || coalesce(current_setting('request.headers', true)::json->>'authorization', '')
       ),
       body := jsonb_build_object(
         'channel_id', NEW.channel_id,
@@ -18,6 +17,9 @@ BEGIN
         'sender_id', NEW.user_id
       )
     );
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  -- If anything fails (like missing headers or pg_net not installed), just continue and save the message anyway.
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
