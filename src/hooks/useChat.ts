@@ -424,8 +424,10 @@ export function useChat() {
           const { data: profile } = await supabase.from('profiles').select('username').eq('id', newMsg.user_id).single();
           new Notification(profile?.username || 'New Message', {
             body: formatted.text.startsWith('[VOICE_NOTE]') ? '🎤 Voice Recording' : formatted.text,
-            icon: '/logo.svg'
-          });
+            icon: '/icon-192.png',
+            tag: `auscope-chat-${newMsg.channel_id}`,
+            renotify: true
+          } as NotificationOptions);
         }
 
         setChatData(prev => prev.map(chat => {

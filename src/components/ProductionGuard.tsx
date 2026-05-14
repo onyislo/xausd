@@ -72,16 +72,18 @@ export default function ProductionGuard({ children }: { children: React.ReactNod
 
     // ─── 2. Service Worker Registration ───
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(
-          (registration) => {
-            console.log('SW registered:', registration.scope);
-          },
-          (err) => {
-            console.log('SW registration failed:', err);
-          }
-        );
-      });
+      // Register immediately, don't wait for window load
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(
+        (registration) => {
+          console.log('SW registered:', registration.scope);
+          // Force check for updates on every page load
+          // This ensures the latest push handler is always active
+          registration.update().catch(() => {});
+        },
+        (err) => {
+          console.error('SW registration failed:', err);
+        }
+      );
     }
   }, [router]);
 

@@ -1,4 +1,6 @@
-// Simple Service Worker for PWA installability
+// AuScope PWA Service Worker — Push Notifications + Offline Support
+const CACHE_NAME = 'auscope-v1';
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
@@ -8,59 +10,113 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // We can add caching logic here later
+  // Network-first strategy — we can add caching logic here later
   event.respondWith(fetch(event.request));
 });
 
-// Listen for incoming push notifications
+// ─── PUSH NOTIFICATION HANDLER ───
+// This fires even when the app is closed/in background
 self.addEventListener('push', (event) => {
   let data = {};
-  
+
   try {
     if (event.data) {
       data = event.data.json();
     }
   } catch (err) {
-    console.error('Push data parsing failed', err);
-    data = { title: 'AuScope', body: 'New secure transmission' };
+    // If the push data is a plain string instead of JSON
+    try {
+      data = { title: 'AuScope', body: event.data ? event.data.text() : 'New secure transmission' };
+    } catch (e) {
+      data = { title: 'AuScope', body: 'New secure transmission' };
+    }
   }
-  
+
+  const title = data.title || 'AuScope';
   const options = {
     body: data.body || 'You have a new message',
-    icon: '/logo.svg', // Fixed icon path
-    badge: '/logo.svg', // Fixed badge path
-    vibrate: [100, 50, 100],
+    // Use PNG icons — SVG is NOT supported for push notifications on mobile
+    icon: '/icon-192.png',
+    badge: '/badge-96.png',
+    vibrate: [200, 100, 200, 100, 200],
+    // Tag ensures notifications from the same conversation stack/replace instead of flooding
+    tag: data.tag || 'auscope-message',
+    // renotify: vibrate/sound again even when replacing a notification with the same tag
+    renotify: true,
+    // Keep the notification visible until the user interacts with it
+    requireInteraction: false,
+    // Action buttons
+    actions: [
+      { action: 'open', title: 'Open' },
+      { action: 'dismiss', title: 'Dismiss' }
+    ],
     data: {
       dateOfArrival: Date.now(),
-      primaryKey: '2',
       url: data.url || '/comms'
     }
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'AuScope', options)
+    self.registration.showNotification(title, options)
   );
 });
 
-// Handle clicking on the notification
+// ─── NOTIFICATION CLICK HANDLER ───
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  
-  // Open the app when the notification is clicked
+
+  // Handle action buttons
+  if (event.action === 'dismiss') {
+    return;
+  }
+
+  const targetPath = event.notification.data?.url || '/comms';
+
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then((windowClients) => {
-      // Check if there is already a window/tab open with the target URL
-      for (let i = 0; i < windowClients.length; i++) {
-        const client = windowClients[i];
-        // If so, just focus it.
-        if (client.url === event.notification.data.url && 'focus' in client) {
-          return client.focus();
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Look for any existing app window
+      for (const client of windowClients) {
+        // Use URL parsing to compare paths correctly
+        // client.url is a full URL like "https://example.com/comms"
+        // targetPath is just "/comms"
+        try {
+          const clientUrl = new URL(client.url);
+          if (clientUrl.pathname === targetPath || clientUrl.pathname.startsWith(targetPath)) {
+            // Found an existing window — focus it and navigate if needed
+            client.focus();
+            client.navigate(clientUrl.origin + targetPath);
+            return;
+          }
+        } catch (e) {
+          // If URL parsing fails, try simple includes check
+          if (client.url.includes(targetPath)) {
+            return client.focus();
+          }
         }
       }
-      // If not, then open the target URL in a new window/tab.
+
+      // If any window is open at all, focus it and navigate
+      if (windowClients.length > 0) {
+        const client = windowClients[0];
+        client.focus();
+        try {
+          const clientUrl = new URL(client.url);
+          client.navigate(clientUrl.origin + targetPath);
+        } catch (e) {
+          // fallback
+        }
+        return;
+      }
+
+      // No window open — open a new one
       if (clients.openWindow) {
-        return clients.openWindow(event.notification.data.url);
+        return clients.openWindow(targetPath);
       }
     })
   );
+});
+
+// ─── NOTIFICATION CLOSE HANDLER (optional analytics) ───
+self.addEventListener('notificationclose', (event) => {
+  // Could track dismissed notifications here
 });

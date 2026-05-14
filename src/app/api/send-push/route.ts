@@ -66,9 +66,10 @@ export async function POST(req: Request) {
 
     // 4. Send the push notifications
     const payload = JSON.stringify({
-      title: `New message from ${senderName}`,
+      title: `${senderName}`,
       body: content.startsWith('[VOICE_NOTE]') ? '🎤 Voice Recording' : content,
       url: `/comms`,
+      tag: `auscope-chat-${channel_id}`,
     });
 
     const sendPromises = subscriptions.map(async (subRecord) => {

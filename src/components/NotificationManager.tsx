@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export default function NotificationManager() {
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [isMobile, setIsMobile] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
 
   // Helper to convert VAPID key
   const urlBase64ToUint8Array = (base64String: string) => {
@@ -23,38 +24,89 @@ export default function NotificationManager() {
     return outputArray;
   };
 
+  // Subscribe to push notifications and save to Supabase
+  const subscribeToPush = useCallback(async () => {
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.warn('Push notifications not supported');
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+
+      // Check if already subscribed
+      let subscription = await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        if (!vapidKey) {
+          console.error('VAPID public key missing');
+          return;
+        }
+
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey)
+        });
+      }
+
+      // Save subscription to Supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && subscription) {
+        const subJson = subscription.toJSON();
+
+        // Delete old subscriptions for this user first to avoid stale ones
+        // Then insert the new/current one
+        await supabase
+          .from('push_subscriptions')
+          .delete()
+          .eq('user_id', user.id);
+
+        const { error } = await supabase
+          .from('push_subscriptions')
+          .insert({
+            user_id: user.id,
+            subscription: subJson
+          });
+
+        if (error) {
+          console.error('Failed to save push subscription:', error);
+        } else {
+          setSubscribed(true);
+          console.log('Push subscription saved successfully');
+        }
+      }
+    } catch (err) {
+      console.error('Push subscription error:', err);
+    }
+  }, []);
+
   useEffect(() => {
-    // 1. Strict Mobile Detection
+    // Mobile Detection
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const isSmallScreen = window.innerWidth < 768;
     setIsMobile(isMobileDevice || isSmallScreen);
 
     if ('Notification' in window) {
       setPermission(Notification.permission);
+
+      // If permission is already granted, auto-subscribe silently
+      // This ensures the subscription stays fresh even after SW updates
+      if (Notification.permission === 'granted') {
+        subscribeToPush();
+      }
     }
-  }, []);
+  }, [subscribeToPush]);
 
   const requestPermission = async () => {
     if (!('Notification' in window)) return;
-    
+
     try {
       const result = await Notification.requestPermission();
       setPermission(result);
 
       if (result === 'granted') {
-        const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY as string)
-        });
-
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await supabase.from('push_subscriptions').upsert({
-            user_id: user.id,
-            subscription: subscription.toJSON()
-          });
-        }
+        await subscribeToPush();
       }
     } catch (err) {
       console.error("Notification permission error:", err);
@@ -71,7 +123,8 @@ export default function NotificationManager() {
         <div className="flex items-center gap-4">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-500/10 border border-yellow-500/20">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5c451" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
           </div>
           <div className="flex-1">
             <h4 className="text-[11px] font-black text-yellow-500 uppercase tracking-[0.2em]">Live Alerts</h4>
