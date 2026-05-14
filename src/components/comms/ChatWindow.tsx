@@ -112,6 +112,14 @@ export default function ChatWindow({
     e.target.style.height = 'auto';
     e.target.style.height = `${e.target.scrollHeight}px`;
 
+    // Instantly stop typing if the input is cleared
+    if (e.target.value.trim() === '') {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      isTypingRef.current = false;
+      setTyping(activeId, false);
+      return;
+    }
+
     // Immediate start, only broadcast if state changed
     if (!isTypingRef.current) {
       isTypingRef.current = true;
@@ -122,7 +130,7 @@ export default function ChatWindow({
     typingTimeoutRef.current = setTimeout(() => {
       isTypingRef.current = false;
       setTyping(activeId, false);
-    }, 800); // 800ms for ultra-fast stop detection
+    }, 500); // Reduced to 500ms for faster, snappy stop detection
   };
 
   const handleReply = (msg: any) => {
