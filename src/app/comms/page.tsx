@@ -60,6 +60,8 @@ function CommsContent() {
 
   const handleCreate = async () => {
     if (!newGroupName.trim() || !currentUser) return;
+    const groupName = newGroupName.trim();
+    setNewGroupName(''); // Clear immediately to prevent double-clicks
 
     // Check 10 group limit
     const { count } = await supabase
@@ -74,7 +76,7 @@ function CommsContent() {
     }
     const { data: channel, error } = await supabase
       .from('channels')
-      .insert([{ name: newGroupName.trim(), type: 'group', created_by: currentUser.id }])
+      .insert([{ name: groupName, type: 'group', created_by: currentUser.id }])
       .select().single();
     if (channel) {
       await supabase.from('channel_members').upsert(
@@ -83,9 +85,9 @@ function CommsContent() {
       );
       pushChannel(channel);
       setIsCreating(false);
-      setNewGroupName('');
     } else {
       console.error(error);
+      setNewGroupName(groupName); // Restore if failed
     }
   };
 

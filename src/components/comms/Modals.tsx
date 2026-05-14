@@ -98,31 +98,29 @@ export default function Modals({
             </div>
 
             <div className="space-y-6">
-              {isAdmin && (
-                <div className="space-y-3">
-                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block ml-1">Add Operative (from contacts)</label>
-                  <div className="flex gap-2">
-                    <select
-                      className="flex-1 bg-[#0a0e17] text-slate-100 text-sm px-4 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-yellow-500/50 appearance-none"
-                      value={inviteEmail}
-                      onChange={e => setInviteEmail(e.target.value)}
-                    >
-                      <option value="">Select a contact...</option>
-                      {friends?.map((f: any) => (
-                        <option key={f.id} value={f.username}>{f.username}</option>
-                      ))}
-                    </select>
-                    <button onClick={handleAddMember} disabled={!inviteEmail} className="px-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl text-yellow-500 hover:bg-yellow-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                      <UserPlus size={18} />
-                    </button>
-                  </div>
-
-                  <button onClick={copyInviteLink} className="w-full flex items-center justify-center gap-2 py-3 bg-slate-800/40 border border-slate-700 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 transition-all group">
-                    {copied ? <Check size={14} className="text-green-500" /> : <LinkIcon size={14} className="group-hover:text-yellow-500" />}
-                    {copied ? 'LINK COPIED TO CLIPBOARD' : 'GENERATE & COPY INVITE LINK'}
+              <div className="space-y-3">
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block ml-1">Add Operative (from contacts)</label>
+                <div className="flex gap-2">
+                  <select
+                    className="flex-1 bg-[#0a0e17] text-slate-100 text-sm px-4 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-yellow-500/50 appearance-none"
+                    value={inviteEmail}
+                    onChange={e => setInviteEmail(e.target.value)}
+                  >
+                    <option value="">Select a contact...</option>
+                    {friends?.map((f: any) => (
+                      <option key={f.id} value={f.username}>{f.username}</option>
+                    ))}
+                  </select>
+                  <button onClick={handleAddMember} disabled={!inviteEmail} className="px-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl text-yellow-500 hover:bg-yellow-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    <UserPlus size={18} />
                   </button>
                 </div>
-              )}
+
+                <button onClick={copyInviteLink} className="w-full flex items-center justify-center gap-2 py-3 bg-slate-800/40 border border-slate-700 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 transition-all group">
+                  {copied ? <Check size={14} className="text-green-500" /> : <LinkIcon size={14} className="group-hover:text-yellow-500" />}
+                  {copied ? 'LINK COPIED TO CLIPBOARD' : 'GENERATE & COPY INVITE LINK'}
+                </button>
+              </div>
 
               <div>
                 <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-3 ml-1">Authorized Personnel ({members.length})</label>
@@ -133,7 +131,14 @@ export default function Modals({
                         <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-bold">
                           {m.profiles?.username?.[0]?.toUpperCase()}
                         </div>
-                        <span className="text-xs text-slate-300 font-bold">{m.profiles?.username}</span>
+                        <span className="text-xs text-slate-300 font-bold">
+                          {m.profiles?.username}
+                          {m.user_id === activeChat?.created_by && (
+                            <span className="ml-2 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest bg-yellow-500/20 text-yellow-500 border border-yellow-500/30">
+                              Admin
+                            </span>
+                          )}
+                        </span>
                       </div>
                       {isAdmin && m.user_id !== currentUser?.id && (
                         <button onClick={() => handleRemoveMember(m.user_id)} className="text-slate-600 hover:text-red-500 transition-colors" title="Revoke Access">
