@@ -208,7 +208,6 @@ export default function ChatSidebar({
             </div>
           ) : filtered.map(chat => (
             <ChatListItem key={chat.id} chat={chat} active={activeId === chat.id} onSelect={() => {
-              if (IS_PRODUCTION && chat.type === 'group') { showDevToast(); return; }
               setActiveId(chat.id);
             }} />
           ))
