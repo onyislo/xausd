@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 export default function HomePage() {
   const [nav, setNav] = useState(false);
   const [isPWA, setIsPWA] = useState(false);
+  const [checking, setChecking] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -17,25 +18,40 @@ export default function HomePage() {
     setIsPWA(isStandalone);
 
     const checkRedirect = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const lastPath = localStorage.getItem('last_path');
-      
       if (isStandalone) {
+        // PWA mode — NEVER show homepage, redirect immediately
+        const { data: { session } } = await supabase.auth.getSession();
+        const lastPath = localStorage.getItem('last_path');
+        
         if (!session) {
           router.replace('/login');
         } else {
           router.replace(lastPath && lastPath !== '/' ? lastPath : '/comms');
         }
+        return; // Don't set checking=false, keep showing dark screen
       }
+
+      // Browser mode — check if user is already logged in
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // Logged-in browser users also skip homepage
+        const lastPath = localStorage.getItem('last_path');
+        router.replace(lastPath && lastPath !== '/' ? lastPath : '/comms');
+        return;
+      }
+
+      setChecking(false);
     };
     checkRedirect();
   }, [router]);
 
-  // If in PWA mode, show a plain dark screen for a split second while we check auth. 
-  // This feels like a native app launch without an annoying "loading" logo.
-  if (isPWA) {
+  // PWA mode or still checking auth — show dark splash (no homepage content)
+  if (isPWA || checking) {
     return (
-      <div style={{ background: '#0a0e17', height: '100vh', width: '100vw' }} />
+      <div style={{ background: '#0a0e17', height: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid rgba(245,196,81,0.15)', borderTop: '3px solid #f5c451', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
     );
   }
 

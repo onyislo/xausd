@@ -22,24 +22,34 @@ export function useChat() {
   const [typingStatus, setTypingStatus] = useState<Record<string, any[]>>({}); // channelId -> list of typing users
   const [presenceChannel, setPresenceChannel] = useState<any>(null);
   const [replyingTo, setReplyingTo] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [cacheLoaded, setCacheLoaded] = useState(false);
 
   // 1. Get Authentication
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
   }, []);
 
-  // 1.1 Local-First Architecture: Load cached chat data instantly
+  // 1.1 Local-First Architecture: Load cached chat data INSTANTLY
   useEffect(() => {
     if (currentUser?.id) {
       localforage.getItem(`chatData_${currentUser.id}`).then((cached) => {
-        if (cached) {
+        if (cached && Array.isArray(cached) && cached.length > 0) {
           setChatData(prev => {
-            // Only set if we haven't already loaded server data
+            // Only set cache if we haven't already loaded server data
             if (prev.length === 0) return cached as any[];
             return prev;
           });
         }
-      }).catch(err => console.error("LocalForage Error:", err));
+        setCacheLoaded(true);
+        setIsLoading(false);
+      }).catch(err => {
+        console.error("LocalForage Error:", err);
+        setCacheLoaded(true);
+        setIsLoading(false);
+      });
+    } else if (currentUser === null) {
+      // No user yet — will resolve once auth loads
     }
   }, [currentUser?.id]);
 
@@ -116,7 +126,10 @@ export function useChat() {
         .select('channel_id, last_read_at')
         .eq('user_id', currentUser.id);
 
-      if (!myMemberships || myMemberships.length === 0) return;
+      if (!myMemberships || myMemberships.length === 0) {
+        setIsLoading(false);
+        return;
+      }
       const myChannelIds = myMemberships.map(m => m.channel_id);
       const readAtMap: Record<string, string> = {};
       for (const m of myMemberships) readAtMap[m.channel_id] = m.last_read_at;
@@ -223,14 +236,23 @@ export function useChat() {
 
       setChatData(prev => {
         // Merge the new channel list with existing cached messages so we don't wipe out local cache
-        return deduplicated.map(newChat => {
+        const merged = deduplicated.map(newChat => {
           const existing = prev.find(p => p.id === newChat.id);
-          if (existing && existing.messages && existing.messages.length > 0) {
-            return { ...newChat, messages: existing.messages };
+          if (existing) {
+            // Preserve existing messages and unread count if we have them
+            return {
+              ...newChat,
+              messages: existing.messages && existing.messages.length > 0 ? existing.messages : newChat.messages,
+              // Keep cached unread count if server says 0 but we had some locally
+              unreadCount: newChat.unreadCount || existing.unreadCount || 0
+            };
           }
           return newChat;
         });
+        return merged;
       });
+
+      setIsLoading(false);
     };
 
     fetchChannels();
@@ -735,5 +757,5 @@ export function useChat() {
     });
   };
 
-  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, sendVoiceNote, deleteMessage, currentUser, pushChannel, typingStatus, setTyping, onlineUsers, replyingTo, setReplyingTo };
+  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, sendVoiceNote, deleteMessage, currentUser, pushChannel, typingStatus, setTyping, onlineUsers, replyingTo, setReplyingTo, isLoading };
 }

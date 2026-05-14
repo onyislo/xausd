@@ -72,7 +72,8 @@ export function useAuth() {
 
       // Force a router refresh to ensure auth state is updated
       router.refresh();
-      router.push('/dashboard');
+      const lastPath = typeof window !== 'undefined' ? localStorage.getItem('last_path') : null;
+      router.push(lastPath && lastPath !== '/' && lastPath !== '/login' ? lastPath : '/comms');
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');

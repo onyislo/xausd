@@ -23,7 +23,7 @@ function CommsContent() {
     addContact: addFriend, removeContact: removeFriend, 
     searchProfiles, startDM, sendMessage, deleteMessage, 
     currentUser, pushChannel, typingStatus, setTyping, onlineUsers, sendVoiceNote,
-    replyingTo, setReplyingTo
+    replyingTo, setReplyingTo, isLoading
   } = useChat();
 
   const [activeCall, setActiveCall] = useState<{ roomId: string, isIncoming: boolean, targetId: string, targetName: string } | null>(null);
@@ -452,7 +452,7 @@ function CommsContent() {
 
 export default function CommsPage() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#0a0e17] text-yellow-500 font-mono">LOADING ENCRYPTED CHANNEL...</div>}>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#0a0e17]"><div className="w-8 h-8 border-2 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin" /></div>}>
       <CommsContent />
     </Suspense>
   );
