@@ -367,7 +367,7 @@ export function useChat() {
         event: 'INSERT',
         schema: 'public',
         table: 'messages'
-      }, (payload) => {
+      }, async (payload) => {
         const newMsg = payload.new as any;
         const isMe = newMsg.user_id === currentUser.id;
 
@@ -382,6 +382,15 @@ export function useChat() {
 
         const now = new Date();
         const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // ─── LOCAL NOTIFICATION ───
+        if (!isMe && document.visibilityState === 'hidden') {
+          const { data: profile } = await supabase.from('profiles').select('username').eq('id', newMsg.user_id).single();
+          new Notification(profile?.username || 'New Message', {
+            body: formatted.text.startsWith('[VOICE_NOTE]') ? '🎤 Voice Recording' : formatted.text,
+            icon: '/logo.svg'
+          });
+        }
 
         setChatData(prev => prev.map(chat => {
           if (chat.id !== newMsg.channel_id) return chat;
