@@ -5,7 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import HeaderPrice from '@/components/HeaderPrice';
 import { useChat } from '@/hooks/useChat';
 import { supabase } from '@/lib/supabase';
-import { Phone, CheckCircle, Clock } from 'lucide-react';
+import { Phone, CheckCircle, Clock, Link as LinkIcon } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import PhoneCall from '@/components/PhoneCall';
 
@@ -416,6 +416,11 @@ function CommsContent() {
               <div className="h-full bg-gradient-to-r from-yellow-500 to-yellow-600" style={{ animation: 'dev-toast-progress 2s linear forwards' }} />
             </div>
           </div>
+        </div>
+      )}
+      {copied && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[3000] bg-green-500/90 text-white px-6 py-3 rounded-xl text-[12px] font-bold tracking-widest uppercase shadow-[0_10px_40px_rgba(34,197,94,0.3)] border border-green-400/30 animate-in fade-in slide-in-from-top-4 duration-300 backdrop-blur-md flex items-center gap-2">
+          <LinkIcon size={16} /> Invite Link Copied
         </div>
       )}
     </main>

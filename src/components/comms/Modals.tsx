@@ -84,12 +84,12 @@ export default function Modals({
       {/* Manage Channel Modal */}
       {isManaging && activeChat && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-[450px] bg-[#0f1420] border border-yellow-500/30 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+          <div className="w-full max-w-[450px] bg-[#0f1420] border-0 md:border md:border-yellow-500/30 rounded-none md:rounded-2xl p-6 shadow-2xl relative overflow-hidden max-md:h-[100dvh] max-md:flex max-md:flex-col max-md:pt-[calc(1.5rem+env(safe-area-inset-top))] max-md:pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-yellow-500 to-transparent" />
 
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-xl font-black text-slate-100 uppercase tracking-widest">Manage Hub</h2>
+                <h2 className="text-xl font-black text-slate-100 uppercase tracking-widest">{isAdmin ? 'Manage Hub' : 'Group Info'}</h2>
                 <p className="text-[10px] text-yellow-500 font-bold uppercase tracking-widest">{activeChat.name}</p>
               </div>
               <button onClick={() => setIsManaging(false)} className="text-slate-500 hover:text-white transition-colors">
@@ -97,7 +97,7 @@ export default function Modals({
               </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 max-md:flex-1 max-md:overflow-y-auto max-md:pr-2 custom-scrollbar">
               <div className="space-y-3">
                 <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block ml-1">Add Operative (from contacts)</label>
                 <div className="flex gap-2">

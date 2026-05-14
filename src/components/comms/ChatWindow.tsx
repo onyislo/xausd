@@ -219,14 +219,9 @@ export default function ChatWindow({
                       </>
                     ) : (
                       <>
-                        <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
+                        <button onClick={() => { setIsManaging(true); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
                           <Info size={14} /> Group Info
                         </button>
-                        {(activeChat.created_by === currentUser?.id || !activeChat.created_by) && (
-                          <button onClick={() => { setIsManaging(true); setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2 text-xs text-yellow-500/80 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all font-bold">
-                            <Shield size={14} /> Manage Group
-                          </button>
-                        )}
                         <button className="w-full flex items-center gap-3 px-4 py-2 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
                           <BellOff size={14} /> Mute Group
                         </button>
