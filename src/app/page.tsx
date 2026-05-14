@@ -7,34 +7,34 @@ import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
   const [nav, setNav] = useState(false);
+  const [isPWA, setIsPWA] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    // ─── PWA Strict Redirect ───
     const isStandalone = typeof window !== 'undefined' && 
       (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone);
     
+    setIsPWA(isStandalone);
+
     const checkRedirect = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       const lastPath = localStorage.getItem('last_path');
       
-      // IF IN APP (PWA): Skip homepage entirely
       if (isStandalone) {
         if (session) {
           router.push(lastPath && lastPath !== '/' ? lastPath : '/comms');
         } else {
           router.push('/login');
         }
-        return;
-      }
-
-      // IF IN BROWSER: Only redirect if logged in
-      if (session && lastPath && lastPath !== '/') {
-        router.push(lastPath);
       }
     };
     checkRedirect();
   }, [router]);
+
+  // ONLY hide content if we are 100% sure we are in the PWA app
+  if (isPWA) {
+    return <div style={{ background: '#0a0e17', height: '100vh', width: '100vw' }} />;
+  }
 
   return (
     <div style={{ background: '#0a0e17', color: '#e0e6ed', fontFamily: "'Inter',sans-serif", minHeight: '100vh' }}>
