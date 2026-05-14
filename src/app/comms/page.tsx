@@ -113,7 +113,16 @@ function CommsContent() {
     if (data) setMembers(data);
   };
 
-  const joinChannel = async (channelId: string) => {
+  const joinChannel = async (tokenOrId: string) => {
+    let channelId = tokenOrId;
+    
+    // If it's a short token, resolve it to the channel ID
+    if (!tokenOrId.includes('-')) {
+      const { data } = await supabase.from('channels').select('id').eq('invite_token', tokenOrId).single();
+      if (!data) { alert("Invalid or expired invite link."); return; }
+      channelId = data.id;
+    }
+
     // Check 30k member limit
     const { count } = await supabase
       .from('channel_members')
@@ -129,6 +138,11 @@ function CommsContent() {
       .from('channel_members')
       .upsert([{ channel_id: channelId, user_id: currentUser.id }], { onConflict: 'channel_id,user_id', ignoreDuplicates: true });
     if (!error) {
+      await supabase.from('messages').insert([{
+        channel_id: channelId,
+        user_id: currentUser.id,
+        content: `SYSTEM: ${currentUser.user_metadata?.username || 'A new operative'} joined using an invite link`
+      }]);
       window.history.replaceState({}, '', '/comms');
       window.location.reload();
     }
@@ -150,6 +164,13 @@ function CommsContent() {
 
     if (user) {
       await supabase.from('channel_members').insert([{ channel_id: activeId, user_id: user.id }]);
+      
+      await supabase.from('messages').insert([{
+        channel_id: activeId,
+        user_id: currentUser.id,
+        content: `SYSTEM: ${inviteEmail.trim()} was added by ${currentUser.user_metadata?.username || 'Admin'}`
+      }]);
+
       setInviteEmail('');
       fetchMembers();
     } else {
@@ -170,7 +191,9 @@ function CommsContent() {
   };
 
   const copyInviteLink = () => {
-    const link = `${window.location.origin}/comms?invite=${activeId}`;
+    const activeChat = chatData.find(c => c.id === activeId);
+    const token = activeChat?.invite_token || activeId;
+    const link = `${window.location.origin}/comms?invite=${token}`;
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

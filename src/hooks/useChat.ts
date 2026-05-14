@@ -204,7 +204,8 @@ export function useChat() {
           time: latestByChannel[c.id] ? formatMsgTime(new Date(latestByChannel[c.id].created_at)) : '',
           lastActivity: latestByChannel[c.id] ? new Date(latestByChannel[c.id].created_at).getTime() : 0,
           messages: [],
-          unreadCount: unreadCounts[c.id] || 0
+          unreadCount: unreadCounts[c.id] || 0,
+          invite_token: c.invite_token
         };
       });
 
@@ -234,13 +235,12 @@ export function useChat() {
 
     fetchChannels();
 
-    // Subscribe to new channel memberships for THIS user only
+    // Subscribe to new channel memberships for ALL users (updates member counts)
     const membershipSub = supabase.channel('membership_realtime')
       .on('postgres_changes', {
-        event: 'INSERT',
+        event: '*',
         schema: 'public',
-        table: 'channel_members',
-        filter: `user_id=eq.${currentUser.id}`
+        table: 'channel_members'
       }, () => {
         fetchChannels();
       })
