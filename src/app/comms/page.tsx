@@ -60,6 +60,18 @@ function CommsContent() {
 
   const handleCreate = async () => {
     if (!newGroupName.trim() || !currentUser) return;
+
+    // Check 10 group limit
+    const { count } = await supabase
+      .from('channels')
+      .select('*', { count: 'exact', head: true })
+      .eq('created_by', currentUser.id)
+      .eq('type', 'group');
+
+    if (count !== null && count >= 10) {
+      alert('MAXIMUM 10 HUBS AUTHORIZED PER OPERATIVE.');
+      return;
+    }
     const { data: channel, error } = await supabase
       .from('channels')
       .insert([{ name: newGroupName.trim(), type: 'group', created_by: currentUser.id }])
@@ -100,6 +112,17 @@ function CommsContent() {
   };
 
   const joinChannel = async (channelId: string) => {
+    // Check 30k member limit
+    const { count } = await supabase
+      .from('channel_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('channel_id', channelId);
+      
+    if (count !== null && count >= 30000) {
+      alert('HUB IS AT MAXIMUM CAPACITY (30,000).');
+      return;
+    }
+
     const { error } = await supabase
       .from('channel_members')
       .upsert([{ channel_id: channelId, user_id: currentUser.id }], { onConflict: 'channel_id,user_id', ignoreDuplicates: true });
@@ -111,6 +134,12 @@ function CommsContent() {
 
   const handleAddMember = async () => {
     if (!inviteEmail.trim() || !activeId) return;
+
+    if (members.length >= 30000) {
+      alert('HUB IS AT MAXIMUM CAPACITY (30,000).');
+      return;
+    }
+
     const { data: user } = await supabase
       .from('profiles')
       .select('id')
@@ -293,6 +322,7 @@ function CommsContent() {
         copyInviteLink={copyInviteLink}
         copied={copied}
         members={members}
+        friends={friends}
         currentUser={currentUser}
         handleRemoveMember={handleRemoveMember}
         handleDeleteChannel={handleDeleteChannel}

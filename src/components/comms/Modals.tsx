@@ -17,6 +17,7 @@ interface ModalsProps {
   copyInviteLink: () => void;
   copied: boolean;
   members: any[];
+  friends: any[];
   currentUser: any;
   handleRemoveMember: (id: string) => void;
   handleDeleteChannel: () => void;
@@ -37,10 +38,12 @@ export default function Modals({
   copyInviteLink,
   copied,
   members,
+  friends,
   currentUser,
   handleRemoveMember,
   handleDeleteChannel
 }: ModalsProps) {
+  const isAdmin = activeChat?.created_by === currentUser?.id;
   return (
     <>
       {/* Create Channel Modal */}
@@ -95,25 +98,31 @@ export default function Modals({
             </div>
 
             <div className="space-y-6">
-              <div className="space-y-3">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block ml-1">Add Operative (by username)</label>
-                <div className="flex gap-2">
-                  <input
-                    className="flex-1 bg-[#0a0e17] text-slate-100 text-sm px-4 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-yellow-500/50"
-                    placeholder="Enter operative username..."
-                    value={inviteEmail}
-                    onChange={e => setInviteEmail(e.target.value)}
-                  />
-                  <button onClick={handleAddMember} className="px-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl text-yellow-500 hover:bg-yellow-500/20 transition-all">
-                    <UserPlus size={18} />
+              {isAdmin && (
+                <div className="space-y-3">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block ml-1">Add Operative (from contacts)</label>
+                  <div className="flex gap-2">
+                    <select
+                      className="flex-1 bg-[#0a0e17] text-slate-100 text-sm px-4 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-yellow-500/50 appearance-none"
+                      value={inviteEmail}
+                      onChange={e => setInviteEmail(e.target.value)}
+                    >
+                      <option value="">Select a contact...</option>
+                      {friends?.map((f: any) => (
+                        <option key={f.id} value={f.username}>{f.username}</option>
+                      ))}
+                    </select>
+                    <button onClick={handleAddMember} disabled={!inviteEmail} className="px-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl text-yellow-500 hover:bg-yellow-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                      <UserPlus size={18} />
+                    </button>
+                  </div>
+
+                  <button onClick={copyInviteLink} className="w-full flex items-center justify-center gap-2 py-3 bg-slate-800/40 border border-slate-700 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 transition-all group">
+                    {copied ? <Check size={14} className="text-green-500" /> : <LinkIcon size={14} className="group-hover:text-yellow-500" />}
+                    {copied ? 'LINK COPIED TO CLIPBOARD' : 'GENERATE & COPY INVITE LINK'}
                   </button>
                 </div>
-
-                <button onClick={copyInviteLink} className="w-full flex items-center justify-center gap-2 py-3 bg-slate-800/40 border border-slate-700 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 transition-all group">
-                  {copied ? <Check size={14} className="text-green-500" /> : <LinkIcon size={14} className="group-hover:text-yellow-500" />}
-                  {copied ? 'LINK COPIED TO CLIPBOARD' : 'GENERATE & COPY INVITE LINK'}
-                </button>
-              </div>
+              )}
 
               <div>
                 <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-3 ml-1">Authorized Personnel ({members.length})</label>
@@ -126,7 +135,7 @@ export default function Modals({
                         </div>
                         <span className="text-xs text-slate-300 font-bold">{m.profiles?.username}</span>
                       </div>
-                      {m.user_id !== currentUser?.id && (
+                      {isAdmin && m.user_id !== currentUser?.id && (
                         <button onClick={() => handleRemoveMember(m.user_id)} className="text-slate-600 hover:text-red-500 transition-colors" title="Revoke Access">
                           <UserMinus size={16} />
                         </button>
@@ -136,12 +145,14 @@ export default function Modals({
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-red-500/10">
-                <button onClick={handleDeleteChannel} className="w-full flex items-center justify-center gap-2 py-3 bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-black text-red-500 uppercase tracking-widest transition-all">
-                  <Trash2 size={16} />
-                  Decommission Hub (Permanent)
-                </button>
-              </div>
+              {isAdmin && (
+                <div className="pt-4 border-t border-red-500/10">
+                  <button onClick={handleDeleteChannel} className="w-full flex items-center justify-center gap-2 py-3 bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-black text-red-500 uppercase tracking-widest transition-all">
+                    <Trash2 size={16} />
+                    Decommission Hub (Permanent)
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
