@@ -146,7 +146,7 @@ export default function ChatWindow({
       ) : (
         <>
           {/* Chat Header */}
-          <div className="h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-6 shrink-0 bg-slate-800/40 max-md:h-auto max-md:min-h-[60px] max-md:px-2 max-md:gap-2 max-md:justify-start max-md:pt-[calc(10px+env(safe-area-inset-top))] max-md:pb-2 w-full max-w-full z-20">
+          <div className="relative h-[64px] border-b border-yellow-500/10 flex justify-between items-center px-6 shrink-0 bg-slate-800/40 max-md:h-auto max-md:min-h-[60px] max-md:px-2 max-md:gap-2 max-md:justify-start max-md:pt-[calc(10px+env(safe-area-inset-top))] max-md:pb-2 w-full max-w-full z-20">
             <div className="flex items-center gap-3 flex-1 min-w-0 max-md:gap-2">
               <button
                 onClick={() => setActiveId(null)}
@@ -171,10 +171,9 @@ export default function ChatWindow({
                       </span>
                     </>
                   ) : (
-                      <span className={`text-[11px] max-md:text-[10px] leading-tight whitespace-nowrap ${activeChat.status === 'Online' ? 'text-green-400' : 'text-slate-400'}`}>
-                        {activeChat.status}
-                      </span>
-                    </>
+                    <span className={`text-[11px] max-md:text-[10px] leading-tight whitespace-nowrap ${activeChat.status === 'Online' ? 'text-green-400' : 'text-slate-400'}`}>
+                      {activeChat.status}
+                    </span>
                   )}
                 </div>
               </div>
