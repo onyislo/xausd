@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import localforage from 'localforage';
+
+// Configure localForage
+localforage.config({ name: 'XAUSDChat', storeName: 'chat_data' });
 
 const formatMsgTime = (d: Date) => {
   const now = new Date();
@@ -23,6 +27,29 @@ export function useChat() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
   }, []);
+
+  // 1.1 Local-First Architecture: Load cached chat data instantly
+  useEffect(() => {
+    if (currentUser?.id) {
+      localforage.getItem(`chatData_${currentUser.id}`).then((cached) => {
+        if (cached) {
+          setChatData(prev => {
+            // Only set if we haven't already loaded server data
+            if (prev.length === 0) return cached as any[];
+            return prev;
+          });
+        }
+      }).catch(err => console.error("LocalForage Error:", err));
+    }
+  }, [currentUser?.id]);
+
+  // 1.2 Local-First Architecture: Save chat data to cache whenever it changes
+  useEffect(() => {
+    if (currentUser?.id && chatData.length > 0) {
+      // We debounce or save directly. For safety, direct save is fine since localforage is async
+      localforage.setItem(`chatData_${currentUser.id}`, chatData).catch(err => console.error("Save Cache Error", err));
+    }
+  }, [chatData, currentUser?.id]);
 
   // 1.5 Update last_seen instantly on activity
   useEffect(() => {
@@ -193,7 +220,16 @@ export function useChat() {
       }
       deduplicated.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
 
-      setChatData(deduplicated);
+      setChatData(prev => {
+        // Merge the new channel list with existing cached messages so we don't wipe out local cache
+        return deduplicated.map(newChat => {
+          const existing = prev.find(p => p.id === newChat.id);
+          if (existing && existing.messages && existing.messages.length > 0) {
+            return { ...newChat, messages: existing.messages };
+          }
+          return newChat;
+        });
+      });
     };
 
     fetchChannels();

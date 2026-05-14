@@ -16,16 +16,13 @@ export default function HomePage() {
     
     setIsPWA(isStandalone);
 
-    const checkRedirect = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    const checkRedirect = () => {
       const lastPath = localStorage.getItem('last_path');
       
       if (isStandalone) {
-        if (session) {
-          router.push(lastPath && lastPath !== '/' ? lastPath : '/comms');
-        } else {
-          router.push('/login');
-        }
+        // Instantly route to last path or comms. If their session expired, 
+        // the app's internal guards or auth checks will handle it.
+        router.replace(lastPath && lastPath !== '/' ? lastPath : '/comms');
       }
     };
     checkRedirect();
