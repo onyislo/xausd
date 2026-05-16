@@ -3,12 +3,16 @@
 A real-time XAU/USD (Gold) trading terminal with advanced communication features, market intelligence, and mobile-responsive design.
 
 ## 🌟 Features
-
+7777777
 ### 📊 Real-Time Market Data
 - Live XAU/USD price feeds with WebSocket connections
 - Economic pulse monitoring
 - Live ticker with market sentiment analysis
 - Gold price visualization with charts and trends
+gitehdjdbduebhdbdjdnjdndbdjnd
+hejdhjdkjdd
+dhdhjdjd0
+
 
 ### 💬 Advanced Communications
 - Encrypted group channels and direct messages
