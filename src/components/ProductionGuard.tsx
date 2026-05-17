@@ -15,13 +15,13 @@ const PRODUCTION_READY: string[] = [
   '/register',
   '/forgot-password',
   '/reset-password',
+  '/live',
+  '/news',
 ];
 
 // ─── Pages that should show "Coming Soon" overlay ───
 const COMING_SOON: string[] = [
   '/dashboard',
-  '/news',
-  '/live',
   '/settings',
   '/intel',
   '/chart',
