@@ -384,11 +384,14 @@ export function useChat() {
         const next = prev.map(chat => {
           if (chat.type === 'dm' && chat.otherMemberId) {
             const isOnline = onlineUsers.has(chat.otherMemberId);
+            const AI_SYSTEM_ID = "14a09105-4817-44a5-afae-f2fc26441d13";
             const now = new Date();
             const lastSeenDate = chat.last_seen ? new Date(chat.last_seen) : null;
             
             let newStatus = 'Offline';
-            if (isOnline) {
+            if (chat.otherMemberId === AI_SYSTEM_ID) {
+              newStatus = 'Online';
+            } else if (isOnline) {
               newStatus = 'Online';
             } else if (lastSeenDate) {
               const yesterday = new Date(now);
@@ -554,14 +557,14 @@ export function useChat() {
     }]);
 
     // AI Bridge: If the recipient is the AI Assistant, trigger the Hugging Face backend
-    const AI_SYSTEM_ID = "00000000-0000-0000-0000-000000000000";
+    const AI_SYSTEM_ID = "14a09105-4817-44a5-afae-f2fc26441d13";
     const activeChat = chatData.find(c => c.id === activeId);
     const isAIChat = activeChat?.type === 'dm' && activeChat.otherMemberId === AI_SYSTEM_ID;
 
     if (isAIChat) {
       setTyping(activeId, true);
       // Change 'onyiso-xaus-ai-backend.hf.space' to your actual HF URL if different
-      fetch('https://onyiso-xaus-ai-backend.hf.space/ai/chat', {
+      fetch('https://Onyiso-Xaus-ai-backend.hf.space/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

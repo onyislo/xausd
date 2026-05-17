@@ -45,7 +45,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
 
-AI_SYSTEM_ID = "00000000-0000-0000-0000-000000000000"
+AI_SYSTEM_ID = "14a09105-4817-44a5-afae-f2fc26441d13"
 
 async def generate_ai_response(messages: List[Message]):
     """
