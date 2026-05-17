@@ -553,6 +553,34 @@ export function useChat() {
       reply_to_id: replyToId
     }]);
 
+    // AI Bridge: If the recipient is the AI Assistant, trigger the Hugging Face backend
+    const AI_SYSTEM_ID = "00000000-0000-0000-0000-000000000000";
+    const activeChat = chatData.find(c => c.id === activeId);
+    const isAIChat = activeChat?.type === 'dm' && activeChat.otherMemberId === AI_SYSTEM_ID;
+
+    if (isAIChat) {
+      setTyping(activeId, true);
+      // Change 'onyiso-xaus-ai-backend.hf.space' to your actual HF URL if different
+      fetch('https://onyiso-xaus-ai-backend.hf.space/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel_id: activeId,
+          user_id: currentUser.id,
+          messages: activeChat.messages.map((m: any) => ({
+            role: m.user_id === currentUser.id ? 'user' : 'assistant',
+            content: m.text
+          })).concat([{ role: 'user', content: text.trim() }])
+        })
+      })
+      .then(res => res.json())
+      .then(() => setTyping(activeId, false))
+      .catch(err => {
+        console.error('AI Backend Error:', err);
+        setTyping(activeId, false);
+      });
+    }
+
     // Send push notification
     fetch('/api/send-push', {
       method: 'POST',
