@@ -4,7 +4,8 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from supabase import create_client, Client
 
 load_dotenv()
@@ -23,10 +24,9 @@ app.add_middleware(
 # Initialize Gemini
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 else:
-    model = None
+    gemini_client = None
 
 # Initialize Supabase client
 SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
@@ -53,20 +53,18 @@ async def generate_ai_response(messages: List[Message]):
     """
     Generates a response using Google's Gemini API.
     """
-    if not model:
+    if not gemini_client:
         return "Gemini API key not configured. Please check backend environment variables."
 
     try:
         # Prepare history for Gemini
-        # Gemini expects 'user' and 'model' roles
-        history = []
-        for msg in messages[:-1]:
+        contents = []
+        for msg in messages:
             role = "user" if msg.role == "user" else "model"
-            history.append({"role": role, "parts": [msg.content]})
+            contents.append(
+                types.Content(role=role, parts=[types.Part.from_text(text=msg.content)])
+            )
         
-        chat = model.start_chat(history=history)
-        
-        # System instructions (passed as context in the first prompt or separate)
         system_prompt = (
             "You are the AI Intel Core, a specialized market analyst for XAU/USD (Gold). "
             "Provide professional, concise technical and fundamental analysis. "
@@ -74,10 +72,13 @@ async def generate_ai_response(messages: List[Message]):
             "Current context: Gold trading terminal."
         )
         
-        last_msg = messages[-1].content
-        full_prompt = f"{system_prompt}\n\nUser: {last_msg}"
-        
-        response = chat.send_message(full_prompt)
+        response = gemini_client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+            )
+        )
         return response.text
     except Exception as e:
         print(f"Gemini Error: {e}")
@@ -114,7 +115,7 @@ async def chat_endpoint(request: ChatRequest, background_tasks: BackgroundTasks)
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "gemini_active": model is not None, "supabase_active": supabase is not None}
+    return {"status": "ok", "gemini_active": gemini_client is not None, "supabase_active": supabase is not None}
 
 if __name__ == "__main__":
     import uvicorn
