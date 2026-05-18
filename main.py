@@ -66,8 +66,9 @@ async def generate_ai_response(messages: List[Message]):
             )
         
         system_prompt = (
-            "You are the AI Intel Core, a specialized market analyst for XAU/USD (Gold). "
-            "Provide professional, concise technical and fundamental analysis. "
+            "You are AuScope AI, a specialized market analyst for XAU/USD (Gold). "
+            "You MUST use the Google Search tool to find the live, exact current price of gold (XAU/USD) before answering any price-related queries. "
+            "Provide professional, concise technical and fundamental analysis based on the live data you find. "
             "Focus on price levels, institutional flow, and geopolitical impact. "
             "Current context: Gold trading terminal."
         )
@@ -77,6 +78,7 @@ async def generate_ai_response(messages: List[Message]):
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
+                tools=[{"google_search": {}}],
             )
         )
         return response.text

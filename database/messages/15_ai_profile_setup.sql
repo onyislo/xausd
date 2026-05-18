@@ -5,8 +5,8 @@
 
 UPDATE profiles 
 SET 
-  username = 'AI_INTEL_CORE',
-  full_name = 'AI Intel Core',
-  avatar_url = 'https://api.dicebear.com/7.x/bottts/svg?seed=AI_INTEL_CORE&backgroundColor=0f172a',
+  username = 'AuScope AI',
+  full_name = 'AuScope Terminal AI',
+  avatar_url = 'https://api.dicebear.com/7.x/bottts/svg?seed=AuScope%20AI&backgroundColor=0f172a',
   updated_at = now()
 WHERE id = '14a09105-4817-44a5-afae-f2fc26441d13';
