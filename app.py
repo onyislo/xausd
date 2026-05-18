@@ -37,6 +37,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) if SUP
 AI_SYSTEM_ID = "14a09105-4817-44a5-afae-f2fc26441d13"
 print(f"DEBUG: AI_SYSTEM_ID is set to {AI_SYSTEM_ID}")
 
+class Message(BaseModel):
     role: str
     content: str
 
@@ -47,8 +48,6 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     response: str
-
-AI_SYSTEM_ID = "14a09105-4817-44a5-afae-f2fc26441d13"
 
 async def generate_ai_response(messages: List[Message]):
     """
