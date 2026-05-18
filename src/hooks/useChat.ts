@@ -12,7 +12,13 @@ const formatMsgTime = (d: Date) => {
   if (d.toDateString() === y.toDateString()) return 'Yesterday';
   return d.toLocaleDateString([], { day: 'numeric', month: 'short' });
 };
-const fmtPreview = (c: string) => c.startsWith('[VOICE_NOTE]') ? '🎤 Voice Recording' : c.length > 30 ? c.substring(0, 30) + '...' : c;
+const fmtPreview = (c: string) => {
+  if (c.startsWith('[VOICE_NOTE]')) return '🎤 Voice Recording';
+  if (c.startsWith('[IMAGE]')) return '📷 Photo';
+  if (c.startsWith('[VIDEO]')) return '🎥 Video';
+  if (c.startsWith('[FILE]')) return '📄 Document';
+  return c.length > 30 ? c.substring(0, 30) + '...' : c;
+};
 
 export function useChat() {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -469,9 +475,7 @@ export function useChat() {
           return {
             ...chat,
             messages: updatedMessages,
-            lastMsg: formatted.text.startsWith('[VOICE_NOTE]')
-              ? "🎤 Voice Recording"
-              : (formatted.text.length > 30 ? formatted.text.substring(0, 30) + '...' : formatted.text),
+            lastMsg: fmtPreview(formatted.text),
             time: timeStr,
             unreadCount: (activeId === chat.id || isMe) ? (chat.unreadCount || 0) : (chat.unreadCount || 0) + 1,
             lastActivity: now.getTime()
@@ -542,7 +546,7 @@ export function useChat() {
       chat.id === activeId ? {
         ...chat,
         messages: [...chat.messages, optimistic], // Newest at the bottom
-        lastMsg: text.trim().startsWith('[VOICE_NOTE]') ? "🎤 Voice Recording" : text.trim(),
+        lastMsg: fmtPreview(text.trim()),
         time: timeStr,
         lastActivity: now.getTime()
       } : chat
