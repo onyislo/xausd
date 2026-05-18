@@ -1,3 +1,11 @@
+---
+title: Xaus AI Backend
+emoji: 🚀
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+---
 # XAUSD AI Backend (Hugging Face Spaces)
 
 This backend powers the AI Assistant for the XAUSD terminal using Google's Gemini API and Supabase.
