@@ -1,12 +1,13 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
-import { Shield, Trash2, Mic, ChevronDown, Copy, Reply } from 'lucide-react';
+import { Shield, Trash2, Mic, ChevronDown, Copy, Reply, X } from 'lucide-react';
 
 export default function MessageItem({ msg, currentUserId, contactAvatar, contactName, onDelete, onReply, onContextMenu }: any) {
   const isSelf = msg.user_id === currentUserId;
   const [isExpanded, setIsExpanded] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [menuUp, setMenuUp] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
   
@@ -129,14 +130,40 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
                 </audio>
               </div>
             ) : msg.text?.startsWith('[IMAGE]') ? (
-              <div className="max-w-sm rounded-lg overflow-hidden my-1">
-                <img 
-                  src={msg.text.replace('[IMAGE]', '')} 
-                  alt="Shared media" 
-                  className="w-full h-auto object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => window.open(msg.text.replace('[IMAGE]', ''), '_blank')}
-                />
-              </div>
+              <>
+                <div className="max-w-sm rounded-lg overflow-hidden my-1">
+                  <img 
+                    src={msg.text.replace('[IMAGE]', '')} 
+                    alt="Shared media" 
+                    className="w-full h-auto object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setIsFullscreen(true)}
+                  />
+                </div>
+                {isFullscreen && (
+                  <div 
+                    className="fixed inset-0 z-[9999] bg-black/95 flex flex-col items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200"
+                    onClick={() => setIsFullscreen(false)}
+                  >
+                    <div className="absolute top-0 left-0 w-full p-4 flex justify-end bg-gradient-to-b from-black/80 to-transparent">
+                      <button 
+                        className="text-white p-2 hover:bg-white/10 rounded-full transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsFullscreen(false);
+                        }}
+                      >
+                        <X size={24} />
+                      </button>
+                    </div>
+                    <img 
+                      src={msg.text.replace('[IMAGE]', '')} 
+                      alt="Full screen media" 
+                      className="max-w-full max-h-[90vh] object-contain rounded-lg"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                )}
+              </>
             ) : msg.text?.startsWith('[VIDEO]') ? (
               <div className="max-w-sm rounded-lg overflow-hidden my-1">
                 <video 
