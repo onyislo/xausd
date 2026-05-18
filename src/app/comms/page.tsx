@@ -314,6 +314,7 @@ function CommsContent() {
             showDevToast={showDevToast}
             IS_PRODUCTION={IS_PRODUCTION}
             onlineUsers={onlineUsers}
+            typingStatus={typingStatus}
           />
 
           {/* CHAT PANEL */}

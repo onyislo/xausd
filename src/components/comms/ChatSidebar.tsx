@@ -22,6 +22,7 @@ interface ChatSidebarProps {
   showDevToast: () => void;
   IS_PRODUCTION: boolean;
   onlineUsers: Set<string>;
+  typingStatus?: Record<string, any[]>;
 }
 
 export default function ChatSidebar({
@@ -42,7 +43,8 @@ export default function ChatSidebar({
   setIsCreating,
   showDevToast,
   IS_PRODUCTION,
-  onlineUsers
+  onlineUsers,
+  typingStatus
 }: ChatSidebarProps) {
   
   const filtered = tab === 'all'
@@ -207,9 +209,15 @@ export default function ChatSidebar({
               </span>
             </div>
           ) : filtered.map(chat => (
-            <ChatListItem key={chat.id} chat={chat} active={activeId === chat.id} onSelect={() => {
-              setActiveId(chat.id);
-            }} />
+            <ChatListItem 
+              key={chat.id} 
+              chat={chat} 
+              active={activeId === chat.id} 
+              onSelect={() => {
+                setActiveId(chat.id);
+              }} 
+              isTyping={typingStatus && typingStatus[chat.id] && typingStatus[chat.id].length > 0}
+            />
           ))
         )}
       </div>

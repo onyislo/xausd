@@ -173,7 +173,7 @@ export default function ChatWindow({
     typingTimeoutRef.current = setTimeout(() => {
       isTypingRef.current = false;
       setTyping(activeId, false);
-    }, 500); // Reduced to 500ms for faster, snappy stop detection
+    }, 2000); // Increased to 2000ms so typing indicator stays active while typing
   };
 
   const handleReply = (msg: any) => {
