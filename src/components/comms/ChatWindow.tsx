@@ -23,6 +23,7 @@ interface ChatWindowProps {
   typingStatus: any[];
   setTyping: (channelId: string | null, isTyping: boolean) => void;
   sendVoiceNote: (blob: Blob) => void;
+  sendFile: (file: File) => void;
   replyingTo: any;
   setReplyingTo: (msg: any) => void;
 }
@@ -46,6 +47,7 @@ export default function ChatWindow({
   typingStatus,
   setTyping,
   sendVoiceNote,
+  sendFile,
   replyingTo,
   setReplyingTo
 }: ChatWindowProps) {
