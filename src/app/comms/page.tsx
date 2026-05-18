@@ -336,6 +336,7 @@ function CommsContent() {
             typingStatus={typingStatus[activeId || ''] || []}
             setTyping={setTyping}
             sendVoiceNote={sendVoiceNote}
+            sendFile={sendFile}
             replyingTo={replyingTo}
             setReplyingTo={setReplyingTo}
           />

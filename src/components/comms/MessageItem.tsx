@@ -119,8 +119,52 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
             )}
             
             {msg.text?.startsWith('[VOICE_NOTE]') ? (
-              <div className="flex flex-col gap-1.5 min-w-[200px] py-1"><div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-yellow-500/80"><Mic size={10} className="animate-pulse" /><span>Voice Note</span></div><audio controls className="h-8 invert brightness-125 opacity-70 w-full"><source src={msg.text.replace('[VOICE_NOTE]', '')} /></audio></div>
-            ) : <span className="pr-2">{displayText}{(msg.text || '').length > 700 && <button onClick={() => setIsExpanded(!isExpanded)} className="block mt-2 text-[10px] font-black text-yellow-500">{isExpanded ? 'LESS' : 'MORE'}</button>}</span>}
+              <div className="flex flex-col gap-1.5 min-w-[200px] py-1">
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-yellow-500/80">
+                  <Mic size={10} className="animate-pulse" />
+                  <span>Voice Note</span>
+                </div>
+                <audio controls className="h-8 invert brightness-125 opacity-70 w-full">
+                  <source src={msg.text.replace('[VOICE_NOTE]', '')} />
+                </audio>
+              </div>
+            ) : msg.text?.startsWith('[IMAGE]') ? (
+              <div className="max-w-sm rounded-lg overflow-hidden my-1">
+                <img 
+                  src={msg.text.replace('[IMAGE]', '')} 
+                  alt="Shared media" 
+                  className="w-full h-auto object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => window.open(msg.text.replace('[IMAGE]', ''), '_blank')}
+                />
+              </div>
+            ) : msg.text?.startsWith('[VIDEO]') ? (
+              <div className="max-w-sm rounded-lg overflow-hidden my-1">
+                <video 
+                  controls 
+                  className="w-full h-auto"
+                >
+                  <source src={msg.text.replace('[VIDEO]', '')} />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            ) : msg.text?.startsWith('[FILE]') ? (
+              <a 
+                href={msg.text.replace('[FILE]', '')} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 p-2 bg-black/20 rounded-lg hover:bg-black/40 transition-all border border-white/5"
+              >
+                <div className="w-10 h-10 bg-yellow-500/20 rounded flex items-center justify-center text-yellow-500">
+                  <Copy size={20} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[11px] font-bold text-slate-200 truncate">Document Attachment</span>
+                  <span className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Tap to View</span>
+                </div>
+              </a>
+            ) : (
+              <span className="pr-2">{displayText}{(msg.text || '').length > 700 && <button onClick={() => setIsExpanded(!isExpanded)} className="block mt-2 text-[10px] font-black text-yellow-500">{isExpanded ? 'LESS' : 'MORE'}</button>}</span>
+            )}
           </div>
 
           {showMenu && (
