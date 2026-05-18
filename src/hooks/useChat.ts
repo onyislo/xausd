@@ -653,6 +653,20 @@ export function useChat() {
     }).catch(err => console.error('Push Error:', err));
   };
 
+  const sendFile = async (file: File) => {
+    if (!activeId || !currentUser) return;
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    const prefix = isImage ? '[IMAGE]' : isVideo ? '[VIDEO]' : '[FILE]';
+    
+    const fileName = `${activeId}/${Date.now()}_${file.name}`;
+    const { data, error } = await supabase.storage.from('comms').upload(fileName, file);
+    if (error) return;
+
+    const { data: { publicUrl } } = supabase.storage.from('comms').getPublicUrl(fileName);
+    await sendMessage(`${prefix}${publicUrl}`);
+  };
+
   // 6. Push Channel (for group creation)
   const pushChannel = (c: any) => {
     setChatData(prev => {
