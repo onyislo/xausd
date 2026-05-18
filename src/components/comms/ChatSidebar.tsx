@@ -200,13 +200,20 @@ export default function ChatSidebar({
               );
             })
           )
-        ) : (
-          filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-600">
-              <span className="text-2xl">{tab === 'ai' ? '🤖' : tab === 'dms' ? '💬' : '#'}</span>
+        ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-600">
+              <span className="text-4xl">{tab === 'ai' ? '🤖' : tab === 'dms' ? '💬' : '#'}</span>
               <span className="text-[10px] uppercase tracking-widest text-center px-4">
-                {tab === 'all' ? 'No messages yet.' : tab === 'channels' ? 'No channels yet. Hit + to create one.' : tab === 'dms' ? 'No direct messages yet.' : 'No AI sessions yet.'}
+                {tab === 'all' ? 'No messages yet.' : tab === 'channels' ? 'No channels yet. Hit + to create one.' : tab === 'dms' ? 'No direct messages yet.' : 'Start your first AI session.'}
               </span>
+              {tab === 'ai' && (
+                <button 
+                  onClick={() => onStartDM('14a09105-4817-44a5-afae-f2fc26441d13', 'AuScope AI')}
+                  className="px-6 py-2 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-yellow-500/20 transition-all shadow-[0_0_15px_rgba(245,196,81,0.15)]"
+                >
+                  Start Terminal AI
+                </button>
+              )}
             </div>
           ) : filtered.map(chat => (
             <ChatListItem 
@@ -221,6 +228,25 @@ export default function ChatSidebar({
           ))
         )}
       </div>
+      {/* Floating AI Button (Mobile only) */}
+      {tab !== 'ai' && (
+        <button 
+          onClick={() => {
+            onStartDM('14a09105-4817-44a5-afae-f2fc26441d13', 'AuScope AI');
+            setTab('ai');
+          }}
+          className="md:hidden fixed bottom-20 right-4 z-[100] h-12 pl-1 pr-4 bg-[#0a0e17] border border-yellow-500/30 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.8),0_0_20px_rgba(245,196,81,0.2)] flex items-center gap-2.5 active:scale-95 transition-transform"
+        >
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shrink-0 shadow-inner">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200" />
+              <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200" />
+              <rect x="6" y="4" width="12" height="5" rx="1" fill="#1a1200" />
+            </svg>
+          </div>
+          <span className="text-[11px] font-black uppercase tracking-widest text-yellow-500">AuScope AI</span>
+        </button>
+      )}
     </section>
   );
 }
