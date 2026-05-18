@@ -1,6 +1,6 @@
 'use client';
 import React, { useRef, useEffect } from 'react';
-import { Users, User, Phone, MoreVertical, Info, BellOff, Trash2, Shield, Link as LinkIcon, LogOut, Send, Mic, Square, X } from 'lucide-react';
+import { Users, User, Phone, MoreVertical, Info, BellOff, Trash2, Shield, Link as LinkIcon, LogOut, Send, Mic, Square, X, Image as ImageIcon, FileText, Video, Paperclip } from 'lucide-react';
 import HeaderPrice from '@/components/HeaderPrice';
 import MessageItem from './MessageItem';
 
@@ -57,6 +57,12 @@ export default function ChatWindow({
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTypingRef = useRef(false);
 
+  // Attachment State
+  const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = React.useState(false);
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const [filePreviewUrl, setFilePreviewUrl] = React.useState<string | null>(null);
+  const [fileAcceptType, setFileAcceptType] = React.useState<string>('*/*');
+
   // Voice Recording State
   const [isRecording, setIsRecording] = React.useState(false);
   const [recordTime, setRecordTime] = React.useState(0);
@@ -104,6 +110,40 @@ export default function ChatWindow({
     if (audioBlob) sendVoiceNote(audioBlob);
     setAudioUrl(null);
     setAudioBlob(null);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+        setFilePreviewUrl(URL.createObjectURL(file));
+      } else {
+        setFilePreviewUrl(null);
+      }
+      setIsAttachmentMenuOpen(false);
+    }
+  };
+
+  const handleConfirmFileSend = () => {
+    if (selectedFile) {
+      sendFile(selectedFile);
+      setSelectedFile(null);
+      setFilePreviewUrl(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleCancelFileSend = () => {
+    setSelectedFile(null);
+    setFilePreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+  
+  const openFilePicker = (accept: string) => {
+    setFileAcceptType(accept);
+    setIsAttachmentMenuOpen(false);
+    setTimeout(() => fileInputRef.current?.click(), 0);
   };
 
   useEffect(() => {
@@ -339,23 +379,64 @@ export default function ChatWindow({
                 </div>
               )}
               
+              {/* File Preview Bar */}
+              {selectedFile && (
+                <div className="absolute inset-0 bg-[#0a0e17] rounded-xl z-20 flex items-center justify-between px-3 animate-in fade-in zoom-in duration-200">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    {filePreviewUrl ? (
+                      selectedFile.type.startsWith('video/') ? (
+                        <video src={filePreviewUrl} className="w-10 h-10 rounded object-cover border border-slate-700" />
+                      ) : (
+                        <img src={filePreviewUrl} alt="Preview" className="w-10 h-10 rounded object-cover border border-slate-700" />
+                      )
+                    ) : (
+                      <div className="w-10 h-10 rounded bg-slate-800 flex items-center justify-center border border-slate-700">
+                        <FileText size={20} className="text-yellow-500" />
+                      </div>
+                    )}
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="text-[12px] font-bold text-slate-200 truncate max-w-[150px]">{selectedFile.name}</span>
+                      <span className="text-[10px] text-slate-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={handleCancelFileSend} className="p-2 text-slate-500 hover:text-red-400 rounded-lg transition-colors"><Trash2 size={18} /></button>
+                    <button onClick={handleConfirmFileSend} className="w-9 h-9 bg-yellow-500 text-[#1a1200] rounded-lg flex items-center justify-center shadow-lg"><Send size={18} className="rotate-45 -translate-y-0.5" /></button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center gap-1">
                 <input
                   type="file"
                   ref={fileInputRef}
                   className="hidden"
-                  accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) sendFile(file);
-                  }}
+                  accept={fileAcceptType}
+                  onChange={handleFileSelect}
                 />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-9 h-9 flex items-center justify-center text-slate-500 hover:bg-slate-800 rounded-lg transition-all shrink-0"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                </button>
+                
+                <div className="relative">
+                  <button
+                    onClick={() => setIsAttachmentMenuOpen(!isAttachmentMenuOpen)}
+                    className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all shrink-0 ${isAttachmentMenuOpen ? 'bg-yellow-500/20 text-yellow-500' : 'text-slate-500 hover:bg-slate-800'}`}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  </button>
+
+                  {isAttachmentMenuOpen && (
+                    <div className="absolute bottom-full left-0 mb-2 w-48 bg-[#0f1420] border border-slate-700 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200 origin-bottom-left">
+                      <button onClick={() => openFilePicker('image/*,video/*')} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
+                        <ImageIcon size={16} /> Photos & Videos
+                      </button>
+                      <button onClick={() => openFilePicker('.pdf,.doc,.docx,.txt')} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
+                        <FileText size={16} /> Document
+                      </button>
+                      <button onClick={() => openFilePicker('audio/*')} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:bg-yellow-500/10 hover:text-yellow-500 transition-all">
+                        <Mic size={16} /> Audio
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <textarea
                   ref={inputRef}
                   rows={1}
