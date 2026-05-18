@@ -23,7 +23,7 @@ function CommsContent() {
     addContact: addFriend, removeContact: removeFriend, 
     searchProfiles, startDM, sendMessage, deleteMessage, 
     currentUser, pushChannel, typingStatus, setTyping, onlineUsers, sendVoiceNote,
-    replyingTo, setReplyingTo, isLoading
+    sendFile, replyingTo, setReplyingTo, isLoading
   } = useChat();
 
   const [activeCall, setActiveCall] = useState<{ roomId: string, isIncoming: boolean, targetId: string, targetName: string } | null>(null);
