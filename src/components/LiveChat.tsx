@@ -122,7 +122,7 @@ export default function LiveChat() {
               </div>
               <div className="flex-1 flex flex-col items-end min-w-0">
                 <div className="flex justify-between items-baseline mb-0.5 w-full flex-row-reverse">
-                  <span className="text-yellow-400 text-[10px] font-bold">AI Expert</span>
+                  <span className="text-yellow-400 text-[10px] font-black uppercase tracking-widest font-mono">AuScope Terminal AI Assistant</span>
                   <span className="text-slate-600 text-[9px]">{msg.time}</span>
                 </div>
                 <div className="bg-yellow-500/10 border border-yellow-500/20 text-slate-200 text-[11px] p-2 rounded-lg rounded-tr-none leading-relaxed">

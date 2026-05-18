@@ -799,7 +799,7 @@ export function useChat() {
       if (!mergedTypingStatus[channelId].some(u => u.id === AI_SYSTEM_ID)) {
         mergedTypingStatus[channelId].push({
           id: AI_SYSTEM_ID,
-          username: "AI Intel Core",
+          username: "AuScope Terminal AI Assistant",
           avatarUrl: "/logo.svg" // Use the project logo or a specific AI avatar
         });
       }
@@ -807,17 +807,4 @@ export function useChat() {
   });
 
   return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, sendVoiceNote, sendFile, deleteMessage, currentUser, pushChannel, typingStatus: mergedTypingStatus, setTyping, onlineUsers, replyingTo, setReplyingTo, isLoading };
-}
-";
-      if (!mergedTypingStatus[channelId].some(u => u.id === AI_SYSTEM_ID)) {
-        mergedTypingStatus[channelId].push({
-          id: AI_SYSTEM_ID,
-          username: "AI Intel Core",
-          avatarUrl: "/logo.svg" // Use the project logo or a specific AI avatar
-        });
-      }
-    }
-  });
-
-  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, sendVoiceNote, deleteMessage, currentUser, pushChannel, typingStatus: mergedTypingStatus, setTyping, onlineUsers, replyingTo, setReplyingTo, isLoading };
 }
