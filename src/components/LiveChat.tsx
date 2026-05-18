@@ -134,13 +134,15 @@ export default function LiveChat() {
         )}
 
         {isTyping && (
-          <div className="flex gap-2 items-center ml-7">
-            <div className="flex gap-0.5">
-              {[0, 0.15, 0.3].map((d, i) => (
-                <div key={i} className="w-1.5 h-1.5 bg-yellow-500/60 rounded-full animate-bounce" style={{ animationDelay: `${d}s` }} />
-              ))}
+          <div className="flex items-end gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300 ml-1 mt-2">
+            <div className="w-5 h-5 rounded-full bg-yellow-500/20 flex items-center justify-center shrink-0 border border-yellow-500/40 mb-1">
+              <Bot size={10} className="text-yellow-400" />
             </div>
-            <span className="text-[9px] text-slate-500">AI is typing…</span>
+            <div className="bg-[#161b22] px-3 py-2 rounded-[15px] rounded-bl-[4px] border border-slate-700/30 flex items-center gap-1 shadow-lg">
+              <span className="w-1 h-1 bg-yellow-500/60 rounded-full animate-bounce [animation-delay:-0.3s]" />
+              <span className="w-1 h-1 bg-yellow-500/60 rounded-full animate-bounce [animation-delay:-0.15s]" />
+              <span className="w-1 h-1 bg-yellow-500/60 rounded-full animate-bounce" />
+            </div>
           </div>
         )}
         <div ref={chatEndRef} />

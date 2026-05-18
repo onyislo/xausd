@@ -20,6 +20,7 @@ export function useChat() {
   const [contacts, setContacts] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [typingStatus, setTypingStatus] = useState<Record<string, any[]>>({}); // channelId -> list of typing users
+  const [aiTyping, setAiTyping] = useState<Record<string, boolean>>({}); // channelId -> is AI typing
   const [presenceChannel, setPresenceChannel] = useState<any>(null);
   const [replyingTo, setReplyingTo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -562,7 +563,7 @@ export function useChat() {
     const isAIChat = activeChat?.type === 'dm' && activeChat.otherMemberId === AI_SYSTEM_ID;
 
     if (isAIChat) {
-      setTyping(activeId, true);
+      setAiTyping(prev => ({ ...prev, [activeId]: true }));
       // Change 'onyiso-xaus-ai-backend.hf.space' to your actual HF URL if different
       fetch('https://Onyiso-Xaus-ai-backend.hf.space/ai/chat', {
         method: 'POST',
@@ -577,10 +578,10 @@ export function useChat() {
         })
       })
       .then(res => res.json())
-      .then(() => setTyping(activeId, false))
+      .then(() => setAiTyping(prev => ({ ...prev, [activeId]: false })))
       .catch(err => {
         console.error('AI Backend Error:', err);
-        setTyping(activeId, false);
+        setAiTyping(prev => ({ ...prev, [activeId]: false }));
       });
     }
 
@@ -788,5 +789,22 @@ export function useChat() {
     });
   };
 
-  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, sendVoiceNote, deleteMessage, currentUser, pushChannel, typingStatus, setTyping, onlineUsers, replyingTo, setReplyingTo, isLoading };
+  // Merge AI typing into typingStatus for the active channel
+  const mergedTypingStatus = { ...typingStatus };
+  Object.keys(aiTyping).forEach(channelId => {
+    if (aiTyping[channelId]) {
+      if (!mergedTypingStatus[channelId]) mergedTypingStatus[channelId] = [];
+      // Don't add if AI is already "typing" (though unlikely via presence)
+      const AI_SYSTEM_ID = "14a09105-4817-44a5-afae-f2fc26441d13";
+      if (!mergedTypingStatus[channelId].some(u => u.id === AI_SYSTEM_ID)) {
+        mergedTypingStatus[channelId].push({
+          id: AI_SYSTEM_ID,
+          username: "AI Intel Core",
+          avatarUrl: "/logo.svg" // Use the project logo or a specific AI avatar
+        });
+      }
+    }
+  });
+
+  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, sendVoiceNote, deleteMessage, currentUser, pushChannel, typingStatus: mergedTypingStatus, setTyping, onlineUsers, replyingTo, setReplyingTo, isLoading };
 }
