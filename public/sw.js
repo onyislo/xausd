@@ -45,6 +45,9 @@ self.addEventListener('fetch', (event) => {
   // Skip Supabase API calls — they should never be cached
   if (url.hostname.includes('supabase')) return;
 
+  // Skip unsupported schemes (e.g. chrome-extension://)
+  if (!url.protocol.startsWith('http')) return;
+
   // For navigation requests (HTML pages) — network first, cache fallback
   if (event.request.mode === 'navigate') {
     event.respondWith(
