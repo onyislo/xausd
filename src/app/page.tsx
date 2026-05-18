@@ -19,6 +19,9 @@ export default function HomePage() {
 
     const checkRedirect = async () => {
       if (isStandalone) {
+        // App mode — show beautiful splash screen for 1.5s
+        await new Promise(r => setTimeout(r, 1500));
+        
         // PWA mode — NEVER show homepage, redirect immediately
         const { data: { session } } = await supabase.auth.getSession();
         const lastPath = localStorage.getItem('last_path');
@@ -48,9 +51,26 @@ export default function HomePage() {
   // PWA mode or still checking auth — show dark splash (no homepage content)
   if (isPWA || checking) {
     return (
-      <div style={{ background: '#0a0e17', height: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '40px', height: '40px', border: '3px solid rgba(245,196,81,0.15)', borderTop: '3px solid #f5c451', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{ background: '#0a0e17', height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', animation: 'fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'linear-gradient(135deg,#f5c451,#b8860b)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px rgba(245,196,81,0.2)' }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="14" width="20" height="5" rx="1" fill="#1a1200" />
+              <rect x="4" y="9" width="16" height="5" rx="1" fill="#1a1200" />
+              <rect x="6" y="4" width="12" height="5" rx="1" fill="#1a1200" />
+            </svg>
+          </div>
+          <span style={{ fontFamily: "'Chakra Petch',sans-serif", fontWeight: 800, fontSize: '32px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#f5c451' }}>AuScope</span>
+        </div>
+        <div style={{ position: 'absolute', bottom: '60px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', animation: 'fade-in 1s ease-out 0.5s both' }}>
+          <div style={{ width: '24px', height: '24px', border: '2px solid rgba(245,196,81,0.15)', borderTop: '2px solid #f5c451', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <span style={{ fontSize: '10px', color: '#8a9bb2', letterSpacing: '0.2em', textTransform: 'uppercase', fontFamily: "'Chakra Petch',sans-serif" }}>Intelligence Terminal</span>
+        </div>
+        <style>{`
+          @keyframes spin { to { transform: rotate(360deg); } }
+          @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        `}</style>
       </div>
     );
   }
