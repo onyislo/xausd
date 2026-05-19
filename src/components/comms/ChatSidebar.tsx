@@ -226,7 +226,7 @@ export default function ChatSidebar({
               isTyping={typingStatus && typingStatus[chat.id] && typingStatus[chat.id].length > 0}
             />
           ))
-        )}
+        }
       </div>
     </section>
   );
