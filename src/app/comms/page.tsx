@@ -344,6 +344,32 @@ function CommsContent() {
         </div>
       </div>
 
+      {/* FLOATING AI BUBBLE (PWA/Mobile Optimized) */}
+      <button
+        onClick={() => onStartDM('14a09105-4817-44a5-afae-f2fc26441d13', 'AuScope Terminal AI Assistant')}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-yellow-500 rounded-full shadow-[0_8px_32px_rgba(245,196,81,0.4)] flex items-center justify-center text-[#1a1200] z-[4000] active:scale-90 transition-all animate-bounce-subtle border-2 border-yellow-400/50 group"
+        title="Quick AI Intel"
+      >
+        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#0a0e17] z-10" />
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:rotate-12 transition-transform">
+          <path d="M12 8V4H8" />
+          <rect width="16" height="12" x="4" y="8" rx="2" />
+          <path d="M2 14h2" />
+          <path d="M20 14h2" />
+          <path d="M15 13v2" />
+          <path d="M9 13v2" />
+        </svg>
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes bounce-subtle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+          }
+          .animate-bounce-subtle {
+            animation: bounce-subtle 3s ease-in-out infinite;
+          }
+        `}} />
+      </button>
+
       <Modals 
         isCreating={isCreating}
         setIsCreating={setIsCreating}
