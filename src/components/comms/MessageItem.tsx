@@ -141,10 +141,11 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
                 </div>
                 {isFullscreen && (
                   <div 
-                    className="fixed inset-0 z-[9999] bg-black/95 flex flex-col items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200"
+                    className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-200"
                     onClick={() => setIsFullscreen(false)}
                   >
-                    <div className="absolute top-0 left-0 w-full p-4 flex justify-end bg-gradient-to-b from-black/80 to-transparent">
+                    <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-center bg-gradient-to-b from-black/80 via-black/40 to-transparent z-20">
+                      <span className="text-white text-[11px] font-black uppercase tracking-widest pl-2">AuScope Intelligence</span>
                       <button 
                         className="text-white p-2 hover:bg-white/10 rounded-full transition-colors"
                         onClick={(e) => {
@@ -158,22 +159,52 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
                     <img 
                       src={msg.text.replace('[IMAGE]', '')} 
                       alt="Full screen media" 
-                      className="max-w-full max-h-[90vh] object-contain rounded-lg"
+                      className="max-w-full max-h-screen object-contain"
                       onClick={(e) => e.stopPropagation()}
                     />
                   </div>
                 )}
               </>
             ) : msg.text?.startsWith('[VIDEO]') ? (
-              <div className="max-w-sm rounded-lg overflow-hidden my-1">
-                <video 
-                  controls 
-                  className="w-full h-auto"
-                >
-                  <source src={msg.text.replace('[VIDEO]', '')} />
-                  Your browser does not support the video tag.
-                </video>
-              </div>
+              <>
+                <div className="max-w-sm rounded-lg overflow-hidden my-1 relative cursor-pointer group/vid" onClick={() => setIsFullscreen(true)}>
+                  <video className="w-full h-auto max-h-48 object-cover">
+                    <source src={msg.text.replace('[VIDEO]', '')} />
+                  </video>
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover/vid:bg-black/20 transition-all">
+                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center">
+                      <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1" />
+                    </div>
+                  </div>
+                </div>
+                {isFullscreen && (
+                  <div 
+                    className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center animate-in fade-in duration-200"
+                    onClick={() => setIsFullscreen(false)}
+                  >
+                    <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-center bg-gradient-to-b from-black/80 via-black/40 to-transparent z-20">
+                      <span className="text-white text-[11px] font-black uppercase tracking-widest pl-2">AuScope Video Intelligence</span>
+                      <button 
+                        className="text-white p-2 hover:bg-white/10 rounded-full transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsFullscreen(false);
+                        }}
+                      >
+                        <X size={24} />
+                      </button>
+                    </div>
+                    <video 
+                      autoPlay 
+                      controls 
+                      className="max-w-full max-h-screen z-10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <source src={msg.text.replace('[VIDEO]', '')} />
+                    </video>
+                  </div>
+                )}
+              </>
             ) : msg.text?.startsWith('[FILE]') ? (
               <a 
                 href={msg.text.replace('[FILE]', '')} 
