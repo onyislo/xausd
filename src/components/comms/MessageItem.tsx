@@ -82,6 +82,7 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
   const displayText = (msg.text || '').length > 700 && !isExpanded ? msg.text.slice(0, 700) + '...' : msg.text;
 
   return (
+    <>
     <div className={`w-full flex flex-col ${isSelf ? 'items-end' : 'items-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300 relative`}>
       <div className={`flex w-full ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end gap-2.5 px-2 relative`}>
         {/* Swipe to reply indicator (mobile only) */}
@@ -130,81 +131,14 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
                 </audio>
               </div>
             ) : msg.text?.startsWith('[IMAGE]') ? (
-              <>
-                <div className="max-w-sm rounded-lg overflow-hidden my-1">
-                  <img 
-                    src={msg.text.replace('[IMAGE]', '')} 
-                    alt="Shared media" 
-                    className="w-full h-auto object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                    onClick={() => setIsFullscreen(true)}
-                  />
-                </div>
-                {isFullscreen && (
-                  <div 
-                    className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-200"
-                    onClick={() => setIsFullscreen(false)}
-                  >
-                    <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-center bg-gradient-to-b from-black/80 via-black/40 to-transparent z-20">
-                      <span className="text-white text-[11px] font-black uppercase tracking-widest pl-2">AuScope Intelligence</span>
-                      <button 
-                        className="text-white p-2 hover:bg-white/10 rounded-full transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsFullscreen(false);
-                        }}
-                      >
-                        <X size={24} />
-                      </button>
-                    </div>
-                    <img 
-                      src={msg.text.replace('[IMAGE]', '')} 
-                      alt="Full screen media" 
-                      className="max-w-full max-h-screen object-contain"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                )}
-              </>
+              <div className="max-w-sm rounded-lg overflow-hidden my-1 cursor-pointer hover:opacity-90" onClick={() => setIsFullscreen(true)}>
+                <img src={msg.text.replace('[IMAGE]', '')} alt="" className="w-full h-auto object-cover pointer-events-none" />
+              </div>
             ) : msg.text?.startsWith('[VIDEO]') ? (
-              <>
-                <div className="max-w-sm rounded-lg overflow-hidden my-1 relative cursor-pointer group/vid" onClick={() => setIsFullscreen(true)}>
-                  <video className="w-full h-auto max-h-48 object-cover">
-                    <source src={msg.text.replace('[VIDEO]', '')} />
-                  </video>
-                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover/vid:bg-black/20 transition-all">
-                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center">
-                      <div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1" />
-                    </div>
-                  </div>
-                </div>
-                {isFullscreen && (
-                  <div 
-                    className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center animate-in fade-in duration-200"
-                    onClick={() => setIsFullscreen(false)}
-                  >
-                    <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-center bg-gradient-to-b from-black/80 via-black/40 to-transparent z-20">
-                      <span className="text-white text-[11px] font-black uppercase tracking-widest pl-2">AuScope Video Intelligence</span>
-                      <button 
-                        className="text-white p-2 hover:bg-white/10 rounded-full transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsFullscreen(false);
-                        }}
-                      >
-                        <X size={24} />
-                      </button>
-                    </div>
-                    <video 
-                      autoPlay 
-                      controls 
-                      className="max-w-full max-h-screen z-10"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <source src={msg.text.replace('[VIDEO]', '')} />
-                    </video>
-                  </div>
-                )}
-              </>
+              <div className="max-w-sm rounded-lg overflow-hidden my-1 relative cursor-pointer group" onClick={() => setIsFullscreen(true)}>
+                <video className="w-full h-auto max-h-48 object-cover pointer-events-none"><source src={msg.text.replace('[VIDEO]', '')} /></video>
+                <div className="absolute inset-0 bg-black/20 flex items-center justify-center"><div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"><div className="w-0 h-0 border-t-[8px] border-t-transparent border-l-[14px] border-l-white border-b-[8px] border-b-transparent ml-1" /></div></div>
+              </div>
             ) : msg.text?.startsWith('[FILE]') ? (
               <a 
                 href={msg.text.replace('[FILE]', '')} 
@@ -239,5 +173,20 @@ export default function MessageItem({ msg, currentUserId, contactAvatar, contact
         {isSelf && <div className="w-1 h-1 bg-yellow-500/40 rounded-full" />}
       </div>
     </div>
+    {isFullscreen && (
+      <div className="fixed inset-0 z-[1000000] bg-black/95 backdrop-blur-md flex items-center justify-center p-0 m-0 animate-in fade-in duration-200" onClick={() => setIsFullscreen(false)}>
+        <button className="fixed top-8 right-8 text-white/70 hover:text-white z-[1000001] p-2 bg-white/10 rounded-full transition-all active:scale-90" onClick={() => setIsFullscreen(false)}>
+          <X size={32} />
+        </button>
+        {msg.text?.startsWith('[IMAGE]') ? (
+          <img src={msg.text.replace('[IMAGE]', '')} className="max-w-full max-h-full object-contain" onClick={e => e.stopPropagation()} />
+        ) : (
+          <video controls autoPlay className="max-w-full max-h-full" onClick={e => e.stopPropagation()}>
+            <source src={msg.text.replace('[VIDEO]', '')} />
+          </video>
+        )}
+      </div>
+    )}
+    </>
   );
 }

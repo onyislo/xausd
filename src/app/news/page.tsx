@@ -10,41 +10,41 @@ export default function NewsPage() {
   return (
     <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans flex h-screen overflow-hidden">
       <Sidebar />
-      <div className="flex-1 overflow-y-auto p-6 md:p-12 relative">
+      <div className="flex-1 overflow-y-auto p-4 pt-16 md:p-12 relative">
         <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <header className="mb-12 flex justify-between items-center border-b border-slate-800 pb-6">
+        <header className="mb-8 md:mb-12 flex flex-col md:flex-row md:justify-between md:items-center border-b border-slate-800 pb-6 gap-4">
           <div>
-            <Link href="/dashboard" className="text-yellow-500 hover:text-yellow-400 text-sm font-bold tracking-widest uppercase flex items-center gap-2 mb-2 transition-colors">
+            <Link href="/dashboard" className="text-yellow-500 hover:text-yellow-400 text-[10px] md:text-sm font-bold tracking-widest uppercase flex items-center gap-2 mb-2 transition-colors">
               <span>←</span> BACK TO TERMINAL
             </Link>
-            <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 uppercase">
+            <h1 className="text-xl md:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 uppercase">
               Global Intelligence Feed
             </h1>
-            <p className="text-slate-500 text-sm tracking-widest uppercase mt-1">Real-time Geopolitical & Market Analysis</p>
+            <p className="text-slate-500 text-[10px] md:text-sm tracking-widest uppercase mt-1">Real-time Geopolitical & Market Analysis</p>
           </div>
           
-          <div className="hidden md:flex items-center gap-4">
-            <div className="flex flex-col items-end">
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-start md:items-end">
               <span className="text-[10px] text-slate-500 tracking-widest uppercase">Encryption Status</span>
-              <span className="text-green-500 font-mono text-xs font-bold">AES-256 SECURE</span>
+              <span className="text-green-500 font-mono text-[10px] md:text-xs font-bold">AES-256 SECURE</span>
             </div>
-            <div className="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-green-500 animate-pulse"></div>
             </div>
           </div>
         </header>
 
         {/* Filters/Stats Bar */}
-        <div className="flex flex-wrap gap-4 mb-8">
-          <div className="bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 flex items-center gap-3">
-            <span className="text-[10px] text-slate-500 uppercase font-bold">Total Articles</span>
-            <span className="text-yellow-500 font-mono font-bold">{newsData.length}</span>
+        <div className="flex flex-wrap gap-2 md:gap-4 mb-8">
+          <div className="bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-2 md:gap-3">
+            <span className="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold">Articles</span>
+            <span className="text-yellow-500 font-mono font-bold text-xs md:text-base">{newsData.length}</span>
           </div>
-          <div className="bg-slate-900/60 border border-slate-800 rounded-lg px-4 py-2 flex items-center gap-3">
-             <div className="w-2 h-2 rounded-full bg-red-500"></div>
-             <span className="text-[10px] text-slate-500 uppercase font-bold">High Impact</span>
-             <span className="text-red-500 font-mono font-bold">{newsData.filter(n => n.impact === 'HIGH').length}</span>
+          <div className="bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-2 md:gap-3">
+             <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-red-500"></div>
+             <span className="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold">High Impact</span>
+             <span className="text-red-500 font-mono font-bold text-xs md:text-base">{newsData.filter(n => n.impact === 'HIGH').length}</span>
           </div>
         </div>
 
@@ -120,49 +120,49 @@ export default function NewsPage() {
             selectedNews.impact === 'MED' ? 'border-yellow-500/50' : 
             'border-green-500/50'
           } rounded-xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200`}>
-            <div className="px-6 py-4 bg-slate-800/50 border-b border-slate-800 flex justify-between items-center">
-              <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">
+            <div className="px-4 py-3 md:px-6 md:py-4 bg-slate-800/50 border-b border-slate-800 flex justify-between items-center">
+              <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                 Intelligence Briefing / {selectedNews.id}
               </span>
               <button 
                 onClick={() => setSelectedNews(null)}
-                className="text-slate-500 hover:text-white transition-colors"
+                className="text-slate-500 hover:text-white transition-colors p-1"
               >
                 ✕
               </button>
             </div>
-            <div className="p-8">
+            <div className="p-5 md:p-8">
               <div className="flex items-center gap-3 mb-4">
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${
+                <span className={`px-2 py-0.5 rounded text-[9px] md:text-[10px] font-bold uppercase tracking-widest ${
                   selectedNews.impact === 'HIGH' ? 'bg-red-500/10 text-red-500 border border-red-500/30' : 
                   selectedNews.impact === 'MED' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/30' : 
                   'bg-green-500/10 text-green-500 border border-green-500/30'
                 }`}>
                   {selectedNews.impact} IMPACT
                 </span>
-                <span className="text-[10px] text-slate-500 font-mono">{selectedNews.timestamp}</span>
+                <span className="text-[9px] md:text-[10px] text-slate-500 font-mono">{selectedNews.timestamp}</span>
               </div>
-              <h2 className="text-2xl font-black text-slate-100 mb-6 leading-tight uppercase">
+              <h2 className="text-lg md:text-2xl font-black text-slate-100 mb-4 md:mb-6 leading-tight uppercase">
                 {selectedNews.title}
               </h2>
-              <p className="text-slate-300 leading-relaxed mb-8">
+              <p className="text-slate-300 text-sm md:text-base leading-relaxed mb-6 md:mb-8">
                 {selectedNews.content}
               </p>
               <div className="grid grid-cols-2 gap-4 pt-6 border-t border-slate-800">
                 <div>
-                  <span className="block text-[10px] text-slate-600 uppercase font-bold tracking-widest mb-1">Source Analysis</span>
-                  <span className="text-slate-200 font-bold">{selectedNews.source}</span>
+                  <span className="block text-[9px] md:text-[10px] text-slate-600 uppercase font-bold tracking-widest mb-1">Source Analysis</span>
+                  <span className="text-slate-200 font-bold text-xs md:text-sm">{selectedNews.source}</span>
                 </div>
                 <div>
-                  <span className="block text-[10px] text-slate-600 uppercase font-bold tracking-widest mb-1">Category</span>
-                  <span className="text-slate-200 font-bold">{selectedNews.category}</span>
+                  <span className="block text-[9px] md:text-[10px] text-slate-600 uppercase font-bold tracking-widest mb-1">Category</span>
+                  <span className="text-slate-200 font-bold text-xs md:text-sm">{selectedNews.category}</span>
                 </div>
               </div>
             </div>
-            <div className="px-8 py-4 bg-slate-800/30 border-t border-slate-800/50 flex justify-end">
+            <div className="px-6 py-4 bg-slate-800/30 border-t border-slate-800/50 flex justify-end">
               <button 
                 onClick={() => setSelectedNews(null)}
-                className="px-6 py-2 bg-slate-100 hover:bg-white text-slate-900 rounded font-bold text-xs uppercase tracking-widest transition-all"
+                className="w-full md:w-auto px-6 py-2 bg-slate-100 hover:bg-white text-slate-900 rounded font-bold text-[10px] md:text-xs uppercase tracking-widest transition-all"
               >
                 Close Report
               </button>

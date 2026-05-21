@@ -9,27 +9,28 @@ export default function LiveStreamsPage() {
     <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <header className="h-[64px] border-b border-slate-800/60 bg-slate-900/40 backdrop-blur-md flex items-center justify-between px-6 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-500/10 rounded-lg border border-red-500/20">
-              <PlayCircle size={20} className="text-red-500" />
+        <header className="h-[64px] border-b border-slate-800/60 bg-slate-900/40 backdrop-blur-md flex items-center justify-between pl-14 pr-4 md:px-6 shrink-0">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="p-1.5 md:p-2 bg-red-500/10 rounded-lg border border-red-500/20">
+              <PlayCircle size={18} className="text-red-500" />
             </div>
             <div>
-              <h1 className="text-[14px] font-black tracking-[0.15em] text-slate-100 uppercase" style={{ fontFamily: "'Chakra Petch', sans-serif" }}>
+              <h1 className="text-[11px] md:text-[14px] font-black tracking-[0.1em] md:tracking-[0.15em] text-slate-100 uppercase" style={{ fontFamily: "'Chakra Petch', sans-serif" }}>
                 Tactical Video Feeds
               </h1>
-              <p className="text-[10px] text-slate-500 font-bold tracking-wider uppercase mt-0.5">Multi-point Intelligence Surveillance</p>
+              <p className="hidden xs:block text-[8px] md:text-[10px] text-slate-500 font-bold tracking-wider uppercase mt-0.5">Surveillance Intel</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="px-3 py-1 bg-red-500/10 border border-red-500/20 rounded text-[10px] text-red-500 font-bold tracking-widest uppercase flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_5px_rgba(239,68,68,0.5)]"></div>
-              Live Feeds Active
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="px-2 md:px-3 py-1 bg-red-500/10 border border-red-500/20 rounded text-[8px] md:text-[10px] text-red-500 font-bold tracking-widest uppercase flex items-center gap-1.5 md:gap-2">
+              <div className="w-1 md:w-1.5 h-1 md:h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_5px_rgba(239,68,68,0.5)]"></div>
+              <span className="hidden sm:inline">Live Feeds Active</span>
+              <span className="sm:hidden">LIVE</span>
             </div>
           </div>
         </header>
 
-        <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-gradient-to-b from-slate-900/20 to-transparent">
+        <div className="flex-1 p-4 md:p-6 overflow-y-auto custom-scrollbar bg-gradient-to-b from-slate-900/20 to-transparent">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {videoStreams.map((v) => (
