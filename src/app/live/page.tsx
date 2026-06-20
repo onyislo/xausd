@@ -78,6 +78,9 @@ export default function LiveStreamsPage() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [viewingVideo, setViewingVideo] = useState<VideoStream | null>(null);
   const [isPipMode, setIsPipMode] = useState(false);
+  const [pipPosition, setPipPosition] = useState({ x: 24, y: 24 }); // right: 24px, bottom: 24px
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const tickerRef = useRef<HTMLDivElement>(null);
 
   // Fetch video feeds from sync API
@@ -133,6 +136,41 @@ export default function LiveStreamsPage() {
       clearInterval(interval);
     };
   }, [fetchFeeds]);
+
+  // Drag handlers for PIP mode
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!isPipMode) return;
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - (window.innerWidth - pipPosition.x - 360), // Account for right positioning
+      y: e.clientY - (window.innerHeight - pipPosition.y - 202) // Account for bottom positioning (202 is approximate height)
+    });
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const newX = Math.max(10, Math.min(window.innerWidth - 370, window.innerWidth - (e.clientX - dragStart.x) - 360));
+    const newY = Math.max(10, Math.min(window.innerHeight - 212, window.innerHeight - (e.clientY - dragStart.y) - 202));
+    
+    setPipPosition({ x: newX, y: newY });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Add global mouse event listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragStart]);
 
   const categories = ['ALL', ...Array.from(new Set(videoFeeds.map(v => v.category)))];
 
@@ -474,15 +512,26 @@ export default function LiveStreamsPage() {
 
       {/* ═══ VIDEO VIEWER MODAL / PIP ═══ */}
       {viewingVideo && (
-        <div className={
-          isPipMode 
-            ? "fixed bottom-6 right-6 z-[9999] w-[360px] aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 shadow-2xl flex flex-col hover:scale-105 transition-all duration-300 group"
-            : "fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-8"
-        }>
+        <div 
+          className={
+            isPipMode 
+              ? "fixed z-[9999] w-[360px] aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 shadow-2xl flex flex-col hover:scale-105 transition-all duration-300 group cursor-move"
+              : "fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-8"
+          }
+          style={isPipMode ? {
+            right: `${pipPosition.x}px`,
+            bottom: `${pipPosition.y}px`,
+            cursor: isDragging ? 'grabbing' : 'grab'
+          } : {}}
+          onMouseDown={handleMouseDown}
+        >
           <div className={isPipMode ? "w-full h-full flex flex-col relative" : "w-full max-w-5xl aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl relative flex flex-col"}>
             
             {/* Header / Controls */}
-            <div className={`bg-slate-900 border-b border-slate-800 flex items-center justify-between px-3 shrink-0 transition-all ${isPipMode ? 'absolute top-0 left-0 right-0 z-20 h-8 opacity-0 group-hover:opacity-100 bg-black/80 backdrop-blur-md border-none' : 'h-12'}`}>
+            <div 
+              className={`bg-slate-900 border-b border-slate-800 flex items-center justify-between px-3 shrink-0 transition-all ${isPipMode ? 'absolute top-0 left-0 right-0 z-20 h-8 opacity-0 group-hover:opacity-100 bg-black/80 backdrop-blur-md border-none cursor-move' : 'h-12'}`}
+              onMouseDown={isPipMode ? handleMouseDown : undefined}
+            >
               <div className="flex items-center gap-2 overflow-hidden pr-2">
                 {!isPipMode && (
                   <div className="w-6 h-6 rounded bg-slate-800 flex items-center justify-center shrink-0">
@@ -496,7 +545,10 @@ export default function LiveStreamsPage() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button 
-                  onClick={() => setIsPipMode(!isPipMode)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsPipMode(!isPipMode);
+                  }}
                   className={`p-1.5 rounded-lg text-slate-400 hover:text-white transition-all ${isPipMode ? 'bg-transparent hover:bg-slate-700/50' : 'bg-slate-800 border border-slate-700 hover:border-blue-500/30 hover:bg-blue-500/20'}`}
                   title={isPipMode ? "Maximize" : "Picture-in-Picture"}
                 >
@@ -507,7 +559,10 @@ export default function LiveStreamsPage() {
                   )}
                 </button>
                 <button 
-                  onClick={() => setViewingVideo(null)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setViewingVideo(null);
+                  }}
                   className={`p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-red-500/20 transition-all ${isPipMode ? 'bg-transparent' : 'bg-slate-800 border border-slate-700 hover:border-red-500/30'}`}
                   title="Close"
                 >
@@ -517,7 +572,7 @@ export default function LiveStreamsPage() {
             </div>
 
             {/* Video iframe */}
-            <div className="flex-1 w-full bg-black relative z-10">
+            <div className="flex-1 w-full bg-black relative z-10" style={{ pointerEvents: isPipMode && isDragging ? 'none' : 'auto' }}>
               <iframe
                 src={viewingVideo.video_url?.includes('youtube.com/watch?v=') ? viewingVideo.video_url.replace('watch?v=', 'embed/') : viewingVideo.video_url}
                 className="w-full h-full border-none pointer-events-auto"
