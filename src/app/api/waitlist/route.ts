@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import nodemailer from 'nodemailer';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
@@ -92,67 +93,71 @@ export async function POST(req: NextRequest) {
   // 1. Save to Supabase
   const { error: dbError } = await supabase.from('waitlist').insert([{ email }]);
 
+  // Track if already registered but continue to send email
+  let alreadyRegistered = false;
+  
   // If email already exists (Postgres error 23505)
   if (dbError?.code === '23505') {
-    return NextResponse.json({ success: true, alreadyRegistered: true });
-  }
-
-  if (dbError) {
+    alreadyRegistered = true;
+    // Don't return early - continue to send email
+  } else if (dbError) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
-  // 2. Upsert a profile record for this waitlist user
-  // We use email as the lookup key since they don't have an auth account yet.
-  // When they later sign up via auth, the trigger will update this with their real user.id.
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .upsert([{ email, username: email.split('@')[0], created_at: new Date().toISOString() }], {
-      onConflict: 'email',
-      ignoreDuplicates: true,
-    });
-
-  if (profileError) {
-    console.warn('Profile upsert warning (non-fatal):', profileError.message);
-  }
-
-  // 3. Send email via Brevo only in Production
-  let emailStatus = 'skipped';
-  if (process.env.NODE_ENV === 'production') {
-    try {
-      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': process.env.BREVO_API_KEY!,
-        },
-        body: JSON.stringify({
-          sender: { name: 'AuScope', email: 'no.reply@auscope.mic3solutiongroup.com' }, // Updated to match verified Brevo sender
-          to: [{ email }],
-          subject: "You're on the AuScope Waitlist — Access Coming Soon",
-          htmlContent: emailHtml(email),
-          textContent: `You're on the AuScope Waitlist!\n\nWelcome to AuScope early access. You've secured a priority spot ahead of our official launch.\n\nYour reserved email: ${email}\n\n© 2026 AuScope. All rights reserved.`,
-        }),
+  // 2. Upsert a profile record for this waitlist user (only if new)
+  if (!alreadyRegistered) {
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert([{ email, username: email.split('@')[0], created_at: new Date().toISOString() }], {
+        onConflict: 'email',
+        ignoreDuplicates: true,
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(JSON.stringify(err));
-      }
+    if (profileError) {
+      console.warn('Profile upsert warning (non-fatal):', profileError.message);
+    }
+  }
+
+  // 3. Send email via Zoho SMTP to real inbox
+  let emailStatus = 'skipped';
+  
+  const zohoPassword = process.env.ZOHO_PASSWORD;
+  
+  if (zohoPassword) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.zoho.com',
+        port: 465,
+        secure: true,
+        auth: {
+          user: 'maya@swift.com',
+          pass: zohoPassword,
+        },
+      });
+
+      const info = await transporter.sendMail({
+        from: 'maya@swift.com',
+        to: email,
+        subject: 'Hello',
+        text: 'Hello Rodney testing this is how it would be',
+        html: '<p>Hello Rodney testing this is how it would be</p>',
+      });
+
+      console.log('✅ Email sent to real inbox via Zoho!');
       emailStatus = 'sent';
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      console.error('--- BREVO API ERROR ---');
-      console.error(errMsg);
-      console.error('-----------------------');
-      emailStatus = errMsg;
+      console.error('--- EMAIL ERROR ---', errMsg);
+      emailStatus = `error: ${errMsg}`;
     }
   } else {
-    console.log('Local Environment: Skipping email send.');
+    emailStatus = 'no ZOHO_PASSWORD';
   }
 
   return NextResponse.json({
     success: true,
+    alreadyRegistered,
     emailStatus,
-    debug: process.env.NODE_ENV === 'production' ? 'Check Vercel logs for full error' : 'Local'
+    debug: emailStatus === 'sent' ? 'Email sent via Nodemailer' : emailStatus
   });
 }

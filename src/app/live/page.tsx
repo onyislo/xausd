@@ -476,7 +476,7 @@ export default function LiveStreamsPage() {
       {viewingVideo && (
         <div className={
           isPipMode 
-            ? "fixed bottom-6 left-6 z-[9999] w-[360px] aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 shadow-2xl flex flex-col hover:scale-105 transition-all duration-300 group"
+            ? "fixed bottom-6 right-6 z-[9999] w-[360px] aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 shadow-2xl flex flex-col hover:scale-105 transition-all duration-300 group"
             : "fixed inset-0 z-[60] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-8"
         }>
           <div className={isPipMode ? "w-full h-full flex flex-col relative" : "w-full max-w-5xl aspect-video bg-black rounded-xl overflow-hidden border border-slate-800 shadow-2xl relative flex flex-col"}>
