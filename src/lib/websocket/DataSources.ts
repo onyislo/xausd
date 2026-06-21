@@ -117,7 +117,7 @@ export class MultiDataSourceManager {
     }
 
     // Real USD Index instead of demo
-    this.addRealUSDSource();
+    this.fetchRealUSDSource();
   }
 
   // 🌍 Major Currency Pairs (for DXY calculation)
@@ -216,42 +216,39 @@ export class MultiDataSourceManager {
     }
   }
 
-  private addRealUSDSource() {
-    // Real DXY from Yahoo Finance
-    this.fetchYahooUSDIndex();
-    setInterval(() => this.fetchYahooUSDIndex(), 6000); // Every 6 seconds
+  private async fetchRealUSDSource() {
+    // Real DXY from Twelve Data + Yahoo Finance
+    this.fetchRealDXYPrice();
+    setInterval(() => this.fetchRealDXYPrice(), 10000); // Every 10 seconds
 
     this.sources.push({
-      name: 'Yahoo-Finance-DXY',
+      name: 'Real-DXY-API',
       instruments: ['DXY'],
       manager: null as any,
     });
 
-    this.broadcastStatus({ source: 'Yahoo-Finance-DXY', status: 'connected' });
+    this.broadcastStatus({ source: 'Real-DXY-API', status: 'connected' });
   }
 
-  // 💵 Fetch real USD Index from Yahoo Finance  
-  private async fetchYahooUSDIndex() {
+  // 💵 Fetch REAL DXY price
+  private async fetchRealDXYPrice() {
     try {
-      const response = await fetch('/api/yahoo-finance?symbol=DX-Y.NYB');
+      const response = await fetch('/api/real-dxy-price');
       const data = await response.json();
       
-      if (data.price) {
-        const realUSDData: PriceData = {
+      if (data.success && data.price) {
+        const realDXYData: PriceData = {
           symbol: 'DXY',
           price: parseFloat(data.price),
-          bid: data.bid ? parseFloat(data.bid) : undefined,
-          ask: data.ask ? parseFloat(data.ask) : undefined,
-          volume: data.volume ? parseInt(data.volume) : undefined,
           timestamp: Date.now(),
-          source: 'Yahoo-Finance',
+          source: 'Live Feed',
         };
 
-        this.broadcastPrice(realUSDData);
-        console.log(`💵 Real DXY: ${realUSDData.price} (Yahoo Finance)`);
+        this.broadcastPrice(realDXYData);
+        console.log(`💵 REAL DXY: ${realDXYData.price}`);
       }
     } catch (error) {
-      console.error('Yahoo Finance DXY error:', error);
+      console.error('Real DXY fetch error:', error);
     }
   }
 
