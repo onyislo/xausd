@@ -457,7 +457,7 @@ export function useChat() {
           new Notification(profile?.username || 'New Message', {
             body: formatted.text.startsWith('[VOICE_NOTE]') ? '🎤 Voice Recording' : formatted.text,
             icon: '/icon-192.png',
-            tag: `auscope-chat-${newMsg.channel_id}`,
+            tag: `globoard-chat-${newMsg.channel_id}`,
             renotify: true
           } as NotificationOptions);
         }
@@ -817,7 +817,7 @@ export function useChat() {
       if (!mergedTypingStatus[channelId].some(u => u.id === AI_SYSTEM_ID)) {
         mergedTypingStatus[channelId].push({
           id: AI_SYSTEM_ID,
-          username: "AuScope Terminal AI Assistant",
+          username: "Globard Terminal AI Assistant",
           avatarUrl: "/logo.svg" // Use the project logo or a specific AI avatar
         });
       }

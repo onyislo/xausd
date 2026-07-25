@@ -19,7 +19,7 @@ const inviteEmailHtml = (email: string, resetLink: string) => `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AuScope  Your Access is Ready</title>
+<title>Globard  Your Access is Ready</title>
 </head>
 <body style="margin:0;padding:0;background:#0a0e17;font-family:'Helvetica Neue',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0e17;padding:40px 16px;">
@@ -34,7 +34,7 @@ const inviteEmailHtml = (email: string, resetLink: string) => `<!DOCTYPE html>
           <div style="display:inline-block;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#f5c451,#b8860b);margin-bottom:20px;line-height:56px;text-align:center;">
             <span style="font-size:24px;line-height:56px;display:inline-block;">▦</span>
           </div>
-          <div style="font-size:13px;letter-spacing:0.22em;color:#f5c451;text-transform:uppercase;font-weight:800;margin-bottom:6px;">AuScope</div>
+          <div style="font-size:13px;letter-spacing:0.22em;color:#f5c451;text-transform:uppercase;font-weight:800;margin-bottom:6px;">Globard</div>
           <div style="font-size:10px;letter-spacing:0.16em;color:#4a5568;text-transform:uppercase;">XAU/USD Intelligence Terminal</div>
         </td></tr>
         
@@ -52,7 +52,7 @@ const inviteEmailHtml = (email: string, resetLink: string) => `<!DOCTYPE html>
           </div>
 
           <p style="font-size:14px;color:#6b7a8d;line-height:1.8;margin:0 0 32px;">
-            We appreciate your patience while we resolved the technical issues with the initial links. We look forward to seeing you inside the AuScope terminal.
+            We appreciate your patience while we resolved the technical issues with the initial links. We look forward to seeing you inside the Globard terminal.
           </p>
           
           <div style="background:rgba(245,196,81,0.06);border:1px solid rgba(245,196,81,0.15);border-radius:10px;padding:20px;text-align:center;">
@@ -64,7 +64,7 @@ const inviteEmailHtml = (email: string, resetLink: string) => `<!DOCTYPE html>
         <!-- Footer -->
         <tr><td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.05);text-align:center;background:rgba(0,0,0,0.2);">
           <p style="font-size:10px;color:#2a3441;letter-spacing:0.08em;margin:0;">
-            © 2026 AUSCOPE · ALL RIGHTS RESERVED<br/>
+            © 2026 GLOBARD · ALL RIGHTS RESERVED<br/>
             You received this because you were previously on our waitlist.
           </p>
         </td></tr>
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
           type: 'recovery',
           email,
           options: {
-            redirectTo: `https://auscope.mic3solutiongroup.com/reset-password`
+            redirectTo: `https://globoard.mic3solutiongroup.com/reset-password`
           }
         });
 
@@ -152,11 +152,11 @@ export async function POST(req: NextRequest) {
             'api-key': process.env.BREVO_API_KEY!,
           },
           body: JSON.stringify({
-            sender: { name: 'AuScope', email: 'no.reply@auscope.mic3solutiongroup.com' },
+            sender: { name: 'Globard', email: 'no.reply@globoard.mic3solutiongroup.com' },
             to: [{ email }],
-            subject: "Your AuScope Early Access — Set Your Password",
+            subject: "Your Globard Early Access — Set Your Password",
             htmlContent: inviteEmailHtml(email, resetLink),
-            textContent: `Welcome to AuScope! You've been granted early access. Set your password here: ${resetLink}`,
+            textContent: `Welcome to Globard! You've been granted early access. Set your password here: ${resetLink}`,
           }),
         });
 

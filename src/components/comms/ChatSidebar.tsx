@@ -208,7 +208,7 @@ export default function ChatSidebar({
               </span>
               {tab === 'ai' && (
                 <button 
-                  onClick={() => onStartDM('14a09105-4817-44a5-afae-f2fc26441d13', 'AuScope AI')}
+                  onClick={() => onStartDM('14a09105-4817-44a5-afae-f2fc26441d13', 'Globard AI')}
                   className="px-6 py-2 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-yellow-500/20 transition-all shadow-[0_0_15px_rgba(245,196,81,0.15)]"
                 >
                   Start Terminal AI

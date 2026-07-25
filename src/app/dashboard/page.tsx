@@ -25,7 +25,7 @@ export default function Dashboard() {
             <div>
               <div className="flex items-baseline gap-2">
                 <h1 className="text-[15px] font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 uppercase" style={{ fontFamily: "'Chakra Petch', sans-serif" }}>
-                  AuScope
+                  Globard
                 </h1>
                 <span className="text-slate-500 text-[10px] tracking-widest uppercase font-semibold">|</span>
                 <span className="text-[11px] text-slate-400 tracking-[0.15em] uppercase font-semibold" style={{ fontFamily: "'Chakra Petch', sans-serif" }}>Terminal</span>

@@ -1,49 +1,60 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useTheme } from '@/lib/ThemeContext';
 
 const API_KEY = process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY || '76c9f305de4343028c2fa26b75d63b81';
 
 interface Ticker {
   symbol: string;
   label: string;
+  prefix: string;
   price: string | null;
   prev: string | null;
 }
 
-const SYMBOLS = [
-  { symbol: 'XAU/USD', label: 'XAU/USD' },
-  { symbol: 'DX-Y.NYB', label: 'DXY' },
-  { symbol: 'US10Y', label: 'US10Y' },
+const SYMBOLS: Ticker[] = [
+  { symbol: 'XAU/USD', label: 'XAU/USD', prefix: '$', price: null, prev: null },
+  { symbol: 'DXY',     label: 'DXY',     prefix: '',  price: null, prev: null },
+  { symbol: 'US10Y',   label: 'US10Y',   prefix: '',  price: null, prev: null },
+  { symbol: 'USD/JPY', label: 'USD/JPY', prefix: '',  price: null, prev: null },
 ];
 
+const BATCH = SYMBOLS.map(s => s.symbol).join(',');
+
 export default function LiveTicker() {
-  const [tickers, setTickers] = useState<Ticker[]>(
-    SYMBOLS.map(s => ({ ...s, price: null, prev: null }))
-  );
+  const { theme } = useTheme();
+  const dark = theme === 'dark';
+
+  const [tickers, setTickers] = useState<Ticker[]>(SYMBOLS);
 
   useEffect(() => {
     let dead = false;
 
-    // Fetch all prices via REST on mount
     async function fetchAll() {
-      await Promise.all(SYMBOLS.map(async ({ symbol, label }) => {
-        try {
-          const res = await fetch(
-            `https://api.twelvedata.com/price?symbol=${encodeURIComponent(symbol)}&apikey=${API_KEY}`
-          );
-          const data = await res.json();
-          if (!dead && data.price) {
-            setTickers(prev => prev.map(t =>
-              t.symbol === symbol ? { ...t, prev: t.price, price: parseFloat(data.price).toFixed(2) } : t
-            ));
+      try {
+        // Batch fetch — one call for all symbols
+        const res = await fetch(
+          `https://api.twelvedata.com/price?symbol=${encodeURIComponent(BATCH)}&apikey=${API_KEY}`
+        );
+        const data = await res.json();
+
+        if (dead) return;
+
+        setTickers(prev => prev.map(t => {
+          // Batch response: if multiple symbols, data is keyed by symbol
+          // If single symbol, data has .price directly
+          const entry = data[t.symbol] ?? data;
+          if (entry?.price) {
+            return { ...t, prev: t.price, price: parseFloat(entry.price).toFixed(2) };
           }
-        } catch { /* silently ignore */ }
-      }));
+          return t;
+        }));
+      } catch { /* ignore */ }
     }
 
     fetchAll();
 
-    // WebSocket for live XAU/USD
+    // WebSocket for live XAU/USD ticks
     let ws: WebSocket;
     function connectWs() {
       if (dead) return;
@@ -61,9 +72,7 @@ export default function LiveTicker() {
     }
     connectWs();
 
-    // Poll DXY + US10Y every 30s (no WS stream on free tier)
     const poll = setInterval(fetchAll, 30_000);
-
     return () => {
       dead = true;
       clearInterval(poll);
@@ -71,24 +80,29 @@ export default function LiveTicker() {
     };
   }, []);
 
+  const borderColor = dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)';
+  const labelColor  = dark ? '#4a5568' : '#718096';
+  const priceColor  = dark ? '#e0e6ed' : '#0a0e17';
+
+  // Always show all tickers — show skeleton for loading ones
   return (
-    <div style={{ display: 'flex', gap: '40px', justifyContent: 'center', marginTop: '64px', paddingTop: '40px', borderTop: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
-      {tickers.map(({ symbol, label, price, prev }) => {
+    <div style={{ display: 'flex', gap: '32px', justifyContent: 'center', marginTop: '64px', paddingTop: '40px', borderTop: `1px solid ${borderColor}`, flexWrap: 'wrap' }}>
+      {tickers.map(({ symbol, label, prefix, price, prev }) => {
         const isUp = price && prev ? parseFloat(price) >= parseFloat(prev) : true;
-        const chg = price && prev
+        const chg  = price && prev
           ? (((parseFloat(price) - parseFloat(prev)) / parseFloat(prev)) * 100).toFixed(2)
           : null;
 
         return (
-          <div key={symbol} style={{ textAlign: 'left', minWidth: '90px' }}>
-            <div style={{ fontSize: '10px', color: '#4a5568', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px' }}>{label}</div>
-            <div style={{ fontSize: '17px', fontWeight: 700, color: '#e0e6ed', fontFamily: "'Chakra Petch',sans-serif", letterSpacing: '-0.01em', transition: 'color 0.3s' }}>
+          <div key={symbol} style={{ textAlign: 'left', minWidth: '80px' }}>
+            <div style={{ fontSize: '10px', color: labelColor, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px' }}>{label}</div>
+            <div style={{ fontSize: '17px', fontWeight: 700, color: priceColor, fontFamily: "'Chakra Petch',sans-serif", letterSpacing: '-0.01em' }}>
               {price
-                ? (symbol === 'XAU/USD' ? `$${parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : price)
-                : <span style={{ opacity: 0.3, fontSize: '13px' }}>Loading…</span>}
+                ? `${prefix}${parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+                : <span style={{ opacity: 0.25, fontSize: '13px' }}>—</span>}
             </div>
-            <div style={{ fontSize: '11px', fontWeight: 500, color: isUp ? '#22c55e' : '#ef4444', marginTop: '2px' }}>
-              {chg ? `${isUp ? '+' : ''}${chg}%` : <span style={{ opacity: 0.3 }}>—</span>}
+            <div style={{ fontSize: '11px', fontWeight: 500, color: chg ? (isUp ? '#22c55e' : '#ef4444') : 'transparent', marginTop: '2px' }}>
+              {chg ? `${isUp ? '+' : ''}${chg}%` : '—'}
             </div>
           </div>
         );

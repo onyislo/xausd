@@ -69,7 +69,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
             fontFamily: "'Chakra Petch', sans-serif",
             fontSize: '12px', fontWeight: 700, letterSpacing: '0.18em',
             textTransform: 'uppercase', color: '#f5c451', marginBottom: '2px',
-          }}>AuScope</h1>
+          }}>Globard</h1>
           <p style={{ fontSize: '10px', color: '#4a5568', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             XAU/USD Terminal
           </p>
@@ -250,25 +250,6 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
                   </Link>
                 </p>
 
-                {/* System Status Notice */}
-                <div style={{ 
-                  marginTop: '20px', 
-                  padding: '12px', 
-                  background: 'rgba(245,196,81,0.03)', 
-                  border: '1px solid rgba(245,196,81,0.1)', 
-                  borderRadius: '8px' 
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f5c451', boxShadow: '0 0 10px #f5c451' }} />
-                    <span style={{ fontSize: '10px', fontWeight: 800, color: '#f5c451', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                      System Status
-                    </span>
-                  </div>
-                  <p style={{ fontSize: '10px', color: '#8a9bb2', lineHeight: '1.4' }}>
-                    <span style={{ color: '#f5c451' }}>●</span> Accessible: <Link href="/comms" style={{ color: '#e0e6ed', textDecoration: 'underline' }}>Comms</Link>, <Link href="/profile" style={{ color: '#e0e6ed', textDecoration: 'underline' }}>Profile</Link> <br />
-                    <span style={{ opacity: 0.5 }}>●</span> In-Dev: Dashboard, Intel, News, Charts
-                  </p>
-                </div>
               </form>
             </React.Fragment>
           )}
@@ -276,7 +257,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
 
         {/* Footer */}
         <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '9px', color: '#2a3441', letterSpacing: '0.08em' }}>
-          © 2025 AUSCOPE · SSL SECURE
+          © 2025 GLOBARD · SSL SECURE
         </p>
       </div>
     </div>

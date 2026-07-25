@@ -81,7 +81,7 @@ export default function InstallPWA() {
           </div>
           
           <div className="flex-1 pr-6">
-            <h3 className="text-sm font-bold text-yellow-500 uppercase tracking-wider">Install AuScope</h3>
+            <h3 className="text-sm font-bold text-yellow-500 uppercase tracking-wider">Install Globard</h3>
             <p className="mt-1 text-xs text-slate-300 leading-relaxed">
               {isIOS 
                 ? "Tap the Share button and select 'Add to Home Screen' for a faster, full-screen experience."

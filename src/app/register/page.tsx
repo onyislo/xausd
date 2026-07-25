@@ -18,7 +18,7 @@ export default function RegisterPage() {
   const handleRegister = async (data: Record<string, string>) => {
     await signUp(data.email, data.password, { full_name: data.name });
     setSuccessTitle("Welcome");
-    setSuccessMsg("Registration successful! Welcome to AuScope.");
+    setSuccessMsg("Registration successful! Welcome to Globard.");
   };
 
   return (

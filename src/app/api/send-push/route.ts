@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   try {
     webPush.setVapidDetails(
-      'mailto:admin@auscope.com', 
+      'mailto:admin@globoard.com', 
       process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
       process.env.VAPID_PRIVATE_KEY
     );
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
       title: `${senderName}`,
       body: content.startsWith('[VOICE_NOTE]') ? '🎤 Voice Recording' : content,
       url: `/comms`,
-      tag: `auscope-chat-${channel_id}`,
+      tag: `globoard-chat-${channel_id}`,
       icon: senderIcon,
     });
 
