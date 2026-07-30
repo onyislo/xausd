@@ -127,7 +127,7 @@ export default function Sidebar({ hideMobileTrigger = false }: { hideMobileTrigg
       <aside style={{
         width: '64px', height: '100vh', background: bg,
         borderRight: `1px solid ${border}`,
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        flexDirection: 'column', alignItems: 'center',
         padding: '16px 0', zIndex: 40, flexShrink: 0, transition: 'background 0.2s',
       }} className="hidden md:flex">
         <Link href="/" style={{ marginBottom: '28px', display: 'flex', textDecoration: 'none' }}>
@@ -164,9 +164,9 @@ export default function Sidebar({ hideMobileTrigger = false }: { hideMobileTrigg
           position: 'fixed', top: '12px', left: '12px', zIndex: 40,
           width: '40px', height: '40px', borderRadius: '10px',
           background: bg, border: `1px solid ${border}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          alignItems: 'center', justifyContent: 'center',
           color: txtSec, cursor: 'pointer', backdropFilter: 'blur(8px)',
-        }} className="md:hidden" aria-label="Open menu">
+        }} className="flex md:hidden" aria-label="Open menu">
           <Menu size={20} />
         </button>
       )}
@@ -183,10 +183,10 @@ export default function Sidebar({ hideMobileTrigger = false }: { hideMobileTrigg
       <aside style={{
         position: 'fixed', top: 0, left: 0, height: '100vh', width: '260px',
         background: bg, borderRight: `1px solid ${border}`, zIndex: 50,
-        display: 'flex', flexDirection: 'column', padding: '16px 0',
+        flexDirection: 'column', padding: '16px 0',
         transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)',
         transition: 'transform 0.3s ease',
-      }} className="md:hidden">
+      }} className="flex md:hidden">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', marginBottom: '24px' }}>
           <Link href="/" onClick={() => setMobileOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
             <HexLogo size={24} color={gold} />
