@@ -1,5 +1,5 @@
-// AuScope PWA Service Worker — Push Notifications + Offline Support
-const CACHE_NAME = 'auscope-v2';
+// Globard PWA Service Worker — Push Notifications + Offline Support
+const CACHE_NAME = 'globard-v2';
 const APP_SHELL = [
   '/',
   '/comms',
@@ -100,13 +100,13 @@ self.addEventListener('push', (event) => {
   } catch (err) {
     // If the push data is a plain string instead of JSON
     try {
-      data = { title: 'AuScope', body: event.data ? event.data.text() : 'New secure transmission' };
+      data = { title: 'Globard', body: event.data ? event.data.text() : 'New secure transmission' };
     } catch (e) {
-      data = { title: 'AuScope', body: 'New secure transmission' };
+      data = { title: 'Globard', body: 'New secure transmission' };
     }
   }
 
-  const title = data.title || 'AuScope';
+  const title = data.title || 'Globard';
   const options = {
     body: data.body || 'You have a new message',
     // Use the dynamic sender icon (profile pic or initials) if provided, otherwise fallback to app icon
@@ -114,7 +114,7 @@ self.addEventListener('push', (event) => {
     badge: '/badge-96.png',
     vibrate: [200, 100, 200, 100, 200],
     // Tag ensures notifications from the same conversation stack/replace instead of flooding
-    tag: data.tag || 'auscope-message',
+    tag: data.tag || 'globard-message',
     // renotify: vibrate/sound again even when replacing a notification with the same tag
     renotify: true,
     // Keep the notification visible until the user interacts with it

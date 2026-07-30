@@ -1,7 +1,7 @@
 {
-  "name": "AuScope Intelligence Terminal",
-  "short_name": "AuScope",
-  "description": "Advanced XAU/USD Trading Intelligence",
+  "name": "Globard Intelligence Terminal",
+  "short_name": "Globard",
+  "description": "Globard XAU/USD Trading Intelligence",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
