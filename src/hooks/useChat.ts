@@ -1,27 +1,82 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import localforage from 'localforage';
+
+// Configure localForage
+localforage.config({ name: 'XAUSDChat', storeName: 'chat_data' });
+
+const formatMsgTime = (d: Date) => {
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const y = new Date(now); y.setDate(y.getDate() - 1);
+  if (d.toDateString() === y.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString([], { day: 'numeric', month: 'short' });
+};
+const fmtPreview = (c: string) => {
+  if (c.startsWith('[VOICE_NOTE]')) return '🎤 Voice Recording';
+  if (c.startsWith('[IMAGE]')) return '📷 Photo';
+  if (c.startsWith('[VIDEO]')) return '🎥 Video';
+  if (c.startsWith('[FILE]')) return '📄 Document';
+  return c.length > 30 ? c.substring(0, 30) + '...' : c;
+};
 
 export function useChat() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [chatData, setChatData] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [typingStatus, setTypingStatus] = useState<Record<string, any[]>>({}); // channelId -> list of typing users
+  const [aiTyping, setAiTyping] = useState<Record<string, boolean>>({}); // channelId -> is AI typing
+  const [presenceChannel, setPresenceChannel] = useState<any>(null);
+  const [replyingTo, setReplyingTo] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [cacheLoaded, setCacheLoaded] = useState(false);
 
   // 1. Get Authentication
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
   }, []);
 
+  // 1.1 Local-First Architecture: Load cached chat data INSTANTLY
+  useEffect(() => {
+    if (currentUser?.id) {
+      localforage.getItem(`chatData_${currentUser.id}`).then((cached) => {
+        if (cached && Array.isArray(cached) && cached.length > 0) {
+          setChatData(prev => {
+            // Only set cache if we haven't already loaded server data
+            if (prev.length === 0) return cached as any[];
+            return prev;
+          });
+        }
+        setCacheLoaded(true);
+        setIsLoading(false);
+      }).catch(err => {
+        console.error("LocalForage Error:", err);
+        setCacheLoaded(true);
+        setIsLoading(false);
+      });
+    } else if (currentUser === null) {
+      // No user yet — will resolve once auth loads
+    }
+  }, [currentUser?.id]);
+
+  // 1.2 Local-First Architecture: Save chat data to cache whenever it changes
+  useEffect(() => {
+    if (currentUser?.id && chatData.length > 0) {
+      // We debounce or save directly. For safety, direct save is fine since localforage is async
+      localforage.setItem(`chatData_${currentUser.id}`, chatData).catch(err => console.error("Save Cache Error", err));
+    }
+  }, [chatData, currentUser?.id]);
+
   // 1.5 Update last_seen instantly on activity
   useEffect(() => {
     if (!currentUser?.id) return;
-
     let lastUpdate = 0;
     const updateLastSeen = () => {
       const now = Date.now();
-      if (now - lastUpdate < 1000) return; // Update every 1 second while active
+      if (now - lastUpdate < 1000) return;
       lastUpdate = now;
-      
+
       supabase
         .from('profiles')
         .update({ last_seen: new Date().toISOString() })
@@ -29,12 +84,41 @@ export function useChat() {
         .then();
     };
 
+    // Trigger immediately on load
+    updateLastSeen();
+
     // Update instantly on user activity
     const events = ['mousedown', 'keydown', 'touchstart', 'click'];
     events.forEach(e => window.addEventListener(e, updateLastSeen));
 
+    // INSTANT OFFLINE: When the user closes the tab, set them offline immediately
+    const handleExit = () => {
+      // We use a past date to ensure the 30s window thinks they are offline instantly
+      const offlineDate = new Date(Date.now() - 60000).toISOString();
+      const body = JSON.stringify({ last_seen: offlineDate });
+      
+      // Use fetch with keepalive to ensure it finishes even if tab is closing
+      fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`
+        },
+        body,
+        keepalive: true
+      });
+    };
+
+    window.addEventListener('beforeunload', handleExit);
+
+    // BACKGROUND HEARTBEAT: Update every 10 seconds even if not moving mouse
+    const interval = setInterval(updateLastSeen, 10000);
+
     return () => {
       events.forEach(e => window.removeEventListener(e, updateLastSeen));
+      window.removeEventListener('beforeunload', handleExit);
+      clearInterval(interval);
     };
   }, [currentUser?.id]);
 
@@ -46,11 +130,16 @@ export function useChat() {
       // Step 1: Get channel IDs where I am a member
       const { data: myMemberships } = await supabase
         .from('channel_members')
-        .select('channel_id')
+        .select('channel_id, last_read_at')
         .eq('user_id', currentUser.id);
 
-      if (!myMemberships || myMemberships.length === 0) return;
+      if (!myMemberships || myMemberships.length === 0) {
+        setIsLoading(false);
+        return;
+      }
       const myChannelIds = myMemberships.map(m => m.channel_id);
+      const readAtMap: Record<string, string> = {};
+      for (const m of myMemberships) readAtMap[m.channel_id] = m.last_read_at;
 
       // Step 2: Fetch those channels with ALL members' profiles
       const { data: channels } = await supabase
@@ -61,8 +150,28 @@ export function useChat() {
 
       if (!channels) return;
 
+      const { data: latestMsgs } = await supabase
+        .from('messages')
+        .select('channel_id, content, created_at, user_id')
+        .in('channel_id', myChannelIds)
+        .order('created_at', { ascending: false });
+      const latestByChannel: Record<string, any> = {};
+      if (latestMsgs) for (const m of latestMsgs) if (!latestByChannel[m.channel_id]) latestByChannel[m.channel_id] = m;
+
+      // Count unread messages per channel (messages from others after my last_read_at)
+      const unreadCounts: Record<string, number> = {};
+      if (latestMsgs) for (const m of latestMsgs) {
+        if (m.user_id === currentUser.id) continue;
+        const readAt = readAtMap[m.channel_id];
+        if (!readAt || m.created_at > readAt) unreadCounts[m.channel_id] = (unreadCounts[m.channel_id] || 0) + 1;
+      }
+
+      const now = new Date();
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+
       const formatted = channels.map((c: any) => {
-        let name = c.name;
+        let name = 'Unknown';
         let avatar = null;
         let otherMemberId = null;
         let status = c.type === 'dm' ? 'Offline' : 'Active';
@@ -77,16 +186,13 @@ export function useChat() {
             name = prof?.username || prof?.full_name || 'Unknown';
             avatar = prof?.avatar_url;
             last_seen = prof?.last_seen || null;
-            const now = new Date();
             const lastSeenDate = prof?.last_seen ? new Date(prof.last_seen) : null;
             const diffTime = lastSeenDate ? Math.abs(now.getTime() - lastSeenDate.getTime()) : Infinity;
-            const isOnline = diffTime < 2 * 1000; // Strictly 2 seconds!
+            const isOnline = diffTime < 30 * 1000; // 30s for rock-solid stability
 
             if (isOnline) {
               status = 'Online';
             } else if (lastSeenDate) {
-              const yesterday = new Date(now);
-              yesterday.setDate(yesterday.getDate() - 1);
               const timeStr = lastSeenDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
               
               if (lastSeenDate.toDateString() === now.toDateString()) {
@@ -100,20 +206,26 @@ export function useChat() {
               status = 'Offline';
             }
           }
+        } else {
+          name = c.name;
+          status = `${c.channel_members?.length || 0} members`;
         }
 
         return {
           id: c.id,
           type: c.type,
-          name: name || (c.type === 'dm' ? 'Direct Message' : 'Group'),
+          name: name,
           avatar,
           otherMemberId,
           created_by: c.created_by,
           status: status,
           last_seen: last_seen,
-          lastMsg: '',
-          time: '',
-          messages: []
+          lastMsg: latestByChannel[c.id] ? fmtPreview(latestByChannel[c.id].content) : '',
+          time: latestByChannel[c.id] ? formatMsgTime(new Date(latestByChannel[c.id].created_at)) : '',
+          lastActivity: latestByChannel[c.id] ? new Date(latestByChannel[c.id].created_at).getTime() : 0,
+          messages: [],
+          unreadCount: unreadCounts[c.id] || 0,
+          invite_token: c.invite_token
         };
       });
 
@@ -127,20 +239,37 @@ export function useChat() {
         }
         deduplicated.push(chat);
       }
+      deduplicated.sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0));
 
-      setChatData(deduplicated);
-      if (deduplicated.length > 0 && !activeId) setActiveId(deduplicated[0].id);
+      setChatData(prev => {
+        // Merge the new channel list with existing cached messages so we don't wipe out local cache
+        const merged = deduplicated.map(newChat => {
+          const existing = prev.find(p => p.id === newChat.id);
+          if (existing) {
+            // Preserve existing messages and unread count if we have them
+            return {
+              ...newChat,
+              messages: existing.messages && existing.messages.length > 0 ? existing.messages : newChat.messages,
+              // Keep cached unread count if server says 0 but we had some locally
+              unreadCount: newChat.unreadCount || existing.unreadCount || 0
+            };
+          }
+          return newChat;
+        });
+        return merged;
+      });
+
+      setIsLoading(false);
     };
 
     fetchChannels();
 
-    // Subscribe to new channel memberships for THIS user only
+    // Subscribe to new channel memberships for ALL users (updates member counts)
     const membershipSub = supabase.channel('membership_realtime')
       .on('postgres_changes', {
-        event: 'INSERT',
+        event: '*',
         schema: 'public',
-        table: 'channel_members',
-        filter: `user_id=eq.${currentUser.id}`
+        table: 'channel_members'
       }, () => {
         fetchChannels();
       })
@@ -192,22 +321,86 @@ export function useChat() {
     };
   }, [currentUser]);
 
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+
+  // 2.7 REAL-TIME TYPING & PRESENCE (Instant Status)
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // Use a single channel for both typing and presence
+    const channel = supabase.channel('chat_presence', {
+      config: { presence: { key: currentUser.id } }
+    });
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const typing: Record<string, any[]> = {};
+        const online = new Set<string>();
+
+        Object.keys(state).forEach((key) => online.add(key));
+
+        Object.values(state).forEach((presences: any) => {
+          presences.forEach((p: any) => {
+            if (p.is_typing && p.channel_id) {
+              if (!typing[p.channel_id]) typing[p.channel_id] = [];
+              if (p.user_id !== currentUser.id) {
+                typing[p.channel_id].push({ id: p.user_id, username: p.username || 'Someone', avatarUrl: p.avatarUrl });
+              }
+            }
+          });
+        });
+        setTypingStatus(typing);
+        setOnlineUsers(online);
+
+        // Instant update for chatData statuses
+        setChatData(prev => prev.map(chat => {
+          if (chat.type === 'dm' && chat.otherMemberId) {
+            const isOnline = online.has(chat.otherMemberId);
+            if (isOnline && chat.status !== 'Online') {
+              return { ...chat, status: 'Online' };
+            }
+          }
+          return chat;
+        }));
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            user_id: currentUser.id,
+            username: currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
+            avatarUrl: currentUser.user_metadata?.avatar_url,
+            is_typing: false,
+            channel_id: null
+          });
+        }
+      });
+
+    setPresenceChannel(channel);
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser]);
+
   // 2.5 Periodic Status Auto-Refresher (every 1 second)
   useEffect(() => {
     const interval = setInterval(() => {
       setChatData(prev => {
         let changed = false;
         const next = prev.map(chat => {
-          if (chat.type === 'dm' && chat.last_seen) {
+          if (chat.type === 'dm' && chat.otherMemberId) {
+            const isOnline = onlineUsers.has(chat.otherMemberId);
+            const AI_SYSTEM_ID = "14a09105-4817-44a5-afae-f2fc26441d13";
             const now = new Date();
-            const lastSeenDate = new Date(chat.last_seen);
-            const diffTime = Math.abs(now.getTime() - lastSeenDate.getTime());
-            const isOnline = diffTime < 2 * 1000; // Strictly 2 seconds!
+            const lastSeenDate = chat.last_seen ? new Date(chat.last_seen) : null;
             
             let newStatus = 'Offline';
-            if (isOnline) {
+            if (chat.otherMemberId === AI_SYSTEM_ID) {
               newStatus = 'Online';
-            } else {
+            } else if (isOnline) {
+              newStatus = 'Online';
+            } else if (lastSeenDate) {
               const yesterday = new Date(now);
               yesterday.setDate(yesterday.getDate() - 1);
               const timeStr = lastSeenDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -231,7 +424,7 @@ export function useChat() {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [onlineUsers]);
 
   // 3. Real-time Messages — only update chats the user can see
   useEffect(() => {
@@ -242,49 +435,57 @@ export function useChat() {
         event: 'INSERT',
         schema: 'public',
         table: 'messages'
-      }, (payload) => {
+      }, async (payload) => {
         const newMsg = payload.new as any;
+        const isMe = newMsg.user_id === currentUser.id;
+
+        const formatted = {
+          id: newMsg.id,
+          user_id: newMsg.user_id,
+          sender: isMe ? 'User' : 'Contact',
+          text: newMsg.content,
+          time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          created_at: newMsg.created_at
+        };
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // ─── LOCAL NOTIFICATION ───
+        if (!isMe && document.visibilityState === 'hidden') {
+          const { data: profile } = await supabase.from('profiles').select('username').eq('id', newMsg.user_id).single();
+          new Notification(profile?.username || 'New Message', {
+            body: formatted.text.startsWith('[VOICE_NOTE]') ? '🎤 Voice Recording' : formatted.text,
+            icon: '/icon-192.png',
+            tag: `globoard-chat-${newMsg.channel_id}`,
+            renotify: true
+          } as NotificationOptions);
+        }
 
         setChatData(prev => prev.map(chat => {
-          // Only add message if it belongs to a channel in OUR list
           if (chat.id !== newMsg.channel_id) return chat;
 
-          const formatted = {
-            id: newMsg.id,
-            user_id: newMsg.user_id,
-            sender: newMsg.user_id === currentUser.id ? 'User' : 'Contact',
-            text: newMsg.content,
-            time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          };
+          // Check if this message was already added optimistically (no ID yet)
+          const isOptimistic = chat.messages.some((m: any) => !m.id && m.text === formatted.text && m.user_id === formatted.user_id);
 
-          // Duplicate check by ID
-          if (chat.messages.some((m: any) => m.id === newMsg.id)) return chat;
-          // Duplicate check by content (for optimistic updates without ID)
-          if (chat.messages.some((m: any) => !m.id && m.text === formatted.text && m.sender === formatted.sender)) {
-            return {
-              ...chat,
-              messages: chat.messages.map((m: any) =>
-                (!m.id && m.text === formatted.text && m.sender === formatted.sender)
-                  ? { ...m, id: newMsg.id }
-                  : m
-              ),
-              lastMsg: formatted.text.length > 30 ? formatted.text.substring(0, 30) + '...' : formatted.text,
-              time: 'Just now'
-            };
-          }
+          const updatedMessages = isOptimistic && isMe
+            ? chat.messages.map((m: any) => (!m.id && m.text === formatted.text) ? { ...m, id: newMsg.id } : m)
+            : [...chat.messages, formatted]; // Newest at the bottom
 
           return {
             ...chat,
-            messages: [...chat.messages, formatted],
-            lastMsg: formatted.text.length > 30 ? formatted.text.substring(0, 30) + '...' : formatted.text,
-            time: 'Just now'
+            messages: updatedMessages,
+            lastMsg: fmtPreview(formatted.text),
+            time: timeStr,
+            unreadCount: (activeId === chat.id || isMe) ? (chat.unreadCount || 0) : (chat.unreadCount || 0) + 1,
+            lastActivity: now.getTime()
           };
-        }));
+        }).sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0)));
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [currentUser]);
+  }, [currentUser, activeId]);
 
   // 4. Fetch Messages for Active Channel
   useEffect(() => {
@@ -293,22 +494,30 @@ export function useChat() {
     const fetchMsgs = async () => {
       const { data: messages, error } = await supabase
         .from('messages')
-        .select('*')
+        .select('*, replied_message:reply_to_id(content, user_id)')
         .eq('channel_id', activeId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true }); // Standard order
 
       if (messages && !error) {
+        const last = messages[messages.length - 1];
+        // Mark channel as read
+        supabase.from('channel_members').update({ last_read_at: new Date().toISOString() }).eq('channel_id', activeId).eq('user_id', currentUser.id).then();
         setChatData(prev => prev.map(chat => {
           if (chat.id !== activeId) return chat;
           return {
             ...chat,
+            unreadCount: 0,
             messages: messages.map(m => ({
               id: m.id,
               user_id: m.user_id,
               sender: m.user_id === currentUser.id ? 'User' : 'Contact',
               text: m.content,
-              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            }))
+              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              created_at: m.created_at,
+              reply_to: m.replied_message
+            })),
+            lastMsg: last ? fmtPreview(last.content) : chat.lastMsg,
+            time: last ? formatMsgTime(new Date(last.created_at)) : chat.time
           };
         }));
       }
@@ -317,31 +526,149 @@ export function useChat() {
   }, [activeId, currentUser]);
 
   // 5. Send Message
-  const sendMessage = async (text: string) => {
+  const sendMessage = async (text: string, replyToId?: string | null) => {
     if (!text.trim() || !activeId || !currentUser) return;
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     // Optimistic update
     const optimistic = {
       user_id: currentUser.id,
       sender: 'User',
       text: text.trim(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      time: timeStr,
+      created_at: now.toISOString(),
+      reply_to: replyingTo ? { content: replyingTo.text, user_id: replyingTo.user_id } : null
+    };
+
+    setChatData(prev => prev.map(chat =>
+      chat.id === activeId ? {
+        ...chat,
+        messages: [...chat.messages, optimistic], // Newest at the bottom
+        lastMsg: fmtPreview(text.trim()),
+        time: timeStr,
+        lastActivity: now.getTime()
+      } : chat
+    ).sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0)));
+
+    setReplyingTo(null);
+
+    await supabase.from('messages').insert([{
+      channel_id: activeId,
+      user_id: currentUser.id,
+      content: text.trim(),
+      reply_to_id: replyToId
+    }]);
+
+    // AI Bridge: If the recipient is the AI Assistant, trigger the Hugging Face backend
+    const AI_SYSTEM_ID = "14a09105-4817-44a5-afae-f2fc26441d13";
+    const activeChat = chatData.find(c => c.id === activeId);
+    const isAIChat = activeChat?.type === 'dm' && activeChat.otherMemberId === AI_SYSTEM_ID;
+
+    if (isAIChat) {
+      setAiTyping(prev => ({ ...prev, [activeId]: true }));
+      // Change 'onyiso-xaus-ai-backend.hf.space' to your actual HF URL if different
+      fetch('https://Onyiso-Xaus-ai-backend.hf.space/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel_id: activeId,
+          user_id: currentUser.id,
+          messages: activeChat.messages.map((m: any) => ({
+            role: m.user_id === currentUser.id ? 'user' : 'assistant',
+            content: m.text
+          })).concat([{ role: 'user', content: text.trim() }])
+        })
+      })
+      .then(res => res.json())
+      .then(() => setAiTyping(prev => ({ ...prev, [activeId]: false })))
+      .catch(err => {
+        console.error('AI Backend Error:', err);
+        setAiTyping(prev => ({ ...prev, [activeId]: false }));
+      });
+    }
+
+    // Send push notification
+    fetch('/api/send-push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        channel_id: activeId,
+        content: text.trim(),
+        sender_id: currentUser.id
+      })
+    }).catch(err => console.error('Push Error:', err));
+  };
+
+  const sendVoiceNote = async (blob: Blob) => {
+    if (!activeId || !currentUser) return;
+    
+    // Optimistic update for voice note
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const optimistic = {
+      user_id: currentUser.id,
+      sender: 'User',
+      text: '[VOICE_NOTE]loading...',
+      time: timeStr,
+      created_at: now.toISOString()
     };
 
     setChatData(prev => prev.map(chat =>
       chat.id === activeId ? {
         ...chat,
         messages: [...chat.messages, optimistic],
-        lastMsg: text.trim(),
-        time: 'Just now'
+        lastMsg: "🎤 Voice Recording",
+        time: timeStr,
+        lastActivity: now.getTime()
+      } : chat
+    ).sort((a, b) => (b.lastActivity || 0) - (a.lastActivity || 0)));
+
+    const fileName = `${activeId}/${Date.now()}.webm`;
+    const { data, error } = await supabase.storage.from('comms').upload(fileName, blob);
+    if (error) return;
+
+    const { data: { publicUrl } } = supabase.storage.from('comms').getPublicUrl(fileName);
+    const content = `[VOICE_NOTE]${publicUrl}`;
+
+    setChatData(prev => prev.map(chat => 
+      chat.id === activeId ? {
+        ...chat,
+        messages: chat.messages.map((m: any) => m.text === '[VOICE_NOTE]loading...' ? { ...m, text: content } : m)
       } : chat
     ));
 
     await supabase.from('messages').insert([{
       channel_id: activeId,
       user_id: currentUser.id,
-      content: text.trim()
+      content
     }]);
+
+    // Send push notification
+    fetch('/api/send-push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        channel_id: activeId,
+        content,
+        sender_id: currentUser.id
+      })
+    }).catch(err => console.error('Push Error:', err));
+  };
+
+  const sendFile = async (file: File) => {
+    if (!activeId || !currentUser) return;
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    const prefix = isImage ? '[IMAGE]' : isVideo ? '[VIDEO]' : '[FILE]';
+    
+    const fileName = `${activeId}/${Date.now()}_${file.name}`;
+    const { data, error } = await supabase.storage.from('comms').upload(fileName, file);
+    if (error) return;
+
+    const { data: { publicUrl } } = supabase.storage.from('comms').getPublicUrl(fileName);
+    await sendMessage(`${prefix}${publicUrl}`);
   };
 
   // 6. Push Channel (for group creation)
@@ -468,5 +795,34 @@ export function useChat() {
     return channel.id;
   };
 
-  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, deleteMessage, currentUser, pushChannel };
+  // 10. Typing Indicator Control
+  const setTyping = async (channelId: string | null, isTyping: boolean) => {
+    if (!presenceChannel || !currentUser) return;
+    await presenceChannel.track({
+      user_id: currentUser.id,
+      username: currentUser.user_metadata?.username || currentUser.email?.split('@')[0],
+      avatarUrl: currentUser.user_metadata?.avatar_url,
+      is_typing: isTyping,
+      channel_id: channelId
+    });
+  };
+
+  // Merge AI typing into typingStatus for the active channel
+  const mergedTypingStatus = { ...typingStatus };
+  Object.keys(aiTyping).forEach(channelId => {
+    if (aiTyping[channelId]) {
+      if (!mergedTypingStatus[channelId]) mergedTypingStatus[channelId] = [];
+      // Don't add if AI is already "typing" (though unlikely via presence)
+      const AI_SYSTEM_ID = "14a09105-4817-44a5-afae-f2fc26441d13";
+      if (!mergedTypingStatus[channelId].some(u => u.id === AI_SYSTEM_ID)) {
+        mergedTypingStatus[channelId].push({
+          id: AI_SYSTEM_ID,
+          username: "Globard Terminal AI Assistant",
+          avatarUrl: "/logo.svg" // Use the project logo or a specific AI avatar
+        });
+      }
+    }
+  });
+
+  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, sendVoiceNote, sendFile, deleteMessage, currentUser, pushChannel, typingStatus: mergedTypingStatus, setTyping, onlineUsers, replyingTo, setReplyingTo, isLoading };
 }

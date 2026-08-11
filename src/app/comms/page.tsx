@@ -1,23 +1,34 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useEffect, useRef } from 'react';
 import Sidebar from '@/components/Sidebar';
 import HeaderPrice from '@/components/HeaderPrice';
 import { useChat } from '@/hooks/useChat';
 import { supabase } from '@/lib/supabase';
-import { Search, Send, Users, User, Phone, MoreVertical, Plus, Shield, Trash2, UserPlus, UserMinus, Copy, Check, Link as LinkIcon, X, Info, BellOff, LogOut, CheckCircle, Hash, MessageSquare, Bot, PhoneMissed, PhoneIncoming, PhoneOutgoing } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { Phone, CheckCircle, Clock, Link as LinkIcon } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import PhoneCall from '@/components/PhoneCall';
 
+// Extracted Components
+import ChatSidebar from '@/components/comms/ChatSidebar';
+import ChatWindow from '@/components/comms/ChatWindow';
+import Modals from '@/components/comms/Modals';
+import ContextMenu from '@/components/comms/ContextMenu';
+
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+
 function CommsContent() {
-  const { activeId, setActiveId, chatData, contacts: friends, addContact: addFriend, removeContact: removeFriend, searchProfiles, startDM, sendMessage, deleteMessage, currentUser, pushChannel } = useChat();
+  const { 
+    activeId, setActiveId, chatData, contacts: friends, 
+    addContact: addFriend, removeContact: removeFriend, 
+    searchProfiles, startDM, sendMessage, deleteMessage, 
+    currentUser, pushChannel, typingStatus, setTyping, onlineUsers, sendVoiceNote,
+    sendFile, replyingTo, setReplyingTo, isLoading
+  } = useChat();
+
   const [activeCall, setActiveCall] = useState<{ roomId: string, isIncoming: boolean, targetId: string, targetName: string } | null>(null);
   const [incomingRing, setIncomingRing] = useState<{ roomId: string, callerId: string, callerName: string } | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const inputText = activeId ? drafts[activeId] || '' : '';
-  const setInputText = (val: string) => {
-    if (activeId) setDrafts(prev => ({ ...prev, [activeId]: val }));
-  };
   const [tab, setTab] = useState<'all' | 'channels' | 'dms' | 'friends' | 'ai' | 'calls'>('all');
   const [callHistory, setCallHistory] = useState<any[]>([]);
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -29,42 +40,43 @@ function CommsContent() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [members, setMembers] = useState<any[]>([]);
   const [copied, setCopied] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const chatEndRef = React.useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, msgId: string } | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [devToast, setDevToast] = useState(false);
   const searchParams = useSearchParams();
 
   const activeChat = chatData.find(c => c.id === activeId) || null;
-
-  // Auto-scroll to bottom
-  React.useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeChat?.messages]);
-  const filtered = tab === 'all'
-    ? chatData.filter(c => c.type === 'group' || c.type === 'dm')
-    : tab === 'channels'
-      ? chatData.filter(c => c.type === 'group')
-      : tab === 'dms'
-        ? chatData.filter(c => c.type === 'dm')
-        : chatData.filter(c => c.type === 'ai');
-  const handleAddFriend = async (id: string) => {
-    await addFriend(id);
-    setToastMessage("Friend added successfully");
-    setTimeout(() => setToastMessage(null), 10000);
+  const inputText = activeId ? drafts[activeId] || '' : '';
+  
+  const setInputText = (val: string) => {
+    if (activeId) setDrafts(prev => ({ ...prev, [activeId]: val }));
   };
 
   const handleSend = () => {
     if (!inputText.trim()) return;
-    sendMessage(inputText.trim());
+    sendMessage(inputText.trim(), replyingTo?.id);
     setInputText('');
   };
 
   const handleCreate = async () => {
     if (!newGroupName.trim() || !currentUser) return;
+    const groupName = newGroupName.trim();
+    setNewGroupName(''); // Clear immediately to prevent double-clicks
+
+    // Check 10 group limit
+    const { count } = await supabase
+      .from('channels')
+      .select('*', { count: 'exact', head: true })
+      .eq('created_by', currentUser.id)
+      .eq('type', 'group');
+
+    if (count !== null && count >= 10) {
+      alert('MAXIMUM 10 HUBS AUTHORIZED PER OPERATIVE.');
+      return;
+    }
     const { data: channel, error } = await supabase
       .from('channels')
-      .insert([{ name: newGroupName.trim(), type: 'group', created_by: currentUser.id }])
+      .insert([{ name: groupName, type: 'group', created_by: currentUser.id }])
       .select().single();
     if (channel) {
       await supabase.from('channel_members').upsert(
@@ -73,21 +85,19 @@ function CommsContent() {
       );
       pushChannel(channel);
       setIsCreating(false);
-      setNewGroupName('');
     } else {
       console.error(error);
+      setNewGroupName(groupName); // Restore if failed
     }
   };
 
-  // ── ADMIN ACTIONS ──
-  React.useEffect(() => {
+  useEffect(() => {
     if (isManaging && activeChat) {
       fetchMembers();
     }
   }, [isManaging, activeId]);
 
-  // Handle invite links
-  React.useEffect(() => {
+  useEffect(() => {
     const inviteId = searchParams.get('invite');
     if (inviteId && currentUser) {
       joinChannel(inviteId);
@@ -103,19 +113,59 @@ function CommsContent() {
     if (data) setMembers(data);
   };
 
-  const joinChannel = async (channelId: string) => {
+  const joinChannel = async (tokenOrId: string) => {
+    let channelId = tokenOrId;
+    
+    // If it's a short token, resolve it to the channel ID
+    if (!tokenOrId.includes('-')) {
+      const { data } = await supabase.from('channels').select('id').eq('invite_token', tokenOrId).single();
+      if (!data) { alert("Invalid or expired invite link."); return; }
+      channelId = data.id;
+    }
+
+    // Check 30k member limit
+    const { count } = await supabase
+      .from('channel_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('channel_id', channelId);
+      
+    if (count !== null && count >= 30000) {
+      alert('HUB IS AT MAXIMUM CAPACITY (30,000).');
+      return;
+    }
+
     const { error } = await supabase
       .from('channel_members')
       .upsert([{ channel_id: channelId, user_id: currentUser.id }], { onConflict: 'channel_id,user_id', ignoreDuplicates: true });
     if (!error) {
+      await supabase.from('messages').insert([{
+        channel_id: channelId,
+        user_id: currentUser.id,
+        content: `SYSTEM: ${currentUser.user_metadata?.username || 'A new operative'} joined using an invite link`
+      }]);
       window.history.replaceState({}, '', '/comms');
-      // Refresh channels
       window.location.reload();
     }
   };
 
+  // Ensure unauthenticated users are redirected to login
+  const router = useRouter();
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace('/login');
+      }
+    });
+  }, [router]);
+
   const handleAddMember = async () => {
     if (!inviteEmail.trim() || !activeId) return;
+
+    if (members.length >= 30000) {
+      alert('HUB IS AT MAXIMUM CAPACITY (30,000).');
+      return;
+    }
+
     const { data: user } = await supabase
       .from('profiles')
       .select('id')
@@ -124,6 +174,13 @@ function CommsContent() {
 
     if (user) {
       await supabase.from('channel_members').insert([{ channel_id: activeId, user_id: user.id }]);
+      
+      await supabase.from('messages').insert([{
+        channel_id: activeId,
+        user_id: currentUser.id,
+        content: `SYSTEM: ${inviteEmail.trim()} was added by ${currentUser.user_metadata?.username || 'Admin'}`
+      }]);
+
       setInviteEmail('');
       fetchMembers();
     } else {
@@ -144,7 +201,9 @@ function CommsContent() {
   };
 
   const copyInviteLink = () => {
-    const link = `${window.location.origin}/comms?invite=${activeId}`;
+    const activeChat = chatData.find(c => c.id === activeId);
+    const token = activeChat?.invite_token || activeId;
+    const link = `${window.location.origin}/comms?invite=${token}`;
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -155,7 +214,7 @@ function CommsContent() {
     setContextMenu({ x: e.pageX, y: e.pageY, msgId });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     const close = () => setContextMenu(null);
     window.addEventListener('click', close);
     return () => window.removeEventListener('click', close);
@@ -175,6 +234,7 @@ function CommsContent() {
   };
 
   React.useEffect(() => {
+  useEffect(() => {
     if (!currentUser) return;
     supabase.from('call_logs')
       .select('*, caller:profiles!caller_id(username), callee:profiles!callee_id(username)')
@@ -183,7 +243,7 @@ function CommsContent() {
       .then(({ data }) => { if (data) setCallHistory(data); });
   }, [currentUser]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!currentUser) return;
     const ringChannel = supabase.channel(`calls:${currentUser.id}`)
       .on('broadcast', { event: 'ring' }, ({ payload }) => setIncomingRing({ roomId: payload.roomId, callerId: payload.callerId, callerName: payload.callerName }))
@@ -192,7 +252,13 @@ function CommsContent() {
     return () => { supabase.removeChannel(ringChannel); };
   }, [currentUser]);
 
+  const showDevToast = () => {
+    setDevToast(true);
+    setTimeout(() => setDevToast(false), 2000);
+  };
+
   const startCall = () => {
+    if (IS_PRODUCTION) { showDevToast(); return; }
     if (!activeChat || activeChat.type !== 'dm') return;
     const roomId = activeChat.id;
     const targetId = activeChat.otherMemberId;
@@ -200,10 +266,8 @@ function CommsContent() {
     const callerId = currentUser?.id;
     const callerName = currentUser?.user_metadata?.username || currentUser?.email?.split('@')[0] || 'Caller';
 
-    // Show caller's card immediately
     setActiveCall({ roomId, isIncoming: false, targetId, targetName });
 
-    // Subscribe then send so the broadcast actually fires
     const ringCh = supabase.channel(`calls:${targetId}`);
     ringCh.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
@@ -213,19 +277,24 @@ function CommsContent() {
   };
 
   return (
-    <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans flex min-h-screen">
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-hidden">
-
+    <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans flex min-h-screen md:h-screen md:overflow-hidden" style={{ height: '100dvh' }}>
+      <Sidebar hideMobileTrigger={!!activeChat} />
+      
+      <div className="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-hidden max-md:p-0 max-md:gap-0">
         {/* HEADER */}
-        <header className="shrink-0 h-[60px] bg-[#0f1420] border border-yellow-500/10 flex justify-between items-center px-6 rounded-xl shadow-lg relative">
+        <header className={`
+          shrink-0 h-[60px] bg-[#0f1420] border border-yellow-500/10 
+          flex justify-between items-center pl-6 pr-6 
+          rounded-xl shadow-lg relative
+          max-md:h-[52px] max-md:border-0 max-md:border-b max-md:border-yellow-500/10 max-md:rounded-none max-md:pl-14 max-md:pr-3
+          ${activeChat ? 'hidden md:flex' : 'flex'}
+        `}>
           <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-yellow-500/60 to-transparent" />
-          <h1 className="text-[16px] font-black tracking-widest text-yellow-500 uppercase">AuScope | Comms</h1>
-          <div className="flex items-center gap-6"><HeaderPrice /></div>
+          <h1 className="text-[16px] font-black tracking-widest text-yellow-500 uppercase max-md:text-[13px]">Globard | Comms</h1>
+          <div className="flex items-center gap-3"><HeaderPrice /></div>
         </header>
 
-        <div className="flex-1 flex gap-4 min-h-0">
-
+        <div className="flex-1 flex gap-0 md:gap-4 min-h-0 overflow-hidden">
           {/* LEFT PANEL */}
           <section className="w-[290px] bg-[#0f1420] border border-yellow-500/20 rounded-xl flex flex-col shrink-0 overflow-hidden">
 
@@ -522,114 +591,88 @@ function CommsContent() {
               </>
             )}
           </section>
+          <ChatSidebar 
+            tab={tab}
+            setTab={setTab}
+            chatData={chatData}
+            activeId={activeId}
+            setActiveId={setActiveId}
+            searchResults={searchResults}
+            isSearching={isSearching}
+            handleSearch={handleSearch}
+            handleAddFriend={addFriend}
+            onStartDM={onStartDM}
+            friends={friends}
+            removeFriend={removeFriend}
+            callHistory={callHistory}
+            currentUser={currentUser}
+            setIsCreating={setIsCreating}
+            showDevToast={showDevToast}
+            IS_PRODUCTION={IS_PRODUCTION}
+            onlineUsers={onlineUsers}
+            typingStatus={typingStatus}
+          />
+
+          {/* CHAT PANEL */}
+          <ChatWindow 
+            activeChat={activeChat}
+            activeId={activeId}
+            setActiveId={setActiveId}
+            currentUser={currentUser}
+            deleteMessage={deleteMessage}
+            onRightClick={onRightClick}
+            startCall={startCall}
+            isMenuOpen={isMenuOpen}
+            setIsMenuOpen={setIsMenuOpen}
+            setIsManaging={setIsManaging}
+            copyInviteLink={copyInviteLink}
+            handleDeleteChannel={handleDeleteChannel}
+            inputText={inputText}
+            setInputText={setInputText}
+            handleSend={handleSend}
+            typingStatus={typingStatus[activeId || ''] || []}
+            setTyping={setTyping}
+            sendVoiceNote={sendVoiceNote}
+            sendFile={sendFile}
+            replyingTo={replyingTo}
+            setReplyingTo={setReplyingTo}
+          />
         </div>
       </div>
 
-      {/* Create Channel Modal */}
-      {isCreating && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="w-[360px] bg-[#0f1420] border border-yellow-500/30 rounded-2xl p-6 shadow-2xl relative">
-            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent rounded-t-2xl" />
-            <div className="flex flex-col items-center mb-5">
-              <div className="w-14 h-14 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mb-3">
-                <Users size={28} className="text-yellow-500" />
-              </div>
-              <h2 className="text-base font-black text-slate-100 uppercase tracking-widest">New Channel</h2>
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">Encrypted Group Protocol</p>
-            </div>
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 block">Channel Name</label>
-            <input
-              className="w-full bg-[#0a0e17] text-slate-100 text-sm px-4 py-3 rounded-xl border border-slate-700 outline-none focus:border-yellow-500/50 mb-4 font-mono"
-              placeholder="e.g. ALPHA_SQUADRON"
-              value={newGroupName}
-              onChange={e => setNewGroupName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleCreate()}
-              autoFocus
-            />
-            <div className="flex gap-3">
-              <button onClick={() => { setIsCreating(false); setNewGroupName(''); }}
-                className="flex-1 py-2.5 bg-slate-800 text-slate-400 text-[10px] font-black rounded-xl uppercase tracking-widest hover:bg-slate-700 transition-all">
-                Abort
-              </button>
-              <button onClick={handleCreate}
-                className="flex-1 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-[#1a1200] text-[10px] font-black rounded-xl uppercase tracking-widest transition-all active:scale-[0.98]">
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* FLOATING AI BUBBLE (WhatsApp style) */}
+      {!activeChat && (
+        <button
+          onClick={() => onStartDM('14a09105-4817-44a5-afae-f2fc26441d13', 'Globard Terminal AI Assistant')}
+          className="fixed bottom-24 right-6 w-14 h-14 bg-yellow-500 rounded-full shadow-[0_8px_32px_rgba(245,196,81,0.4)] flex items-center justify-center z-[4000] active:scale-90 transition-all border-2 border-yellow-400/50 group"
+          title="Quick AI Intel"
+        >
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#0a0e17] z-10" />
+          <img src="/logo.svg" className="w-8 h-8 group-hover:scale-110 transition-transform" alt="Globard AI" />
+        </button>
       )}
-      {/* Manage Channel Modal */}
-      {isManaging && activeChat && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-[450px] bg-[#0f1420] border border-yellow-500/30 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-yellow-500 to-transparent" />
 
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-xl font-black text-slate-100 uppercase tracking-widest">Manage Hub</h2>
-                <p className="text-[10px] text-yellow-500 font-bold uppercase tracking-widest">{activeChat.name}</p>
-              </div>
-              <button onClick={() => setIsManaging(false)} className="text-slate-500 hover:text-white transition-colors">
-                <X size={20} />
-              </button>
-            </div>
+      <Modals 
+        isCreating={isCreating}
+        setIsCreating={setIsCreating}
+        newGroupName={newGroupName}
+        setNewGroupName={setNewGroupName}
+        handleCreate={handleCreate}
+        isManaging={isManaging}
+        setIsManaging={setIsManaging}
+        activeChat={activeChat}
+        inviteEmail={inviteEmail}
+        setInviteEmail={setInviteEmail}
+        handleAddMember={handleAddMember}
+        copyInviteLink={copyInviteLink}
+        copied={copied}
+        members={members}
+        friends={friends}
+        currentUser={currentUser}
+        handleRemoveMember={handleRemoveMember}
+        handleDeleteChannel={handleDeleteChannel}
+      />
 
-            <div className="space-y-6">
-              {/* Invite Section */}
-              <div className="space-y-3">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block ml-1">Add Operative (by username)</label>
-                <div className="flex gap-2">
-                  <input
-                    className="flex-1 bg-[#0a0e17] text-slate-100 text-sm px-4 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-yellow-500/50"
-                    placeholder="Enter operative username..."
-                    value={inviteEmail}
-                    onChange={e => setInviteEmail(e.target.value)}
-                  />
-                  <button onClick={handleAddMember} className="px-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl text-yellow-500 hover:bg-yellow-500/20 transition-all">
-                    <UserPlus size={18} />
-                  </button>
-                </div>
-
-                <button onClick={copyInviteLink} className="w-full flex items-center justify-center gap-2 py-3 bg-slate-800/40 border border-slate-700 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 transition-all group">
-                  {copied ? <Check size={14} className="text-green-500" /> : <LinkIcon size={14} className="group-hover:text-yellow-500" />}
-                  {copied ? 'LINK COPIED TO CLIPBOARD' : 'GENERATE & COPY INVITE LINK'}
-                </button>
-              </div>
-
-              {/* Members List */}
-              <div>
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mb-3 ml-1">Authorized Personnel ({members.length})</label>
-                <div className="bg-[#0a0e17] rounded-xl border border-slate-800 max-h-[150px] overflow-y-auto custom-scrollbar">
-                  {members.map((m: any) => (
-                    <div key={m.user_id} className="flex items-center justify-between p-3 border-b border-slate-800 last:border-0 hover:bg-slate-800/30 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-bold">
-                          {m.profiles?.username?.[0]?.toUpperCase()}
-                        </div>
-                        <span className="text-xs text-slate-300 font-bold">{m.profiles?.username}</span>
-                      </div>
-                      {m.user_id !== currentUser?.id && (
-                        <button onClick={() => handleRemoveMember(m.user_id)} className="text-slate-600 hover:text-red-500 transition-colors" title="Revoke Access">
-                          <UserMinus size={16} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Danger Zone */}
-              <div className="pt-4 border-t border-red-500/10">
-                <button onClick={handleDeleteChannel} className="w-full flex items-center justify-center gap-2 py-3 bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-black text-red-500 uppercase tracking-widest transition-all">
-                  <Trash2 size={16} />
-                  Decommission Hub (Permanent)
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}
@@ -638,6 +681,7 @@ function CommsContent() {
           onDelete={(mid: string) => deleteMessage(mid, activeId as string)}
         />
       )}
+
       {toastMessage && (
         <div className="fixed top-6 right-6 z-[2000] w-72 bg-slate-900 border border-slate-700 text-slate-200 rounded-lg shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden animate-in slide-in-from-top-5 fade-in duration-300">
           <div className="flex items-center gap-3 p-4">
@@ -714,84 +758,84 @@ export default function CommsPage() {
   );
 }
 
-
-function ContextMenu({ x, y, msgId, onDelete }: any) {
-  return (
-    <div
-      className="fixed z-[1000] bg-[#0f1420] border border-yellow-500/30 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] py-1.5 min-w-[140px] animate-in fade-in zoom-in-95 duration-100 backdrop-blur-md"
-      style={{ top: y, left: x }}
-    >
-      <button
-        onClick={() => onDelete(msgId)}
-        className="w-full text-left px-4 py-2.5 text-[11px] font-black text-red-500/80 hover:text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition-colors uppercase tracking-widest"
-      >
-        <Trash2 size={13} /> Delete Message
-      </button>
-      <div className="h-[1px] bg-yellow-500/5 my-1" />
-      <button
-        className="w-full text-left px-4 py-2.5 text-[11px] font-bold text-slate-400 hover:bg-slate-800 flex items-center gap-3 transition-colors uppercase tracking-widest"
-      >
-        <Copy size={13} /> Copy Text
-      </button>
-    </div>
-  );
-}
-
-function ChatListItem({ chat, active, onSelect }: any) {
-  return (
-    <div onClick={onSelect} className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all border group relative ${active
-        ? 'bg-yellow-500/5 border-yellow-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
-        : 'border-transparent hover:bg-slate-800/40'
-      }`}>
-      {active && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-yellow-500 rounded-r-full shadow-[0_0_10px_#f5c451]" />
-      )}
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all duration-300 overflow-hidden ${active
-          ? 'bg-yellow-500/20 border-yellow-500/40 shadow-[0_0_15px_rgba(245,196,81,0.2)] scale-105'
-          : 'bg-slate-800/60 border-slate-700/50 group-hover:border-slate-500'
-        }`}>
-        {chat.avatar ? <img src={chat.avatar} className="w-full h-full object-cover" alt="" /> : chat.type === 'dm' ? <User size={18} className={active ? 'text-yellow-500' : 'text-slate-500'} /> : <Users size={18} className={active ? 'text-yellow-500' : 'text-slate-500'} />}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-center mb-0.5">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className={`text-[12px] font-bold truncate tracking-tight transition-colors ${active ? 'text-yellow-500' : 'text-slate-300 group-hover:text-white'}`}>
-              {chat.name}
-            </span>
-            {chat.type === 'dm' && (
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${chat.status === 'Online' ? 'bg-green-500 shadow-[0_0_5px_#22c55e]' : 'bg-slate-600'}`} />
-            )}
+      {incomingRing && !activeCall && (
+        <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative flex flex-col items-center gap-6 bg-[#0f1420] border border-yellow-500/30 rounded-3xl p-10 shadow-[0_0_80px_rgba(0,0,0,0.9)] w-[320px] animate-in zoom-in-95 duration-200">
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-yellow-500/60 to-transparent rounded-t-3xl" />
+            <div className="relative">
+              <span className="absolute inset-0 rounded-full bg-yellow-500/20 animate-ping" />
+              <div className="w-24 h-24 rounded-full bg-yellow-500/10 border-2 border-yellow-500/50 flex items-center justify-center text-3xl font-black text-yellow-400">
+                {incomingRing.callerName[0]?.toUpperCase()}
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-1 text-center">
+              <p className="text-white text-lg font-black uppercase tracking-widest">{incomingRing.callerName}</p>
+              <div className="flex items-center gap-2">
+                <Phone size={11} className="text-yellow-400 animate-pulse" />
+                <p className="text-yellow-400 text-xs font-bold uppercase tracking-widest animate-pulse">Incoming Call...</p>
+              </div>
+            </div>
+            <div className="flex gap-4 w-full">
+              <button
+                onClick={() => { setActiveCall({ roomId: incomingRing.roomId, isIncoming: true, targetId: incomingRing.callerId, targetName: incomingRing.callerName }); setIncomingRing(null); }}
+                className="flex-1 py-3 bg-green-500 hover:bg-green-400 text-[#1a1200] font-black tracking-widest uppercase text-[10px] rounded-xl transition-all active:scale-95 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+              >Accept</button>
+              <button
+                onClick={() => { supabase.channel(`calls:${incomingRing.callerId}`).send({ type: 'broadcast', event: 'cancel_ring', payload: {} }); setIncomingRing(null); }}
+                className="flex-1 py-3 bg-slate-800 hover:bg-red-500/20 border border-slate-700 hover:border-red-500/30 text-slate-400 hover:text-red-400 font-black tracking-widest uppercase text-[10px] rounded-xl transition-all active:scale-95"
+              >Decline</button>
+            </div>
           </div>
-          <span className="text-[9px] text-slate-600 font-bold uppercase tracking-tighter shrink-0 ml-2">
-            {chat.time}
-          </span>
         </div>
-        <span className={`text-[10px] truncate block font-medium transition-colors ${active ? 'text-yellow-500/70' : 'text-slate-500 group-hover:text-slate-400'}`}>
-          {chat.lastMsg}
-        </span>
-      </div>
-    </div>
+      )}
+
+      {activeCall && (
+        <PhoneCall
+          roomId={activeCall.roomId}
+          isIncoming={activeCall.isIncoming}
+          targetName={activeCall.targetName}
+          targetId={activeCall.targetId}
+          currentUserId={currentUser?.id}
+          onEndCall={() => {
+            setActiveCall(null);
+            if (currentUser) supabase.from('call_logs')
+              .select('*, caller:profiles!caller_id(username), callee:profiles!callee_id(username)')
+              .or(`caller_id.eq.${currentUser.id},callee_id.eq.${currentUser.id}`)
+              .order('created_at', { ascending: false }).limit(20)
+              .then(({ data }) => { if (data) setCallHistory(data); });
+          }}
+        />
+      )}
+
+      {devToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[3000] animate-in slide-in-from-top-3 fade-in duration-200">
+          <div className="bg-[#0f1420] border border-yellow-500/30 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_40px_rgba(245,196,81,0.05)] overflow-hidden backdrop-blur-xl">
+            <div className="flex items-center gap-2.5 px-5 py-3">
+              <div className="w-7 h-7 rounded-lg bg-yellow-500/10 border border-yellow-500/25 flex items-center justify-center shrink-0">
+                <Clock size={13} className="text-yellow-500" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black text-yellow-500 uppercase tracking-[0.15em] leading-tight">In Development</p>
+                <p className="text-[9px] text-slate-500 font-medium tracking-wider">Feature coming soon</p>
+              </div>
+            </div>
+            <div className="h-[2px] bg-slate-800/50">
+              <div className="h-full bg-gradient-to-r from-yellow-500 to-yellow-600" style={{ animation: 'dev-toast-progress 2s linear forwards' }} />
+            </div>
+          </div>
+        </div>
+      )}
+      {copied && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[3000] bg-green-500/90 text-white px-6 py-3 rounded-xl text-[12px] font-bold tracking-widest uppercase shadow-[0_10px_40px_rgba(34,197,94,0.3)] border border-green-400/30 animate-in fade-in slide-in-from-top-4 duration-300 backdrop-blur-md flex items-center gap-2">
+          <LinkIcon size={16} /> Invite Link Copied
+        </div>
+      )}
+
+    </main>
   );
 }
 
-function MessageItem({ msg, currentUserId, contactAvatar, contactName, onDelete, onContextMenu }: any) {
-  // Use user_id directly — never rely on pre-computed 'sender' field
-  const isSelf = msg.user_id === currentUserId;
-  const isSystem = msg.text?.startsWith('SYSTEM:');
-
-  if (isSystem) {
-    return (
-      <div className="flex justify-center my-4 animate-in fade-in duration-700">
-        <div className="bg-yellow-500/5 border border-yellow-500/20 px-4 py-1.5 rounded-full flex items-center gap-2 shadow-[0_0_15px_rgba(245,196,81,0.05)]">
-          <Shield size={10} className="text-yellow-500/60" />
-          <span className="text-[9px] font-black tracking-[0.2em] text-yellow-500/80 uppercase font-mono">
-            {msg.text.replace('SYSTEM: ', '')}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
+export default function CommsPage() {
   return (
     <div
       onContextMenu={(e) => isSelf && onContextMenu(e)}
@@ -843,5 +887,8 @@ function MessageItem({ msg, currentUserId, contactAvatar, contactName, onDelete,
         {isSelf && <div className="w-1 h-1 bg-yellow-500/40 rounded-full" />}
       </div>
     </div>
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#0a0e17]"><div className="w-8 h-8 border-2 border-yellow-500/20 border-t-yellow-500 rounded-full animate-spin" /></div>}>
+      <CommsContent />
+    </Suspense>
   );
 }

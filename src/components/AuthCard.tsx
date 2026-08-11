@@ -25,7 +25,6 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
   const [show, setShow] = useState<Record<string, boolean>>({});
 
   const isLogin = mode === 'login';
-  const isProd = process.env.NODE_ENV === 'production';
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +69,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
             fontFamily: "'Chakra Petch', sans-serif",
             fontSize: '12px', fontWeight: 700, letterSpacing: '0.18em',
             textTransform: 'uppercase', color: '#f5c451', marginBottom: '2px',
-          }}>AuScope</h1>
+          }}>Globard</h1>
           <p style={{ fontSize: '10px', color: '#4a5568', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
             XAU/USD Terminal
           </p>
@@ -102,7 +101,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
             {isLogin ? 'Sign In' : 'Register'}
           </h2>
           <p style={{ fontSize: '11px', color: '#4a5568', marginBottom: '10px' }}>
-            {isLogin ? 'Access your dashboard' : (successMessage ? 'Registration Status' : (isProd ? 'Request Early Access' : 'Create your account'))}
+            {isLogin ? 'Access your dashboard' : (successMessage ? 'Registration Status' : 'Create your account')}
           </p>
 
           {successMessage ? (
@@ -188,7 +187,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
 
                 {isLogin && (
                   <div style={{ textAlign: 'right', marginBottom: '16px', marginTop: '-6px' }}>
-                    <Link href="#" style={{ fontSize: '10px', color: '#f5c451', textDecoration: 'none' }}>
+                    <Link href="/forgot-password" style={{ fontSize: '10px', color: '#f5c451', textDecoration: 'none' }}>
                       Forgot password?
                     </Link>
                   </div>
@@ -208,7 +207,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
                   transition: 'all 0.2s',
                   marginBottom: '16px',
                 }}>
-                  {loading ? (isLogin ? 'Authenticating...' : 'Processing...') : (isLogin ? 'Access Terminal' : (isProd ? 'Join Waitlist' : 'Create Account'))}
+                  {loading ? (isLogin ? 'Authenticating...' : 'Processing...') : (isLogin ? 'Access Terminal' : 'Create Account')}
                 </button>
 
                 {/* Divider */}
@@ -250,6 +249,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
                     {isLogin ? 'Create Account' : 'Sign In'}
                   </Link>
                 </p>
+
               </form>
             </React.Fragment>
           )}
@@ -257,7 +257,7 @@ export default function AuthCard({ mode, fields, onSubmit, loading, error, succe
 
         {/* Footer */}
         <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '9px', color: '#2a3441', letterSpacing: '0.08em' }}>
-          © 2025 AUSCOPE · SSL SECURE
+          © 2025 GLOBARD · SSL SECURE
         </p>
       </div>
     </div>

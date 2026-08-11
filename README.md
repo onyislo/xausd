@@ -1,45 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+---
+title: Xaus AI Backend
+emoji: 🤖
+colorFrom: yellow
+colorTo: red
+sdk: docker
+pinned: false
+---
 
-## Getting Started
+# 🤖 XAUSD AI Intel Core — Backend
 
-First, run the development server:
+> A specialized AI market analyst for XAU/USD (Gold), powered by Google Gemini and deployed on Hugging Face Spaces.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+This is the Python/FastAPI backend that powers the **AI Intel Core** assistant inside the XAUSD trading terminal. It receives chat messages from the frontend, generates professional gold market analysis using Gemini AI, and saves the AI's responses back to Supabase in real-time.
+
+---
+
+## 🏗️ Architecture
+
+```
+Next.js Frontend (Vercel)
+        │
+        │  POST /ai/chat
+        ▼
+FastAPI Backend (Hugging Face Spaces)
+        │
+        ├──► Google Gemini 1.5 Flash  (generates AI response)
+        │
+        └──► Supabase (saves AI message to messages table)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 API Endpoints
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### `POST /ai/chat`
+Sends a conversation history and gets back an AI-generated gold market analysis.
 
-## Learn More
+**Request Body:**
+```json
+{
+  "channel_id": "uuid-of-channel",
+  "user_id": "uuid-of-user",
+  "messages": [
+    { "role": "user", "content": "What is gold doing today?" }
+  ]
+}
+```
 
-To learn more about Next.js, take a look at the following resources:
+**Response:**
+```json
+{
+  "response": "Gold is currently trading near key resistance at $2,380..."
+}
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### `GET /health`
+Health check to confirm the backend is running and services are connected.
 
-## Deploy on Vercel
+**Response:**
+```json
+{
+  "status": "ok",
+  "gemini_active": true,
+  "supabase_active": true
+}
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-made sure reDMIE 
-djjdjdjjdjd
-kdkdd
-jdjd
-jdjd
+## ⚙️ Environment Variables
 
-## AuScope Project
-AuScope Terminal is an advanced real-time communication platform for financial monitoring.
-jdjd
+Set these in your Hugging Face Space **Settings → Variables and Secrets** tab:
+
+| Variable | Description |
+|---|---|
+| `GEMINI_API_KEY` | Your Google Gemini API key |
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key (not the anon key!) |
+
+---
+
+## 🛠️ Local Development
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Create a .env file with your keys
+echo "GEMINI_API_KEY=your_key_here" >> .env
+echo "NEXT_PUBLIC_SUPABASE_URL=your_url_here" >> .env
+echo "SUPABASE_SERVICE_ROLE_KEY=your_key_here" >> .env
+
+# 3. Run the server
+python main.py
+```
+
+The server will start at `http://localhost:7860`
+
+---
+
+## 📦 Deploying to Hugging Face
+
+From the main project repository, run:
+
+```bash
+bash deploy_to_hf.sh
+```
+
+This script pushes **only** the backend files to Hugging Face, skipping all frontend assets.
+
+---
+
+## 🧰 Tech Stack
+
+| Technology | Purpose |
+|---|---|
+| **FastAPI** | Python web framework |
+| **Google Gemini 1.5 Flash** | AI response generation |
+| **Supabase** | Database for storing messages |
+| **Docker** | Containerization for HF Spaces |
+| **Uvicorn** | ASGI server, runs on port 7860 |

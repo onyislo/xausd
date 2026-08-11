@@ -2,50 +2,23 @@
 
 import { useState } from 'react';
 import AuthCard from '@/components/AuthCard';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function RegisterPage() {
-  const [loading, setLoading] = useState(false);
+  const { signUp, loading, error } = useAuth();
   const [successMsg, setSuccessMsg] = useState('');
   const [successTitle, setSuccessTitle] = useState('');
 
-  const isProd = process.env.NODE_ENV === 'production';
-
-  const fields = isProd 
-    ? [{ id: 'email', label: 'Email Address', type: 'email', placeholder: 'VIP Access Email' }]
-    : [
-        { id: 'name', label: 'Full Name', type: 'text', placeholder: 'John Doe' },
-        { id: 'email', label: 'Email Address', type: 'email', placeholder: 'you@domain.com' },
-        { id: 'password', label: 'Password', type: 'password', placeholder: '••••••••' }
-      ];
+  const fields = [
+    { id: 'name', label: 'Full Name', type: 'text', placeholder: 'John Doe' },
+    { id: 'email', label: 'Email Address', type: 'email', placeholder: 'you@domain.com' },
+    { id: 'password', label: 'Password', type: 'password', placeholder: '••••••••' }
+  ];
 
   const handleRegister = async (data: Record<string, string>) => {
-    setLoading(true);
-    try {
-      if (isProd) {
-        const res = await fetch('/api/waitlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: data.email }),
-        });
-        if (!res.ok) throw new Error('Failed');
-        
-        const result = await res.json();
-        if (result.alreadyRegistered) {
-          setSuccessTitle("Already Registered");
-          setSuccessMsg("You're already on our waitlist! We'll notify you as soon as access opens up.");
-        } else {
-          setSuccessTitle("Access Requested");
-          setSuccessMsg("You're on the list! Check your email — we've sent you a confirmation from AuScope.");
-        }
-      } else {
-        setSuccessTitle("Welcome");
-        setTimeout(() => setSuccessMsg("Registration successful! Welcome to AuScope."), 500);
-      }
-    } catch {
-      alert("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    await signUp(data.email, data.password, { full_name: data.name });
+    setSuccessTitle("Welcome");
+    setSuccessMsg("Registration successful! Welcome to Globard.");
   };
 
   return (
@@ -53,6 +26,7 @@ export default function RegisterPage() {
       mode="register"
       fields={fields}
       loading={loading}
+      error={error}
       successMessage={successMsg}
       successTitle={successTitle}
       onSubmit={handleRegister}
