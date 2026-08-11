@@ -4,6 +4,7 @@ import "./globals.css";
 import ProductionGuard from '@/components/ProductionGuard';
 import InstallPWA from "@/components/InstallPWA";
 import NotificationManager from "@/components/NotificationManager";
+import { ThemeProvider } from "@/lib/ThemeContext";
 
 
 const geistSans = localFont({
@@ -18,17 +19,20 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "AuScope — Advanced XAU/USD Intelligence Terminal",
-  description: "Real-time gold market analytics, AI-powered trade signals, and geopolitical intelligence for professional XAU/USD traders.",
+  title: "Globard",
+  description: "Real-time gold market analytics, AI-powered trade insights, and geopolitical intelligence for professional XAU/USD traders.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "AuScope",
+    title: "Globard",
   },
   icons: {
-    icon: "/icon-192.png",
-    shortcut: "/icon-192.png",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.svg",
     apple: "/icon-192.png",
   },
 };
@@ -51,11 +55,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <ProductionGuard>
-          {children}
-        </ProductionGuard>
-        <InstallPWA />
-        <NotificationManager />
+        <ThemeProvider>
+          <ProductionGuard>
+            {children}
+          </ProductionGuard>
+          <InstallPWA />
+          <NotificationManager />
+        </ThemeProvider>
       </body>
     </html>
   );

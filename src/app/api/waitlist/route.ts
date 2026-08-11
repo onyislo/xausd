@@ -11,7 +11,7 @@ const emailHtml = (email: string) => `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AuScope — You're on the Waitlist</title>
+<title>Globard — You're on the Waitlist</title>
 </head>
 <body style="margin:0;padding:0;background:#0a0e17;font-family:'Helvetica Neue',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0e17;padding:40px 16px;">
@@ -26,7 +26,7 @@ const emailHtml = (email: string) => `<!DOCTYPE html>
           <div style="display:inline-block;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#f5c451,#b8860b);margin-bottom:20px;line-height:56px;text-align:center;">
             <span style="font-size:24px;line-height:56px;display:inline-block;">▦</span>
           </div>
-          <div style="font-size:13px;letter-spacing:0.22em;color:#f5c451;text-transform:uppercase;font-weight:800;margin-bottom:6px;">AuScope</div>
+          <div style="font-size:13px;letter-spacing:0.22em;color:#f5c451;text-transform:uppercase;font-weight:800;margin-bottom:6px;">Globard</div>
           <div style="font-size:10px;letter-spacing:0.16em;color:#4a5568;text-transform:uppercase;">XAU/USD Intelligence Terminal</div>
         </td></tr>
         
@@ -37,7 +37,7 @@ const emailHtml = (email: string) => `<!DOCTYPE html>
         <tr><td style="padding:40px;">
           <h1 style="font-size:24px;font-weight:800;color:#ffffff;margin:0 0 8px;letter-spacing:-0.02em;">You're on the list 🏆</h1>
           <p style="font-size:14px;color:#6b7a8d;line-height:1.8;margin:0 0 32px;">
-            Welcome to AuScope early access. You've secured a priority spot ahead of our official launch. Here's what's waiting for you inside the terminal:
+            Welcome to Globard early access. You've secured a priority spot ahead of our official launch. Here's what's waiting for you inside the terminal:
           </p>
           
           <!-- Features Grid -->
@@ -75,7 +75,7 @@ const emailHtml = (email: string) => `<!DOCTYPE html>
         <!-- Footer -->
         <tr><td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.05);text-align:center;background:rgba(0,0,0,0.2);">
           <p style="font-size:10px;color:#2a3441;letter-spacing:0.08em;margin:0;">
-            © 2026 AUSCOPE · ALL RIGHTS RESERVED<br/>
+            © 2026 GLOBARD · ALL RIGHTS RESERVED<br/>
             You received this because you joined our waitlist.
           </p>
         </td></tr>
@@ -133,6 +133,13 @@ export async function POST(req: NextRequest) {
           user: 'maya@swift.com',
           pass: zohoPassword,
         },
+        body: JSON.stringify({
+          sender: { name: 'Globard', email: 'no.reply@globoard.mic3solutiongroup.com' }, // Updated to match verified Brevo sender
+          to: [{ email }],
+          subject: "You're on the Globard Waitlist — Access Coming Soon",
+          htmlContent: emailHtml(email),
+          textContent: `You're on the Globard Waitlist!\n\nWelcome to Globard early access. You've secured a priority spot ahead of our official launch.\n\nYour reserved email: ${email}\n\n© 2026 Globard. All rights reserved.`,
+        }),
       });
 
       const info = await transporter.sendMail({

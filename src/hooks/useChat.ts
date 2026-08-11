@@ -12,7 +12,13 @@ const formatMsgTime = (d: Date) => {
   if (d.toDateString() === y.toDateString()) return 'Yesterday';
   return d.toLocaleDateString([], { day: 'numeric', month: 'short' });
 };
-const fmtPreview = (c: string) => c.startsWith('[VOICE_NOTE]') ? '🎤 Voice Recording' : c.length > 30 ? c.substring(0, 30) + '...' : c;
+const fmtPreview = (c: string) => {
+  if (c.startsWith('[VOICE_NOTE]')) return '🎤 Voice Recording';
+  if (c.startsWith('[IMAGE]')) return '📷 Photo';
+  if (c.startsWith('[VIDEO]')) return '🎥 Video';
+  if (c.startsWith('[FILE]')) return '📄 Document';
+  return c.length > 30 ? c.substring(0, 30) + '...' : c;
+};
 
 export function useChat() {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -20,6 +26,7 @@ export function useChat() {
   const [contacts, setContacts] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [typingStatus, setTypingStatus] = useState<Record<string, any[]>>({}); // channelId -> list of typing users
+  const [aiTyping, setAiTyping] = useState<Record<string, boolean>>({}); // channelId -> is AI typing
   const [presenceChannel, setPresenceChannel] = useState<any>(null);
   const [replyingTo, setReplyingTo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -384,11 +391,14 @@ export function useChat() {
         const next = prev.map(chat => {
           if (chat.type === 'dm' && chat.otherMemberId) {
             const isOnline = onlineUsers.has(chat.otherMemberId);
+            const AI_SYSTEM_ID = "14a09105-4817-44a5-afae-f2fc26441d13";
             const now = new Date();
             const lastSeenDate = chat.last_seen ? new Date(chat.last_seen) : null;
             
             let newStatus = 'Offline';
-            if (isOnline) {
+            if (chat.otherMemberId === AI_SYSTEM_ID) {
+              newStatus = 'Online';
+            } else if (isOnline) {
               newStatus = 'Online';
             } else if (lastSeenDate) {
               const yesterday = new Date(now);
@@ -447,7 +457,7 @@ export function useChat() {
           new Notification(profile?.username || 'New Message', {
             body: formatted.text.startsWith('[VOICE_NOTE]') ? '🎤 Voice Recording' : formatted.text,
             icon: '/icon-192.png',
-            tag: `auscope-chat-${newMsg.channel_id}`,
+            tag: `globoard-chat-${newMsg.channel_id}`,
             renotify: true
           } as NotificationOptions);
         }
@@ -465,9 +475,7 @@ export function useChat() {
           return {
             ...chat,
             messages: updatedMessages,
-            lastMsg: formatted.text.startsWith('[VOICE_NOTE]')
-              ? "🎤 Voice Recording"
-              : (formatted.text.length > 30 ? formatted.text.substring(0, 30) + '...' : formatted.text),
+            lastMsg: fmtPreview(formatted.text),
             time: timeStr,
             unreadCount: (activeId === chat.id || isMe) ? (chat.unreadCount || 0) : (chat.unreadCount || 0) + 1,
             lastActivity: now.getTime()
@@ -538,7 +546,7 @@ export function useChat() {
       chat.id === activeId ? {
         ...chat,
         messages: [...chat.messages, optimistic], // Newest at the bottom
-        lastMsg: text.trim().startsWith('[VOICE_NOTE]') ? "🎤 Voice Recording" : text.trim(),
+        lastMsg: fmtPreview(text.trim()),
         time: timeStr,
         lastActivity: now.getTime()
       } : chat
@@ -552,6 +560,34 @@ export function useChat() {
       content: text.trim(),
       reply_to_id: replyToId
     }]);
+
+    // AI Bridge: If the recipient is the AI Assistant, trigger the Hugging Face backend
+    const AI_SYSTEM_ID = "14a09105-4817-44a5-afae-f2fc26441d13";
+    const activeChat = chatData.find(c => c.id === activeId);
+    const isAIChat = activeChat?.type === 'dm' && activeChat.otherMemberId === AI_SYSTEM_ID;
+
+    if (isAIChat) {
+      setAiTyping(prev => ({ ...prev, [activeId]: true }));
+      // Change 'onyiso-xaus-ai-backend.hf.space' to your actual HF URL if different
+      fetch('https://Onyiso-Xaus-ai-backend.hf.space/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel_id: activeId,
+          user_id: currentUser.id,
+          messages: activeChat.messages.map((m: any) => ({
+            role: m.user_id === currentUser.id ? 'user' : 'assistant',
+            content: m.text
+          })).concat([{ role: 'user', content: text.trim() }])
+        })
+      })
+      .then(res => res.json())
+      .then(() => setAiTyping(prev => ({ ...prev, [activeId]: false })))
+      .catch(err => {
+        console.error('AI Backend Error:', err);
+        setAiTyping(prev => ({ ...prev, [activeId]: false }));
+      });
+    }
 
     // Send push notification
     fetch('/api/send-push', {
@@ -619,6 +655,20 @@ export function useChat() {
         sender_id: currentUser.id
       })
     }).catch(err => console.error('Push Error:', err));
+  };
+
+  const sendFile = async (file: File) => {
+    if (!activeId || !currentUser) return;
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    const prefix = isImage ? '[IMAGE]' : isVideo ? '[VIDEO]' : '[FILE]';
+    
+    const fileName = `${activeId}/${Date.now()}_${file.name}`;
+    const { data, error } = await supabase.storage.from('comms').upload(fileName, file);
+    if (error) return;
+
+    const { data: { publicUrl } } = supabase.storage.from('comms').getPublicUrl(fileName);
+    await sendMessage(`${prefix}${publicUrl}`);
   };
 
   // 6. Push Channel (for group creation)
@@ -757,5 +807,22 @@ export function useChat() {
     });
   };
 
-  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, sendVoiceNote, deleteMessage, currentUser, pushChannel, typingStatus, setTyping, onlineUsers, replyingTo, setReplyingTo, isLoading };
+  // Merge AI typing into typingStatus for the active channel
+  const mergedTypingStatus = { ...typingStatus };
+  Object.keys(aiTyping).forEach(channelId => {
+    if (aiTyping[channelId]) {
+      if (!mergedTypingStatus[channelId]) mergedTypingStatus[channelId] = [];
+      // Don't add if AI is already "typing" (though unlikely via presence)
+      const AI_SYSTEM_ID = "14a09105-4817-44a5-afae-f2fc26441d13";
+      if (!mergedTypingStatus[channelId].some(u => u.id === AI_SYSTEM_ID)) {
+        mergedTypingStatus[channelId].push({
+          id: AI_SYSTEM_ID,
+          username: "Globard Terminal AI Assistant",
+          avatarUrl: "/logo.svg" // Use the project logo or a specific AI avatar
+        });
+      }
+    }
+  });
+
+  return { activeId, setActiveId, chatData, contacts, addContact, removeContact, searchProfiles, startDM, sendMessage, sendVoiceNote, sendFile, deleteMessage, currentUser, pushChannel, typingStatus: mergedTypingStatus, setTyping, onlineUsers, replyingTo, setReplyingTo, isLoading };
 }

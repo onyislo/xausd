@@ -1,163 +1,124 @@
-# AuScope Terminal
+---
+title: Xaus AI Backend
+emoji: 🤖
+colorFrom: yellow
+colorTo: red
+sdk: docker
+pinned: false
+---
 
-A real-time XAU/USD (Gold) trading terminal with advanced communication features, market intelligence, and mobile-responsive design.
+# 🤖 XAUSD AI Intel Core — Backend
 
-## 🌟 Features
+> A specialized AI market analyst for XAU/USD (Gold), powered by Google Gemini and deployed on Hugging Face Spaces.
 
-### 📊 Real-Time Market Data
-- Live XAU/USD price feeds with WebSocket connections
-- Economic pulse monitoring
-- Live ticker with market sentiment analysis
-- Gold price visualization with charts and trends
-
-### 💬 Advanced Communications
-- Encrypted group channels and direct messages
-- Real-time voice calling capabilities
-- AI-powered chat assistant
-- Friend system and user discovery
-- Call history and management
-
-### 🗺️ Global Intelligence
-- Interactive globe visualization
-- Flat map with market data overlay
-- Live news aggregation
-- Tactical sessions for market analysis
-
-### 📱 Mobile Responsive
-- Hamburger sidebar navigation (slides from left)
-- WhatsApp-style bottom tabs for communications
-- Full-screen chat interface with back navigation
-- Optimized touch interactions
-
-### 🔐 Secure Authentication
-- Supabase-powered authentication
-- User profiles with avatars
-- Secure registration and login
-- Online status tracking
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 18+
-- npm or yarn
-- Supabase account
-
-### Installation
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/onyislo/xausd.git
-cd xausd
-```
-
-2. **Install dependencies**
-```bash
-npm install
-```
-
-3. **Environment Setup**
-Create a `.env.local` file with:
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-NEXT_PUBLIC_TWELVE_DATA_API_KEY=your_twelve_data_api_key
-```
-
-4. **Run development server**
-```bash
-npm run dev
-```
-
-5. **Open in browser**
-Navigate to [http://localhost:3000](http://localhost:3000)
-
-## 🏗️ Project Structure
-
-```
-src/
-├── app/                    # Next.js app router pages
-│   ├── dashboard/         # Main dashboard
-│   ├── comms/            # Communications hub
-│   ├── intel/            # Global intelligence
-│   ├── chart/            # Market charts
-│   ├── live/             # Live feeds
-│   ├── news/             # News aggregation
-│   └── profile/          # User profile
-├── components/            # Reusable UI components
-│   ├── Sidebar.tsx       # Navigation sidebar
-│   ├── HeaderPrice.tsx   # Gold price display
-│   ├── LiveChat.tsx      # Chat interface
-│   └── ...
-├── hooks/                # Custom React hooks
-│   ├── useAuth.ts       # Authentication
-│   └── useChat.ts       # Chat functionality
-├── lib/                  # Utility libraries
-│   └── supabase.ts      # Database client
-└── types/               # TypeScript definitions
-```
-
-## 🛠️ Tech Stack
-
-- **Frontend**: Next.js 14, React 18, TypeScript
-- **Styling**: Tailwind CSS
-- **Database**: Supabase (PostgreSQL)
-- **Real-time**: WebSockets, Supabase Realtime
-- **Charts**: Custom D3.js visualizations
-- **Deployment**: Vercel
-
-## 📱 Mobile Features
-
-### Sidebar Navigation
-- Hamburger menu slides from left
-- Full menu with icons and labels
-- Desktop remains unchanged
-
-### Communications
-- Bottom tab navigation (All, Channels, DMs, Friends, Calls, AI)
-- Full-screen chat interface
-- Back button navigation
-- Touch-optimized interactions
-
-## 🔧 Available Scripts
-
-```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npm run typecheck    # Run TypeScript checks
-```
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-1. Connect your GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard
-3. Deploy automatically on push
-
-### Manual Deployment
-```bash
-npm run build
-npm run start
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Commit changes: `git commit -m 'Add feature'`
-4. Push to branch: `git push origin feature-name`
-5. Open a Pull Request
-
-## 📄 License
-
-This project is private and proprietary.
-
-## 🆘 Support
-
-For support or questions, please create an issue in the repository.
+This is the Python/FastAPI backend that powers the **AI Intel Core** assistant inside the XAUSD trading terminal. It receives chat messages from the frontend, generates professional gold market analysis using Gemini AI, and saves the AI's responses back to Supabase in real-time.
 
 ---
 
-**AuScope Terminal** - Real-time intelligence for gold trading.</content>
-<parameter name="filePath">README.md
+## 🏗️ Architecture
+
+```
+Next.js Frontend (Vercel)
+        │
+        │  POST /ai/chat
+        ▼
+FastAPI Backend (Hugging Face Spaces)
+        │
+        ├──► Google Gemini 1.5 Flash  (generates AI response)
+        │
+        └──► Supabase (saves AI message to messages table)
+```
+
+---
+
+## 🚀 API Endpoints
+
+### `POST /ai/chat`
+Sends a conversation history and gets back an AI-generated gold market analysis.
+
+**Request Body:**
+```json
+{
+  "channel_id": "uuid-of-channel",
+  "user_id": "uuid-of-user",
+  "messages": [
+    { "role": "user", "content": "What is gold doing today?" }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "response": "Gold is currently trading near key resistance at $2,380..."
+}
+```
+
+---
+
+### `GET /health`
+Health check to confirm the backend is running and services are connected.
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "gemini_active": true,
+  "supabase_active": true
+}
+```
+
+---
+
+## ⚙️ Environment Variables
+
+Set these in your Hugging Face Space **Settings → Variables and Secrets** tab:
+
+| Variable | Description |
+|---|---|
+| `GEMINI_API_KEY` | Your Google Gemini API key |
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key (not the anon key!) |
+
+---
+
+## 🛠️ Local Development
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Create a .env file with your keys
+echo "GEMINI_API_KEY=your_key_here" >> .env
+echo "NEXT_PUBLIC_SUPABASE_URL=your_url_here" >> .env
+echo "SUPABASE_SERVICE_ROLE_KEY=your_key_here" >> .env
+
+# 3. Run the server
+python main.py
+```
+
+The server will start at `http://localhost:7860`
+
+---
+
+## 📦 Deploying to Hugging Face
+
+From the main project repository, run:
+
+```bash
+bash deploy_to_hf.sh
+```
+
+This script pushes **only** the backend files to Hugging Face, skipping all frontend assets.
+
+---
+
+## 🧰 Tech Stack
+
+| Technology | Purpose |
+|---|---|
+| **FastAPI** | Python web framework |
+| **Google Gemini 1.5 Flash** | AI response generation |
+| **Supabase** | Database for storing messages |
+| **Docker** | Containerization for HF Spaces |
+| **Uvicorn** | ASGI server, runs on port 7860 |

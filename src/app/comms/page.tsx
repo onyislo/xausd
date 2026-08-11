@@ -23,7 +23,7 @@ function CommsContent() {
     addContact: addFriend, removeContact: removeFriend, 
     searchProfiles, startDM, sendMessage, deleteMessage, 
     currentUser, pushChannel, typingStatus, setTyping, onlineUsers, sendVoiceNote,
-    replyingTo, setReplyingTo, isLoading
+    sendFile, replyingTo, setReplyingTo, isLoading
   } = useChat();
 
   const [activeCall, setActiveCall] = useState<{ roomId: string, isIncoming: boolean, targetId: string, targetName: string } | null>(null);
@@ -289,7 +289,7 @@ function CommsContent() {
           ${activeChat ? 'hidden md:flex' : 'flex'}
         `}>
           <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-yellow-500/60 to-transparent" />
-          <h1 className="text-[16px] font-black tracking-widest text-yellow-500 uppercase max-md:text-[13px]">AuScope | Comms</h1>
+          <h1 className="text-[16px] font-black tracking-widest text-yellow-500 uppercase max-md:text-[13px]">Globard | Comms</h1>
           <div className="flex items-center gap-3"><HeaderPrice /></div>
         </header>
 
@@ -314,6 +314,7 @@ function CommsContent() {
             showDevToast={showDevToast}
             IS_PRODUCTION={IS_PRODUCTION}
             onlineUsers={onlineUsers}
+            typingStatus={typingStatus}
           />
 
           {/* CHAT PANEL */}
@@ -336,11 +337,24 @@ function CommsContent() {
             typingStatus={typingStatus[activeId || ''] || []}
             setTyping={setTyping}
             sendVoiceNote={sendVoiceNote}
+            sendFile={sendFile}
             replyingTo={replyingTo}
             setReplyingTo={setReplyingTo}
           />
         </div>
       </div>
+
+      {/* FLOATING AI BUBBLE (WhatsApp style) */}
+      {!activeChat && (
+        <button
+          onClick={() => onStartDM('14a09105-4817-44a5-afae-f2fc26441d13', 'Globard Terminal AI Assistant')}
+          className="fixed bottom-24 right-6 w-14 h-14 bg-yellow-500 rounded-full shadow-[0_8px_32px_rgba(245,196,81,0.4)] flex items-center justify-center z-[4000] active:scale-90 transition-all border-2 border-yellow-400/50 group"
+          title="Quick AI Intel"
+        >
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#0a0e17] z-10" />
+          <img src="/logo.svg" className="w-8 h-8 group-hover:scale-110 transition-transform" alt="Globard AI" />
+        </button>
+      )}
 
       <Modals 
         isCreating={isCreating}
@@ -456,6 +470,7 @@ function CommsContent() {
           <LinkIcon size={16} /> Invite Link Copied
         </div>
       )}
+
     </main>
   );
 }

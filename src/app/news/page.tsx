@@ -134,45 +134,29 @@ export default function NewsPage() {
   );
 
   return (
-    <main className="terminal-layout bg-[#080c14] text-slate-200 font-sans flex h-screen overflow-hidden">
-      {/* Sidebar hidden on mobile, shown md+ */}
-      <div className="hidden md:flex"><Sidebar /></div>
-
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-
-        {/* ── TOP HEADER ──────────────────────────────────────────────────── */}
-        <header className="shrink-0 h-[52px] border-b border-slate-800/70 flex items-center justify-between px-3 md:px-5 gap-3"
-          style={{background:'linear-gradient(180deg,rgba(12,17,28,0.98) 0%,rgba(8,12,20,0.98) 100%)'}}>
-          <div className="flex items-center gap-2 md:gap-4 min-w-0">
-            {/* Mobile menu back arrow */}
-            <Link href="/dashboard" className="flex items-center gap-1 text-slate-500 hover:text-slate-300 text-[10px] font-bold tracking-widest uppercase shrink-0">
-              <span>←</span><span className="hidden sm:inline">Terminal</span>
+    <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans flex h-screen overflow-hidden">
+      <Sidebar />
+      <div className="flex-1 overflow-y-auto p-4 pt-16 md:p-12 relative">
+        <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <header className="mb-8 md:mb-12 flex flex-col md:flex-row md:justify-between md:items-center border-b border-slate-800 pb-6 gap-4">
+          <div>
+            <Link href="/dashboard" className="text-yellow-500 hover:text-yellow-400 text-[10px] md:text-sm font-bold tracking-widest uppercase flex items-center gap-2 mb-2 transition-colors">
+              <span>←</span> BACK TO TERMINAL
             </Link>
-            <div className="w-px h-4 bg-slate-800 shrink-0"/>
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center shrink-0">
-                <Layers size={12} className="text-yellow-500"/>
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-[11px] md:text-[13px] font-black tracking-[0.1em] text-slate-100 uppercase leading-none truncate" style={{fontFamily:"'Chakra Petch',sans-serif"}}>
-                  Intelligence Wire
-                </h1>
-                <p className="text-[8px] text-slate-600 tracking-widest uppercase hidden sm:block">Market News · AI-Filtered</p>
-              </div>
-            </div>
+            <h1 className="text-xl md:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 uppercase">
+              Global Intelligence Feed
+            </h1>
+            <p className="text-slate-500 text-[10px] md:text-sm tracking-widest uppercase mt-1">Real-time Geopolitical & Market Analysis</p>
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {breaking.length>0&&(
-              <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/25 animate-pulse">
-                <AlertTriangle size={10} className="text-red-400"/>
-                <span className="text-[8px] font-black text-red-400 uppercase tracking-wider hidden sm:inline">{breaking.length} Breaking</span>
-              </div>
-            )}
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/8 border border-emerald-500/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"/>
-              <span className="text-[8px] font-bold text-emerald-400 uppercase tracking-wider">Live</span>
-              {lastUp&&<span className="hidden md:inline text-[8px] text-slate-600 font-mono">{timeAgo(lastUp.toISOString())}</span>}
+          
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-start md:items-end">
+              <span className="text-[10px] text-slate-500 tracking-widest uppercase">Encryption Status</span>
+              <span className="text-green-500 font-mono text-[10px] md:text-xs font-bold">AES-256 SECURE</span>
+            </div>
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-green-500 animate-pulse"></div>
             </div>
             {/* Calendar toggle — desktop only */}
             <button onClick={()=>setShowCal(s=>!s)}
@@ -186,55 +170,16 @@ export default function NewsPage() {
           </div>
         </header>
 
-        {/* ── PRICE TICKER ────────────────────────────────────────────────── */}
-        <PriceTicker />
-
-        {/* ── BREAKING HEADLINE SCROLL ────────────────────────────────────── */}
-        {breaking.length>0&&(
-          <div className="shrink-0 h-[24px] border-b border-red-900/40 flex items-center overflow-hidden"
-            style={{background:'linear-gradient(90deg,rgba(153,27,27,0.8) 0%,rgba(127,29,29,0.4) 100%)'}}>
-            <div className="shrink-0 h-full px-3 flex items-center gap-1.5 border-r border-red-800/60 bg-red-900/60">
-              <Zap size={8} className="text-red-300"/>
-              <span className="text-[7px] font-black text-red-300 tracking-[0.2em] uppercase">Alert</span>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <div className="flex items-center gap-8 animate-scroll-left whitespace-nowrap px-4">
-                {breaking.concat(breaking).map((a,i)=>(
-                  <span key={i} className="flex items-center gap-2 text-[9px]">
-                    <span className="text-red-400/60 font-bold uppercase text-[8px]">{a.source}</span>
-                    <span className="text-red-100/80">{a.title}</span>
-                    <span className="text-red-900">│</span>
-                  </span>
-                ))}
-              </div>
-            </div>
+        {/* Filters/Stats Bar */}
+        <div className="flex flex-wrap gap-2 md:gap-4 mb-8">
+          <div className="bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-2 md:gap-3">
+            <span className="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold">Articles</span>
+            <span className="text-yellow-500 font-mono font-bold text-xs md:text-base">{newsData.length}</span>
           </div>
-        )}
-
-        {/* ── MOBILE TAB BAR ──────────────────────────────────────────────── */}
-        <div className="md:hidden shrink-0 flex border-b border-slate-800/60" style={{background:'rgba(8,12,20,0.95)'}}>
-          <button onClick={()=>setMobileTab('news')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[10px] font-black uppercase tracking-wider border-b-2 transition-all ${mobileTab==='news'?'border-yellow-500 text-yellow-400':'border-transparent text-slate-500'}`}>
-            <LayoutList size={13}/> News
-          </button>
-          <button onClick={()=>setMobileTab('calendar')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[10px] font-black uppercase tracking-wider border-b-2 transition-all ${mobileTab==='calendar'?'border-yellow-500 text-yellow-400':'border-transparent text-slate-500'}`}>
-            <CalendarDays size={13}/> Calendar
-          </button>
-        </div>
-
-        {/* ── MOBILE: NEWS TAB ────────────────────────────────────────────── */}
-        <div className={`md:hidden flex-1 flex flex-col min-h-0 overflow-hidden ${mobileTab==='news'?'flex':'hidden'}`}>
-          {/* Instrument pill row */}
-          <InstrBar/>
-          {/* Search */}
-          <div className="shrink-0 px-3 py-2 border-b border-slate-800/40" style={{background:'rgba(10,14,22,0.8)'}}>
-            <div className="relative">
-              <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600"/>
-              <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search headlines..."
-                className="w-full bg-slate-900/60 border border-slate-800 text-slate-300 text-[11px] placeholder:text-slate-700 rounded-lg pl-7 pr-8 py-2 focus:outline-none focus:border-slate-600 transition-all"/>
-              {search&&<button onClick={()=>setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600"><X size={11}/></button>}
-            </div>
+          <div className="bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-1.5 md:px-4 md:py-2 flex items-center gap-2 md:gap-3">
+             <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-red-500"></div>
+             <span className="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold">High Impact</span>
+             <span className="text-red-500 font-mono font-bold text-xs md:text-base">{newsData.filter(n => n.impact === 'HIGH').length}</span>
           </div>
           <Feed/>
         </div>
@@ -299,24 +244,50 @@ export default function NewsPage() {
 
       </div>
 
-      {/* ── ARTICLE DETAIL MODAL ──────────────────────────────────────────── */}
-      {selected&&(
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-xl z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-          onClick={()=>setSelected(null)}>
-          <div onClick={e=>e.stopPropagation()}
-            className="w-full sm:max-w-[640px] rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl border border-slate-800"
-            style={{background:'linear-gradient(180deg,rgba(14,20,33,0.99) 0%,rgba(8,12,20,0.99) 100%)',maxHeight:'85vh',display:'flex',flexDirection:'column'}}>
-            <div className={`h-[2px] w-full ${IMPACT[impact(selected)].bar} opacity-80`}/>
-            <div className="px-5 py-3.5 border-b border-slate-800/60 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2.5">
-                <span className="text-lg">{selected.icon}</span>
+      {/* Details Modal */}
+      {selectedNews && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className={`max-w-2xl w-full bg-slate-900 border ${
+            selectedNews.impact === 'HIGH' ? 'border-red-500/50' : 
+            selectedNews.impact === 'MED' ? 'border-yellow-500/50' : 
+            'border-green-500/50'
+          } rounded-xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200`}>
+            <div className="px-4 py-3 md:px-6 md:py-4 bg-slate-800/50 border-b border-slate-800 flex justify-between items-center">
+              <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                Intelligence Briefing / {selectedNews.id}
+              </span>
+              <button 
+                onClick={() => setSelectedNews(null)}
+                className="text-slate-500 hover:text-white transition-colors p-1"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-5 md:p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <span className={`px-2 py-0.5 rounded text-[9px] md:text-[10px] font-bold uppercase tracking-widest ${
+                  selectedNews.impact === 'HIGH' ? 'bg-red-500/10 text-red-500 border border-red-500/30' : 
+                  selectedNews.impact === 'MED' ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/30' : 
+                  'bg-green-500/10 text-green-500 border border-green-500/30'
+                }`}>
+                  {selectedNews.impact} IMPACT
+                </span>
+                <span className="text-[9px] md:text-[10px] text-slate-500 font-mono">{selectedNews.timestamp}</span>
+              </div>
+              <h2 className="text-lg md:text-2xl font-black text-slate-100 mb-4 md:mb-6 leading-tight uppercase">
+                {selectedNews.title}
+              </h2>
+              <p className="text-slate-300 text-sm md:text-base leading-relaxed mb-6 md:mb-8">
+                {selectedNews.content}
+              </p>
+              <div className="grid grid-cols-2 gap-4 pt-6 border-t border-slate-800">
                 <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`px-1.5 py-0.5 rounded border text-[8px] font-bold uppercase ${CAT_BADGE[selected.category]??CAT_BADGE.MARKET}`}>{selected.category}</span>
-                    <span className={`text-[8px] font-black uppercase ${IMPACT[impact(selected)].text}`}>{impact(selected)} IMPACT</span>
-                    {selected.isBreaking&&<span className="text-[8px] text-red-400 font-black animate-pulse">⚡ BREAKING</span>}
-                  </div>
-                  <p className="text-[8px] text-slate-600 font-bold tracking-widest uppercase mt-0.5">{selected.source}</p>
+                  <span className="block text-[9px] md:text-[10px] text-slate-600 uppercase font-bold tracking-widest mb-1">Source Analysis</span>
+                  <span className="text-slate-200 font-bold text-xs md:text-sm">{selectedNews.source}</span>
+                </div>
+                <div>
+                  <span className="block text-[9px] md:text-[10px] text-slate-600 uppercase font-bold tracking-widest mb-1">Category</span>
+                  <span className="text-slate-200 font-bold text-xs md:text-sm">{selectedNews.category}</span>
                 </div>
               </div>
               <button onClick={()=>setSelected(null)} className="p-1.5 rounded-xl bg-slate-800/60 hover:bg-red-500/15 text-slate-500 hover:text-red-400 border border-slate-700 transition-all"><X size={14}/></button>
@@ -332,12 +303,13 @@ export default function NewsPage() {
                 <div><span className="block text-[7px] text-slate-600 uppercase font-bold tracking-widest mb-0.5">Category</span><span className={`text-[12px] font-bold ${IMPACT[impact(selected)].text}`}>{selected.category}</span></div>
               </div>
             </div>
-            <div className="px-5 py-3 border-t border-slate-800/50 bg-slate-900/30 flex items-center justify-between shrink-0">
-              <button onClick={()=>setSelected(null)} className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 text-[10px] font-bold uppercase tracking-widest border border-slate-700 transition-all">Close</button>
-              <a href={selected.url} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-[10px] font-bold uppercase tracking-widest transition-all">
-                Full Article <ExternalLink size={11}/>
-              </a>
+            <div className="px-6 py-4 bg-slate-800/30 border-t border-slate-800/50 flex justify-end">
+              <button 
+                onClick={() => setSelectedNews(null)}
+                className="w-full md:w-auto px-6 py-2 bg-slate-100 hover:bg-white text-slate-900 rounded font-bold text-[10px] md:text-xs uppercase tracking-widest transition-all"
+              >
+                Close Report
+              </button>
             </div>
           </div>
         </div>

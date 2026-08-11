@@ -22,6 +22,7 @@ interface ChatSidebarProps {
   showDevToast: () => void;
   IS_PRODUCTION: boolean;
   onlineUsers: Set<string>;
+  typingStatus?: Record<string, any[]>;
 }
 
 export default function ChatSidebar({
@@ -42,7 +43,8 @@ export default function ChatSidebar({
   setIsCreating,
   showDevToast,
   IS_PRODUCTION,
-  onlineUsers
+  onlineUsers,
+  typingStatus
 }: ChatSidebarProps) {
   
   const filtered = tab === 'all'
@@ -198,20 +200,33 @@ export default function ChatSidebar({
               );
             })
           )
-        ) : (
-          filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-600">
-              <span className="text-2xl">{tab === 'ai' ? '🤖' : tab === 'dms' ? '💬' : '#'}</span>
+        ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-600">
+              <span className="text-4xl">{tab === 'ai' ? '🤖' : tab === 'dms' ? '💬' : '#'}</span>
               <span className="text-[10px] uppercase tracking-widest text-center px-4">
-                {tab === 'all' ? 'No messages yet.' : tab === 'channels' ? 'No channels yet. Hit + to create one.' : tab === 'dms' ? 'No direct messages yet.' : 'No AI sessions yet.'}
+                {tab === 'all' ? 'No messages yet.' : tab === 'channels' ? 'No channels yet. Hit + to create one.' : tab === 'dms' ? 'No direct messages yet.' : 'Start your first AI session.'}
               </span>
+              {tab === 'ai' && (
+                <button 
+                  onClick={() => onStartDM('14a09105-4817-44a5-afae-f2fc26441d13', 'Globard AI')}
+                  className="px-6 py-2 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-yellow-500/20 transition-all shadow-[0_0_15px_rgba(245,196,81,0.15)]"
+                >
+                  Start Terminal AI
+                </button>
+              )}
             </div>
           ) : filtered.map(chat => (
-            <ChatListItem key={chat.id} chat={chat} active={activeId === chat.id} onSelect={() => {
-              setActiveId(chat.id);
-            }} />
+            <ChatListItem 
+              key={chat.id} 
+              chat={chat} 
+              active={activeId === chat.id} 
+              onSelect={() => {
+                setActiveId(chat.id);
+              }} 
+              isTyping={typingStatus && typingStatus[chat.id] && typingStatus[chat.id].length > 0}
+            />
           ))
-        )}
+        }
       </div>
     </section>
   );

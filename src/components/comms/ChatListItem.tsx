@@ -6,9 +6,10 @@ interface ChatListItemProps {
   chat: any;
   active: boolean;
   onSelect: () => void;
+  isTyping?: boolean;
 }
 
-export default function ChatListItem({ chat, active, onSelect }: ChatListItemProps) {
+export default function ChatListItem({ chat, active, onSelect, isTyping }: ChatListItemProps) {
   return (
     <div onClick={onSelect} className={`flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all border group relative ${active
       ? 'bg-yellow-500/5 border-yellow-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
@@ -49,7 +50,7 @@ export default function ChatListItem({ chat, active, onSelect }: ChatListItemPro
           </span>
         </div>
         <span className={`text-[10px] truncate block font-medium transition-colors ${active ? 'text-yellow-500/70' : 'text-slate-500 group-hover:text-slate-400'}`}>
-          {chat.lastMsg}
+          {isTyping ? <span className="text-yellow-500 animate-pulse italic">Typing...</span> : chat.lastMsg}
         </span>
       </div>
     </div>
