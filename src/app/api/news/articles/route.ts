@@ -38,14 +38,15 @@ interface ArticleItem {
 
 function categorize(title: string): string {
   const t = title.toUpperCase();
-  if (t.includes('GOLD') || t.includes('XAU') || t.includes('BULLION')) return 'GOLD';
-  if (t.includes('DOLLAR') || t.includes('DXY') || t.includes('USD')) return 'USD';
-  if (t.includes('FOREX') || t.includes('EUR') || t.includes('GBP') || t.includes('JPY')) return 'FOREX';
-  if (t.includes('OIL') || t.includes('CRUDE') || t.includes('ENERGY')) return 'ENERGY';
-  if (t.includes('SILVER') || t.includes('PLATINUM')) return 'METALS';
-  if (t.includes('FED') || t.includes('RATE') || t.includes('INFLATION') || t.includes('CPI')) return 'FED/RATES';
-  if (t.includes('STOCK') || t.includes('S&P') || t.includes('NASDAQ')) return 'EQUITIES';
-  if (t.includes('CRYPTO') || t.includes('BITCOIN')) return 'CRYPTO';
+  if (t.includes('GOLD') || t.includes('XAU') || t.includes('BULLION') || t.includes('PRECIOUS METAL')) return 'GOLD';
+  if (t.includes('DOLLAR') || t.includes('DXY') || t.includes('USD') || t.includes('GREENBACK') || t.includes('U.S. DOLLAR')) return 'USD';
+  if (t.includes('YEN') || t.includes('JPY') || t.includes('BOJ') || t.includes('BANK OF JAPAN') || t.includes('USD/JPY') || t.includes('JAPAN')) return 'JPY';
+  if (t.includes('OIL') || t.includes('CRUDE') || t.includes('WTI') || t.includes('BRENT') || t.includes('OPEC') || t.includes('PETROLEUM')) return 'OIL';
+  if (t.includes('FOREX') || t.includes('EUR') || t.includes('GBP') || t.includes('CURRENCY') || t.includes('FX ')) return 'FOREX';
+  if (t.includes('SILVER') || t.includes('PLATINUM') || t.includes('PALLADIUM')) return 'METALS';
+  if (t.includes('FED') || t.includes('FEDERAL RESERVE') || t.includes('RATE') || t.includes('INFLATION') || t.includes('CPI') || t.includes('FOMC')) return 'FED/RATES';
+  if (t.includes('STOCK') || t.includes('S&P') || t.includes('NASDAQ') || t.includes('DOW')) return 'EQUITIES';
+  if (t.includes('CRYPTO') || t.includes('BITCOIN') || t.includes('BTC')) return 'CRYPTO';
   return 'MARKET';
 }
 
