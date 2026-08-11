@@ -1,11 +1,137 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { newsData, NewsItem } from '@/lib/newsData';
 import Sidebar from '@/components/Sidebar';
+import EconomicCalendar from '@/components/news/EconomicCalendar';
+import PriceTicker from '@/components/news/PriceTicker';
+import {
+  RefreshCw, ExternalLink, Clock, Zap, X,
+  Search, AlertTriangle, Newspaper, ChevronRight,
+  ArrowUpRight, Activity, CircleDot, Layers,
+  Shield, CalendarDays, LayoutList, TrendingUp
+} from 'lucide-react';
+
+interface Article {
+  id: string; title: string; summary: string; source: string;
+  icon: string; url: string; publishedAt: string; category: string; isBreaking: boolean;
+}
+
+const INSTRUMENTS = [
+  { key: 'ALL',  short: 'ALL', label: 'All Markets',     accent: '#94a3b8', activeBg: 'bg-slate-500/10',   activeText: 'text-slate-200',  border: 'border-slate-500/40',   dot: 'bg-slate-400',   cats: [] as string[] },
+  { key: 'GOLD', short: 'XAU', label: 'Gold · XAU/USD',  accent: '#f5c451', activeBg: 'bg-yellow-500/10',  activeText: 'text-yellow-400', border: 'border-yellow-500/40',  dot: 'bg-yellow-400',  cats: ['GOLD'] },
+  { key: 'USD',  short: 'DXY', label: 'US Dollar · DXY', accent: '#34d399', activeBg: 'bg-emerald-500/10', activeText: 'text-emerald-400',border: 'border-emerald-500/40', dot: 'bg-emerald-400', cats: ['USD','FED/RATES'] },
+  { key: 'JPY',  short: 'JPY', label: 'Yen · USD/JPY',   accent: '#38bdf8', activeBg: 'bg-sky-500/10',     activeText: 'text-sky-400',    border: 'border-sky-500/40',     dot: 'bg-sky-400',     cats: ['JPY'] },
+  { key: 'OIL',  short: 'OIL', label: 'Crude Oil · WTI', accent: '#fb923c', activeBg: 'bg-orange-500/10',  activeText: 'text-orange-400', border: 'border-orange-500/40',  dot: 'bg-orange-400',  cats: ['OIL'] },
+] as const;
+type InstrKey = typeof INSTRUMENTS[number]['key'];
+
+const CAT_BADGE: Record<string,string> = {
+  GOLD:'text-yellow-400 bg-yellow-500/10 border-yellow-500/25', USD:'text-emerald-400 bg-emerald-500/10 border-emerald-500/25',
+  JPY:'text-sky-400 bg-sky-500/10 border-sky-500/25', OIL:'text-orange-400 bg-orange-500/10 border-orange-500/25',
+  FOREX:'text-cyan-400 bg-cyan-500/10 border-cyan-500/25', 'FED/RATES':'text-red-400 bg-red-500/10 border-red-500/25',
+  METALS:'text-amber-400 bg-amber-500/10 border-amber-500/25', EQUITIES:'text-blue-400 bg-blue-500/10 border-blue-500/25',
+  CRYPTO:'text-purple-400 bg-purple-500/10 border-purple-500/25', MARKET:'text-slate-400 bg-slate-500/10 border-slate-500/25',
+};
+const IMPACT = {
+  HIGH:{ text:'text-red-400',    bar:'bg-red-500',    bg:'rgba(239,68,68,0.04)'  },
+  MED: { text:'text-yellow-400', bar:'bg-yellow-500', bg:'rgba(234,179,8,0.03)'  },
+  LOW: { text:'text-slate-500',  bar:'bg-slate-700',  bg:'transparent'           },
+};
+function timeAgo(d:string){const m=Math.floor((Date.now()-new Date(d).getTime())/60000);if(m<1)return'just now';if(m<60)return`${m}m`;if(m<1440)return`${Math.floor(m/60)}h`;return`${Math.floor(m/1440)}d`;}
+function impact(a:Article):'HIGH'|'MED'|'LOW'{if(a.isBreaking)return'HIGH';if(['GOLD','FED/RATES','OIL'].includes(a.category))return'HIGH';if(['USD','JPY','FOREX','METALS'].includes(a.category))return'MED';return'LOW';}
 
 export default function NewsPage() {
-  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+  const [articles, setArticles]   = useState<Article[]>([]);
+  const [loading,  setLoading]    = useState(true);
+  const [instr,    setInstr]      = useState<InstrKey>('ALL');
+  const [search,   setSearch]     = useState('');
+  const [selected, setSelected]   = useState<Article|null>(null);
+  const [lastUp,   setLastUp]     = useState<Date|null>(null);
+  // mobile tab: 'news' | 'calendar'
+  const [mobileTab, setMobileTab] = useState<'news'|'calendar'>('news');
+  // desktop calendar panel
+  const [showCal,  setShowCal]    = useState(true);
+  const feedRef  = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval>|null>(null);
+
+  const fetch_ = useCallback(async()=>{
+    setLoading(true);
+    try{const r=await fetch('/api/news/articles?limit=100');const d=await r.json();
+      if(d.success&&d.articles?.length){setArticles(d.articles);setLastUp(new Date());}}catch(e){console.error(e);}
+    setLoading(false);
+  },[]);
+
+  useEffect(()=>{fetch_();timerRef.current=setInterval(fetch_,90000);return()=>{if(timerRef.current)clearInterval(timerRef.current);};},[fetch_]);
+
+  const activeI = INSTRUMENTS.find(i=>i.key===instr)!;
+  const counts  = Object.fromEntries(INSTRUMENTS.map(i=>[i.key,i.key==='ALL'?articles.length:articles.filter(a=>i.cats.includes(a.category)).length]));
+  const filtered = articles.filter(a=>{
+    const m1 = instr==='ALL'||activeI.cats.includes(a.category);
+    const m2 = !search||a.title.toLowerCase().includes(search.toLowerCase())||a.source.toLowerCase().includes(search.toLowerCase());
+    return m1&&m2;
+  });
+  const breaking   = articles.filter(a=>a.isBreaking);
+  const srcCount   = new Set(articles.map(a=>a.source)).size;
+
+  // ── SHARED: instrument pill bar (used on both mobile & desktop) ─────────────
+  const InstrBar = ()=>(
+    <div className="flex items-center gap-1.5 overflow-x-auto px-4 py-2.5 border-b border-slate-800/50 shrink-0" style={{background:'rgba(8,12,20,0.9)',scrollbarWidth:'none'}}>
+      {INSTRUMENTS.map(i=>{const on=instr===i.key;return(
+        <button key={i.key} onClick={()=>{setInstr(i.key);setSearch('');feedRef.current?.scrollTo({top:0,behavior:'smooth'});}}
+          className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border transition-all ${on?`${i.activeBg} ${i.border} ${i.activeText}`:'bg-slate-800/40 border-slate-700/40 text-slate-500 hover:text-slate-300'}`}>
+          <div className={`w-1.5 h-1.5 rounded-full ${i.dot} ${on?'':'opacity-40'}`}/>
+          {i.short}
+          <span className={`text-[9px] font-mono ${on?i.activeText:'text-slate-700'}`}>{counts[i.key]||0}</span>
+        </button>
+      );})}
+    </div>
+  );
+
+  // ── SHARED: article feed list ────────────────────────────────────────────────
+  const Feed = ()=>(
+    <div ref={feedRef} className="flex-1 overflow-y-auto custom-scrollbar">
+      {loading&&articles.length===0&&(
+        <div className="p-4 space-y-2">{[...Array(8)].map((_,i)=>(
+          <div key={i} className="animate-pulse flex gap-2 p-3 rounded-xl border border-slate-800/30 bg-slate-900/20">
+            <div className="w-1 rounded-full bg-slate-800 self-stretch"/><div className="flex-1 space-y-2">
+              <div className="h-2 bg-slate-800 rounded w-16"/><div className="h-3 bg-slate-800 rounded w-5/6"/><div className="h-2 bg-slate-800 rounded w-2/3"/>
+            </div>
+          </div>))}</div>
+      )}
+      <div className="p-3 space-y-2">
+        {filtered.map((a,idx)=>{const imp=impact(a);const IS=IMPACT[imp];const badge=CAT_BADGE[a.category]??CAT_BADGE.MARKET;return(
+          <article key={a.id+idx} onClick={()=>setSelected(a)}
+            className="group flex rounded-xl border border-slate-800/50 overflow-hidden cursor-pointer transition-all hover:border-slate-700"
+            style={{background:a.isBreaking?'rgba(239,68,68,0.04)':IS.bg}}>
+            <div className={`w-[3px] shrink-0 ${IS.bar} opacity-70`}/>
+            <div className="flex-1 px-3 py-3 min-w-0">
+              <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                <span className={`px-1.5 py-0.5 rounded border text-[8px] font-bold uppercase tracking-wide ${badge}`}>{a.category}</span>
+                <span className={`text-[8px] font-black uppercase ${IS.text}`}>{imp}</span>
+                {a.isBreaking&&<span className="text-[8px] text-red-400 font-black animate-pulse flex items-center gap-0.5"><Zap size={7}/>BREAKING</span>}
+                <span className="ml-auto text-[8px] text-slate-600 font-mono">{timeAgo(a.publishedAt)}</span>
+              </div>
+              <h2 className="text-[12px] font-bold text-slate-200 leading-snug line-clamp-2 mb-1 group-hover:text-white transition-colors" style={{fontFamily:"'Chakra Petch',sans-serif"}}>{a.title}</h2>
+              {a.summary&&<p className="text-[10px] text-slate-500 line-clamp-2 mb-1.5 leading-relaxed">{a.summary}</p>}
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] text-slate-600 font-bold uppercase tracking-wide">{a.source}</span>
+                <span className="flex items-center gap-0.5 text-[9px] text-slate-700 group-hover:text-yellow-500 transition-colors font-bold uppercase">Read<ArrowUpRight size={9}/></span>
+              </div>
+            </div>
+          </article>);})}
+        {!loading&&filtered.length===0&&articles.length>0&&(
+          <div className="flex flex-col items-center py-20 gap-3">
+            <Newspaper size={20} className="text-slate-700"/>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">No articles match</p>
+            <button onClick={()=>{setInstr('ALL');setSearch('');}} className="px-4 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 text-[10px] font-bold uppercase hover:text-white transition-all">Clear Filters</button>
+          </div>
+        )}
+      </div>
+      <footer className="px-4 py-3 border-t border-slate-800/30 flex justify-between text-[8px] text-slate-700 font-bold uppercase tracking-widest">
+        <span>AuScope Intelligence Wire</span><span>{srcCount} sources · 90s</span>
+      </footer>
+    </div>
+  );
 
   return (
     <main className="terminal-layout bg-[#0a0e17] text-slate-200 font-sans flex h-screen overflow-hidden">
@@ -32,6 +158,15 @@ export default function NewsPage() {
             <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center">
               <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-green-500 animate-pulse"></div>
             </div>
+            {/* Calendar toggle — desktop only */}
+            <button onClick={()=>setShowCal(s=>!s)}
+              className={`hidden md:flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[8px] font-black uppercase tracking-wider transition-all ${showCal?'bg-yellow-500/10 border-yellow-500/30 text-yellow-400':'bg-slate-800/60 border-slate-700/50 text-slate-500 hover:text-yellow-400'}`}>
+              <CalendarDays size={12}/><span className="hidden lg:inline">Calendar</span>
+            </button>
+            <button onClick={fetch_} disabled={loading}
+              className="p-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-slate-500 hover:text-yellow-400 transition-all disabled:opacity-40">
+              <RefreshCw size={13} className={loading?'animate-spin':''}/>
+            </button>
           </div>
         </header>
 
@@ -46,70 +181,67 @@ export default function NewsPage() {
              <span className="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold">High Impact</span>
              <span className="text-red-500 font-mono font-bold text-xs md:text-base">{newsData.filter(n => n.impact === 'HIGH').length}</span>
           </div>
+          <Feed/>
         </div>
 
-        {/* News Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {newsData.map((news) => (
-            <div 
-              key={news.id} 
-              className={`group flex flex-col bg-slate-900/40 border transition-all duration-300 hover:shadow-[0_0_15px_rgba(245,196,81,0.1)] rounded-lg overflow-hidden ${
-                news.impact === 'HIGH' ? 'border-red-500/30 hover:border-red-500/60' : 
-                news.impact === 'MED' ? 'border-yellow-500/30 hover:border-yellow-500/60' : 
-                'border-slate-800 hover:border-slate-700'
-              }`}
-            >
-              {/* Card Header */}
-              <div className="px-3 py-2 bg-slate-800/20 border-b border-slate-800/50 flex justify-between items-center">
-                <span className={`text-[9px] font-bold tracking-widest uppercase ${
-                  news.impact === 'HIGH' ? 'text-red-400' : 
-                  news.impact === 'MED' ? 'text-yellow-500' : 
-                  'text-green-500'
-                }`}>
-                  {news.impact}
-                </span>
-                <span className="text-[9px] text-slate-500 font-mono">{news.timestamp.split(' ')[0]}</span>
-              </div>
+        {/* ── MOBILE: CALENDAR TAB ────────────────────────────────────────── */}
+        <div className={`md:hidden flex-1 flex flex-col min-h-0 overflow-hidden ${mobileTab==='calendar'?'flex':'hidden'}`}>
+          <EconomicCalendar/>
+        </div>
 
-              {/* Card Content */}
-              <div className="p-4 flex-1 flex flex-col">
-                <div className="mb-3">
-                  <span className="text-[8px] text-slate-600 font-bold tracking-widest uppercase bg-slate-800 px-1.5 py-0.5 rounded mb-2 inline-block">
-                    {news.category}
-                  </span>
-                  <h2 className="text-sm font-bold text-slate-100 leading-tight group-hover:text-yellow-400 transition-colors">
-                    {news.title}
-                  </h2>
-                </div>
-                
-                <p className="text-[11px] text-slate-400 leading-snug mb-4 flex-1 line-clamp-3">
-                  {news.content}
-                </p>
+        {/* ── DESKTOP LAYOUT ──────────────────────────────────────────────── */}
+        <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
 
-                {/* Card Footer */}
-                <div className="pt-3 border-t border-slate-800/50 flex justify-between items-center text-[10px]">
-                  <div className="flex flex-col">
-                    <span className="text-slate-600 uppercase font-bold tracking-tighter text-[8px]">Source</span>
-                    <span className="text-slate-400 font-bold truncate max-w-[80px]">{news.source}</span>
-                  </div>
-                  <button 
-                    onClick={() => setSelectedNews(news)}
-                    className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded text-[9px] uppercase font-bold tracking-widest transition-all"
-                  >
-                    DETAILS
-                  </button>
-                </div>
-              </div>
-              
-              {/* Decorative accent */}
-              <div className={`h-0.5 w-full ${
-                news.impact === 'HIGH' ? 'bg-red-500/50' : 
-                news.impact === 'MED' ? 'bg-yellow-500/50' : 
-                'bg-green-500/50'
-              }`}></div>
+          {/* Left instrument sidebar */}
+          <aside className="shrink-0 w-[180px] border-r border-slate-800/60 flex flex-col" style={{background:'rgba(8,12,20,0.8)'}}>
+            <div className="px-3 pt-3 pb-2 border-b border-slate-800/40">
+              <p className="text-[8px] text-slate-600 font-black tracking-[0.25em] uppercase">Filter by Asset</p>
             </div>
-          ))}
+            <nav className="flex-1 p-2 space-y-1 overflow-y-auto custom-scrollbar">
+              {INSTRUMENTS.map(i=>{const on=instr===i.key;return(
+                <button key={i.key} onClick={()=>{setInstr(i.key);setSearch('');feedRef.current?.scrollTo({top:0,behavior:'smooth'});}}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all group ${on?`${i.activeBg} border ${i.border}`:'border border-transparent hover:bg-slate-800/40 hover:border-slate-800'}`}>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${i.dot} ${on?'':'opacity-40'}`}/>
+                    <div className="text-left">
+                      <div className={`text-[11px] font-black ${on?i.activeText:'text-slate-400 group-hover:text-slate-200'} transition-colors`}>{i.short}</div>
+                      {i.key!=='ALL'&&<div className="text-[7px] text-slate-600 mt-0.5">{i.label.split('·')[1]?.trim()}</div>}
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-mono font-bold ${on?i.activeText:'text-slate-700'}`}>{counts[i.key]||0}</span>
+                </button>);})}
+            </nav>
+            <div className="p-3 border-t border-slate-800/40 space-y-1.5">
+              <div className="flex items-center gap-1.5"><Shield size={8} className="text-emerald-500"/><span className="text-[7px] text-slate-600 font-bold uppercase tracking-widest">AES-256 Secure</span></div>
+              <div className="flex items-center gap-1.5"><CircleDot size={8} className="text-yellow-500"/><span className="text-[7px] text-slate-600 font-bold uppercase tracking-widest">Auto-refresh 90s</span></div>
+            </div>
+          </aside>
+
+          {/* Centre feed */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            {/* Toolbar */}
+            <div className="shrink-0 px-4 py-2.5 border-b border-slate-800/40 flex items-center gap-3" style={{background:'rgba(10,14,22,0.6)'}}>
+              <div className={`w-2 h-2 rounded-full ${activeI.dot}`}/>
+              <span className={`text-[11px] font-black uppercase ${activeI.activeText}`}>{activeI.key==='ALL'?'All Markets':activeI.label}</span>
+              <span className="text-[9px] text-slate-600 font-mono">{filtered.length}</span>
+              <div className="relative flex-1 max-w-xs ml-2">
+                <Search size={10} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600"/>
+                <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search headlines..."
+                  className="w-full bg-slate-900/60 border border-slate-800 text-slate-300 text-[11px] placeholder:text-slate-700 rounded-lg pl-7 pr-3 py-1.5 focus:outline-none focus:border-slate-600 transition-all"/>
+                {search&&<button onClick={()=>setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600"><X size={10}/></button>}
+              </div>
+            </div>
+            <Feed/>
+          </div>
+
+          {/* Right calendar */}
+          {showCal&&(
+            <aside className="shrink-0 w-[300px] xl:w-[340px] border-l border-slate-800/60 flex flex-col overflow-hidden">
+              <EconomicCalendar/>
+            </aside>
+          )}
         </div>
+
       </div>
 
       {/* Details Modal */}
@@ -158,6 +290,18 @@ export default function NewsPage() {
                   <span className="text-slate-200 font-bold text-xs md:text-sm">{selectedNews.category}</span>
                 </div>
               </div>
+              <button onClick={()=>setSelected(null)} className="p-1.5 rounded-xl bg-slate-800/60 hover:bg-red-500/15 text-slate-500 hover:text-red-400 border border-slate-700 transition-all"><X size={14}/></button>
+            </div>
+            <div className="px-5 py-4 overflow-y-auto">
+              <div className="flex items-center gap-2 text-[9px] text-slate-600 font-mono mb-3">
+                <Clock size={9}/>{timeAgo(selected.publishedAt)} · {new Date(selected.publishedAt).toUTCString().replace(' GMT',' UTC')}
+              </div>
+              <h2 className="text-[15px] font-black text-white leading-tight uppercase mb-3" style={{fontFamily:"'Chakra Petch',sans-serif"}}>{selected.title}</h2>
+              {selected.summary&&<p className="text-slate-400 text-[12px] leading-relaxed mb-4 border-l-2 border-slate-700 pl-3">{selected.summary}</p>}
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                <div><span className="block text-[7px] text-slate-600 uppercase font-bold tracking-widest mb-0.5">Source</span><span className="text-slate-200 font-bold text-[12px]">{selected.source}</span></div>
+                <div><span className="block text-[7px] text-slate-600 uppercase font-bold tracking-widest mb-0.5">Category</span><span className={`text-[12px] font-bold ${IMPACT[impact(selected)].text}`}>{selected.category}</span></div>
+              </div>
             </div>
             <div className="px-6 py-4 bg-slate-800/30 border-t border-slate-800/50 flex justify-end">
               <button 
@@ -170,18 +314,6 @@ export default function NewsPage() {
           </div>
         </div>
       )}
-      
-      {/* Footer Decoration */}
-      <footer className="mt-20 border-t border-slate-800 pt-8 text-center">
-        <div className="flex justify-center gap-8 text-[10px] text-slate-600 tracking-[0.2em] uppercase font-bold">
-          <span>Terminal v2.4.1</span>
-          <span>•</span>
-          <span>System Latency: 14ms</span>
-          <span>•</span>
-          <span>Global Node: HK-4</span>
-        </div>
-      </footer>
-      </div>
     </main>
   );
 }
