@@ -799,19 +799,28 @@ function MessageItem({ msg, currentUserId, contactAvatar, contactName, onDelete,
     >
       <div className={`flex max-w-[80%] ${isSelf ? 'flex-row-reverse' : 'flex-row'} items-end gap-2.5`}>
         {!isSelf && (
-          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mb-1 shadow-inner overflow-hidden">
+          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 mb-1 shadow-inner overflow-hidden"
+            style={{ background: '#1e293b', border: '1px solid rgba(148,163,184,0.2)' }}>
             {contactAvatar ? (
               <img src={contactAvatar} className="w-full h-full object-cover" alt="" />
             ) : (
-              <span className="text-[10px] font-bold text-slate-400">{contactName?.[0]?.toUpperCase() || '?'}</span>
+              <span className="text-[10px] font-bold" style={{ color: '#94a3b8' }}>{contactName?.[0]?.toUpperCase() || '?'}</span>
             )}
           </div>
         )}
         <div className="relative group/bubble">
-          <div className={`px-4 py-2.5 rounded-[20px] text-[12px] leading-relaxed font-medium transition-all ${isSelf
-              ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-[#1a1200] rounded-br-none shadow-[0_4px_15px_rgba(245,196,81,0.15)] hover:shadow-[0_4px_20px_rgba(245,196,81,0.25)]'
-              : 'bg-[#1a2333] text-slate-200 rounded-bl-none border border-slate-700/30 shadow-lg hover:border-slate-600/50'
-            }`}>
+          <div
+            className={`px-4 py-2.5 rounded-[20px] text-[12px] leading-relaxed font-medium transition-all ${
+              isSelf
+                ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-[#1a1200] rounded-br-none shadow-[0_4px_15px_rgba(245,196,81,0.15)] hover:shadow-[0_4px_20px_rgba(245,196,81,0.25)]'
+                : 'rounded-bl-none shadow-lg'
+            }`}
+            style={!isSelf ? {
+              background: '#1e2d42',
+              color: '#f1f5f9',
+              border: '1px solid rgba(148,163,184,0.15)',
+            } : undefined}
+          >
             {msg.text}
           </div>
 
@@ -827,7 +836,8 @@ function MessageItem({ msg, currentUserId, contactAvatar, contactName, onDelete,
         </div>
       </div>
       <div className={`flex items-center gap-1.5 mt-1.5 px-1 ${isSelf ? 'mr-1' : 'ml-11'}`}>
-        <span className="text-[9px] text-slate-600 font-bold uppercase tracking-widest opacity-60">
+        <span className="text-[9px] font-bold uppercase tracking-widest"
+          style={{ color: '#64748b' }}>
           {msg.time}
         </span>
         {isSelf && <div className="w-1 h-1 bg-yellow-500/40 rounded-full" />}
